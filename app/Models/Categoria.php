@@ -19,6 +19,11 @@ final class Categoria
         return Database::pdo()->query('SELECT * FROM categoria ORDER BY ordem, nome')->fetchAll();
     }
 
+    public static function ativas(): array
+    {
+        return Database::pdo()->query('SELECT * FROM categoria WHERE ativo = 1 ORDER BY ordem, nome')->fetchAll();
+    }
+
     public static function find(int $id): ?array
     {
         $stmt = Database::pdo()->prepare('SELECT * FROM categoria WHERE id = :id');

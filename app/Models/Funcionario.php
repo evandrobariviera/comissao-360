@@ -47,6 +47,37 @@ final class Funcionario
         return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
     }
 
+    /** Filiais às quais o dono deste usuário (gerente/funcionário) está vinculado. */
+    public static function filiaisDoUsuario(int $usuarioId): array
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT fl.id, fl.nome
+             FROM funcionario f
+             JOIN funcionario_filial ff ON ff.funcionario_id = f.id
+             JOIN filial fl ON fl.id = ff.filial_id
+             WHERE f.usuario_id = :usuario_id AND fl.ativo = 1
+             ORDER BY fl.nome'
+        );
+        $stmt->execute(['usuario_id' => $usuarioId]);
+
+        return $stmt->fetchAll();
+    }
+
+    /** Funcionários ativos vinculados a uma filial (para lançamento de vendas). */
+    public static function porFilial(int $filialId): array
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT f.id, f.nome
+             FROM funcionario f
+             JOIN funcionario_filial ff ON ff.funcionario_id = f.id
+             WHERE ff.filial_id = :filial_id AND f.ativo = 1
+             ORDER BY f.nome'
+        );
+        $stmt->execute(['filial_id' => $filialId]);
+
+        return $stmt->fetchAll();
+    }
+
     /** @param int[] $filialIds */
     public static function create(
         string $nome,

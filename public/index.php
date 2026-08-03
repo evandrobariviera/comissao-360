@@ -7,6 +7,7 @@ use App\Controllers\CategoriaController;
 use App\Controllers\DashboardController;
 use App\Controllers\FilialController;
 use App\Controllers\UsuarioController;
+use App\Controllers\VendaController;
 use App\Core\Router;
 
 require __DIR__ . '/../app/bootstrap.php';
@@ -39,5 +40,9 @@ $router->post('/categorias', [CategoriaController::class, 'criar']);
 $router->get('/categorias/{id}/editar', [CategoriaController::class, 'editar']);
 $router->post('/categorias/{id}', [CategoriaController::class, 'atualizar']);
 $router->post('/categorias/{id}/status', [CategoriaController::class, 'alternarStatus']);
+
+$router->get('/vendas', [VendaController::class, 'index']);
+$router->post('/vendas', [VendaController::class, 'criar']);
+$router->post('/vendas/{id}/excluir', [VendaController::class, 'excluir']);
 
 $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI'] ?? '/');

@@ -90,12 +90,17 @@ $flash = Flash::pull();
     <a href="/logout">Sair</a>
   </div>
 </header>
-<?php if ($papel === 'admin'): ?>
 <?php $rota = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH); ?>
+<?php if ($papel === 'admin'): ?>
 <nav class="admin-nav">
   <a href="/filiais" class="<?= str_starts_with($rota, '/filiais') ? 'active' : '' ?>">Filiais</a>
   <a href="/usuarios" class="<?= str_starts_with($rota, '/usuarios') ? 'active' : '' ?>">Usuários</a>
   <a href="/categorias" class="<?= str_starts_with($rota, '/categorias') ? 'active' : '' ?>">Categorias</a>
+  <a href="/vendas" class="<?= str_starts_with($rota, '/vendas') ? 'active' : '' ?>">Vendas</a>
+</nav>
+<?php elseif ($papel === 'gerente'): ?>
+<nav class="admin-nav">
+  <a href="/vendas" class="<?= str_starts_with($rota, '/vendas') ? 'active' : '' ?>">Lançar vendas</a>
 </nav>
 <?php endif; ?>
 <main>
