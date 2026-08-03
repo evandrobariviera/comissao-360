@@ -1,0 +1,9 @@
+# Nunca deve ser servido via URL. Camada extra de proteção caso o deploy use
+# subpasta em vez de subdomínio dedicado (ver documento de arquitetura, seção Deploy).
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Order deny,allow
+  Deny from all
+</IfModule>
