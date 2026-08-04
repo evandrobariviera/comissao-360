@@ -34,6 +34,12 @@ $rotuloPeriodo = $nomesMes[(int) $periodo['mes']] . '/' . $periodo['ano'];
 </div>
 
 <div class="secao">
+  <h3>Próxima faixa</h3>
+  <p class="secao-sub">Quanto falta vender em cada categoria para pular de faixa — a alíquota nova vale sobre o total, então vale a pena empurrar.</p>
+  <div class="card"><?= Viz::oportunidadesFuncionario($linha['detalhe_categorias']) ?></div>
+</div>
+
+<div class="secao">
   <h3>Minha meta individual</h3>
   <p class="secao-sub">Soma das metas por categoria vs. total vendido no mês.</p>
   <div class="card"><?= Viz::meterRow('Meta individual', $realizadoIndividual, $metaIndividual) ?></div>

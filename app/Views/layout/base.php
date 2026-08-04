@@ -25,7 +25,7 @@ $flash = Flash::pull();
     --bg:#EEF2F1; --surface:#fff; --ink:#16232A; --ink-soft:#4C5E62; --ink-faint:#7C8C8F; --line:#D3DCD9;
     --primary:#1F6F63; --primary-ink:#0E4139; --primary-tint:#DCEBE7; --accent:#B8792E;
     --good:#3F8F5F; --bad:#AA4638; --good-tint:#E1F0E6; --bad-tint:#F6E4E0;
-    --warn:#B8862E; --warn-tint:#F3E9D2;
+    --warn:#B8862E; --warn-tint:#F3E9D2; --accent-tint:#F3E4CE;
     /* Paleta categórica validada (CVD-safe) — só para o gráfico dos 4 pilares da pontuação 360. */
     --chart-individual:#2a78d6; --chart-filial:#eb6834; --chart-qualidade:#1baf7a; --chart-equipe:#eda100;
   }
@@ -122,6 +122,18 @@ $flash = Flash::pull();
   .pilares-bar{display:flex; height:12px; border-radius:6px; overflow:hidden; background:var(--bg);}
   .pilares-bar .seg{height:100%;}
   .pilares-bar .seg + .seg{margin-left:2px;}
+
+  /* ---- oportunidade: faltam R$X para a próxima faixa ---- */
+  .oport-row{padding:.65rem 0; border-bottom:1px solid var(--line);}
+  .oport-row:last-child{border-bottom:none;}
+  .oport-topo{display:flex; justify-content:space-between; align-items:baseline; gap:.6rem; flex-wrap:wrap;}
+  .oport-nome{font-size:.88rem; font-weight:600; color:var(--ink);}
+  .oport-quem{font-size:.78rem; color:var(--ink-faint); font-weight:400;}
+  .oport-ganho{font-size:.85rem; font-weight:700; color:var(--accent); white-space:nowrap;}
+  .oport-texto{margin:.3rem 0 0; font-size:.82rem; color:var(--ink-soft);}
+  .oport-texto strong{color:var(--ink);}
+  .oport-track{height:6px; border-radius:999px; background:var(--accent-tint); margin-top:.5rem; overflow:hidden;}
+  .oport-fill{height:100%; border-radius:999px; background:var(--accent);}
 
   /* ---- distribuição de níveis (ordinal, uma cor) ---- */
   .tier-row{display:grid; grid-template-columns:9.5rem 1fr 2.2rem; align-items:center; gap:.7rem; font-size:.85rem; padding:.3rem 0;}

@@ -77,6 +77,7 @@ final class DashboardController extends Controller
             'filiaisComMeta' => $filiaisComMeta,
             'ranking' => $ranking,
             'distribuicao' => $distribuicao,
+            'oportunidades' => self::oportunidades($linhas, 5),
         ]);
     }
 
@@ -117,7 +118,38 @@ final class DashboardController extends Controller
             'comissaoTotal' => $comissaoTotal,
             'totalFuncionarios' => count($linhas),
             'ranking' => $ranking,
+            'oportunidades' => self::oportunidades($linhas, 5),
         ]);
+    }
+
+    /**
+     * Achata o detalhe por categoria de várias pessoas numa lista única de
+     * "faltam R$X para a próxima faixa", ordenada pela oportunidade mais perto de acontecer.
+     *
+     * @param array<int, array> $linhas
+     * @return array<int, array{nome:string, categoria:string, falta:float, ganho:float, percentual:float, percentual_proximo:float}>
+     */
+    private static function oportunidades(array $linhas, int $limite): array
+    {
+        $achatado = [];
+        foreach ($linhas as $l) {
+            foreach ($l['detalhe_categorias'] as $d) {
+                if ($d['proxima_faixa'] === null) {
+                    continue;
+                }
+                $achatado[] = [
+                    'nome' => $l['nome'],
+                    'categoria' => $d['categoria'],
+                    'falta' => $d['proxima_faixa']['falta'],
+                    'ganho' => $d['proxima_faixa']['ganho'],
+                    'percentual' => $d['percentual'],
+                    'percentual_proximo' => $d['proxima_faixa']['percentual'],
+                ];
+            }
+        }
+        usort($achatado, static fn ($a, $b) => $a['falta'] <=> $b['falta']);
+
+        return array_slice($achatado, 0, $limite);
     }
 
     private function pessoal(int $periodoId, array $periodo): void

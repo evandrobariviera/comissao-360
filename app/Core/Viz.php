@@ -136,4 +136,58 @@ final class Viz
 
         return $html . '</div>';
     }
+
+    /**
+     * "Faltam R$X para a próxima faixa" — para o dashboard do próprio funcionário.
+     * @param array<int, array{categoria:string, valor:float, percentual:float, proxima_faixa: null|array{falta:float, percentual:float, ganho:float}}> $detalhe
+     */
+    public static function oportunidadesFuncionario(array $detalhe): string
+    {
+        $linhas = array_values(array_filter($detalhe, static fn ($d) => $d['proxima_faixa'] !== null));
+        if (empty($linhas)) {
+            return '<p class="subtitle" style="margin:0">Todas as categorias já estão na faixa máxima — sem próximo degrau a perseguir agora.</p>';
+        }
+        usort($linhas, static fn ($a, $b) => $a['proxima_faixa']['falta'] <=> $b['proxima_faixa']['falta']);
+
+        $html = '';
+        foreach ($linhas as $d) {
+            $prox = $d['proxima_faixa'];
+            $limite = $d['valor'] + $prox['falta'];
+            $progresso = $limite > 0 ? min(100.0, ($d['valor'] / $limite) * 100) : 0.0;
+
+            $html .= '<div class="oport-row"><div class="oport-topo">';
+            $html .= '<span class="oport-nome">' . htmlspecialchars($d['categoria'], ENT_QUOTES) . '</span>';
+            $html .= '<span class="oport-ganho">+' . self::money($prox['ganho']) . '</span>';
+            $html .= '</div><p class="oport-texto">Faltam <strong>' . self::money($prox['falta']) . '</strong> para pular de '
+                . self::pct($d['percentual'], 0) . ' para ' . self::pct($prox['percentual'], 0) . '</p>';
+            $html .= '<div class="oport-track"><div class="oport-fill" style="width:' . $progresso . '%"></div></div>';
+            $html .= '</div>';
+        }
+
+        return $html;
+    }
+
+    /**
+     * Mesma ideia, agregada por várias pessoas — para o dashboard de gerente/rede.
+     * @param array<int, array{nome:string, categoria:string, falta:float, ganho:float, percentual:float, percentual_proximo:float}> $linhas já ordenadas
+     */
+    public static function oportunidadesEquipe(array $linhas): string
+    {
+        if (empty($linhas)) {
+            return '<p class="subtitle" style="margin:0">Nenhuma oportunidade de próxima faixa no momento.</p>';
+        }
+
+        $html = '';
+        foreach ($linhas as $l) {
+            $html .= '<div class="oport-row"><div class="oport-topo">';
+            $html .= '<span class="oport-nome">' . htmlspecialchars($l['categoria'], ENT_QUOTES)
+                . ' <span class="oport-quem">— ' . htmlspecialchars($l['nome'], ENT_QUOTES) . '</span></span>';
+            $html .= '<span class="oport-ganho">+' . self::money($l['ganho']) . '</span>';
+            $html .= '</div><p class="oport-texto">Faltam <strong>' . self::money($l['falta']) . '</strong> para pular de '
+                . self::pct($l['percentual'], 0) . ' para ' . self::pct($l['percentual_proximo'], 0) . '</p>';
+            $html .= '</div>';
+        }
+
+        return $html;
+    }
 }

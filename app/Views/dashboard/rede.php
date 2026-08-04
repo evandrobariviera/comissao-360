@@ -9,6 +9,7 @@
 /** @var array $filiaisComMeta */
 /** @var array $ranking */
 /** @var array $distribuicao */
+/** @var array $oportunidades */
 use App\Core\Viz;
 
 $nomesMes = [1=>'janeiro',2=>'fevereiro',3=>'março',4=>'abril',5=>'maio',6=>'junho',7=>'julho',8=>'agosto',9=>'setembro',10=>'outubro',11=>'novembro',12=>'dezembro'];
@@ -39,6 +40,12 @@ $atingimentoRede = $metaRede > 0 ? ($vendaRealizada / $metaRede) * 100 : 0.0;
   <h3>Ranking de funcionários</h3>
   <p class="secao-sub">Top 10 por total do mês (comissão ajustada + prêmio), rede toda.</p>
   <div class="card"><?= Viz::ranking($ranking) ?></div>
+</div>
+
+<div class="secao">
+  <h3>Maiores oportunidades da rede</h3>
+  <p class="secao-sub">As 5 faixas mais próximas de virar em toda a rede — onde um empurrão hoje rende mais.</p>
+  <div class="card"><?= Viz::oportunidadesEquipe($oportunidades) ?></div>
 </div>
 
 <div class="secao">

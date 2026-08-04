@@ -8,6 +8,7 @@
 /** @var float $comissaoTotal */
 /** @var int $totalFuncionarios */
 /** @var array $ranking */
+/** @var array $oportunidades */
 use App\Core\Viz;
 
 $nomesMes = [1=>'janeiro',2=>'fevereiro',3=>'março',4=>'abril',5=>'maio',6=>'junho',7=>'julho',8=>'agosto',9=>'setembro',10=>'outubro',11=>'novembro',12=>'dezembro'];
@@ -40,6 +41,12 @@ foreach ($filiaisPermitidas as $f) { if ((int) $f['id'] === $filialId) { $nomeFi
 <div class="secao">
   <h3>Atingimento de meta</h3>
   <div class="card"><?= Viz::meterRow($nomeFilial ?: 'Filial', $realizado, $metaVenda) ?></div>
+</div>
+
+<div class="secao">
+  <h3>Oportunidades da equipe</h3>
+  <p class="secao-sub">Quem está mais perto de virar a próxima faixa — bom ponto de partida para uma conversa hoje.</p>
+  <div class="card"><?= Viz::oportunidadesEquipe($oportunidades) ?></div>
 </div>
 
 <div class="secao">
