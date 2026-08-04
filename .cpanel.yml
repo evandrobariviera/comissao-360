@@ -2,6 +2,6 @@
 deployment:
   tasks:
     - export DEPLOYPATH=/home/geremias
-    - /bin/cp -R public/. $DEPLOYPATH/public_html
+    - /bin/cp -R public/. $DEPLOYPATH/comissao
     - /bin/cp -R app $DEPLOYPATH
     - /bin/cp -R storage $DEPLOYPATH
