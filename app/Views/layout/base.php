@@ -98,11 +98,13 @@ $flash = Flash::pull();
   <a href="/categorias" class="<?= str_starts_with($rota, '/categorias') ? 'active' : '' ?>">Categorias</a>
   <a href="/vendas" class="<?= str_starts_with($rota, '/vendas') ? 'active' : '' ?>">Vendas</a>
   <a href="/indicadores" class="<?= str_starts_with($rota, '/indicadores') ? 'active' : '' ?>">Indicadores</a>
+  <a href="/fechamento" class="<?= str_starts_with($rota, '/fechamento') ? 'active' : '' ?>">Fechamento</a>
 </nav>
 <?php elseif ($papel === 'gerente'): ?>
 <nav class="admin-nav">
   <a href="/vendas" class="<?= str_starts_with($rota, '/vendas') ? 'active' : '' ?>">Lançar vendas</a>
   <a href="/indicadores" class="<?= str_starts_with($rota, '/indicadores') ? 'active' : '' ?>">Indicadores</a>
+  <a href="/fechamento" class="<?= str_starts_with($rota, '/fechamento') ? 'active' : '' ?>">Fechamento</a>
 </nav>
 <?php endif; ?>
 <main>

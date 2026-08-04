@@ -356,6 +356,7 @@ INSERT INTO parametro (chave, valor, descricao) VALUES
   ('desconto_pts_max', '6', 'Pontos máximos do sub-pilar desconto médio'),
   ('rentab_filial_pts', '7', 'Pontos do sub-pilar rentabilidade da filial (liga/desliga)'),
   ('rentab_funcionario_pts', '7', 'Pontos do sub-pilar rentabilidade do funcionário (liga/desliga)'),
+  ('meta_rentab_individual_pct', '28', 'Meta de rentabilidade individual (%) — parâmetro global, usado no sub-pilar rentabilidade do funcionário'),
   ('peso_individual_max', '40', 'Pontuação máxima do pilar Resultado Individual'),
   ('peso_filial_max', '30', 'Pontuação máxima do pilar Resultado da Filial'),
   ('peso_qualidade_max', '20', 'Pontuação máxima do pilar Qualidade/Rentabilidade'),

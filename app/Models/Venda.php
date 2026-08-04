@@ -75,4 +75,46 @@ final class Venda
     {
         Database::pdo()->prepare('DELETE FROM venda_lancamento WHERE id = :id')->execute(['id' => $id]);
     }
+
+    public static function somaPorCategoria(int $funcionarioId, int $periodoId, int $categoriaId): float
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT COALESCE(SUM(valor), 0) FROM venda_lancamento
+             WHERE funcionario_id = :funcionario_id AND periodo_id = :periodo_id AND categoria_id = :categoria_id'
+        );
+        $stmt->execute(['funcionario_id' => $funcionarioId, 'periodo_id' => $periodoId, 'categoria_id' => $categoriaId]);
+
+        return (float) $stmt->fetchColumn();
+    }
+
+    public static function somaSemNota(int $funcionarioId, int $periodoId): float
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT COALESCE(SUM(valor), 0) FROM venda_lancamento
+             WHERE funcionario_id = :funcionario_id AND periodo_id = :periodo_id AND eh_sn = 1'
+        );
+        $stmt->execute(['funcionario_id' => $funcionarioId, 'periodo_id' => $periodoId]);
+
+        return (float) $stmt->fetchColumn();
+    }
+
+    public static function somaTotalFuncionario(int $funcionarioId, int $periodoId): float
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT COALESCE(SUM(valor), 0) FROM venda_lancamento WHERE funcionario_id = :funcionario_id AND periodo_id = :periodo_id'
+        );
+        $stmt->execute(['funcionario_id' => $funcionarioId, 'periodo_id' => $periodoId]);
+
+        return (float) $stmt->fetchColumn();
+    }
+
+    public static function somaTotalFilial(int $filialId, int $periodoId): float
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT COALESCE(SUM(valor), 0) FROM venda_lancamento WHERE filial_id = :filial_id AND periodo_id = :periodo_id'
+        );
+        $stmt->execute(['filial_id' => $filialId, 'periodo_id' => $periodoId]);
+
+        return (float) $stmt->fetchColumn();
+    }
 }

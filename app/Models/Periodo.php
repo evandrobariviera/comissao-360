@@ -28,6 +28,13 @@ final class Periodo
         return ['id' => $id, 'ano' => $ano, 'mes' => $mes, 'status' => 'aberto'];
     }
 
+    public static function aprovar(int $id, int $aprovadoPor): void
+    {
+        Database::pdo()
+            ->prepare('UPDATE periodo SET status = "aprovado", aprovado_por = :por, aprovado_em = NOW() WHERE id = :id')
+            ->execute(['por' => $aprovadoPor, 'id' => $id]);
+    }
+
     public static function find(int $id): ?array
     {
         $stmt = Database::pdo()->prepare('SELECT * FROM periodo WHERE id = :id');

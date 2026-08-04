@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Controllers\AuthController;
 use App\Controllers\CategoriaController;
 use App\Controllers\DashboardController;
+use App\Controllers\FechamentoController;
 use App\Controllers\FilialController;
 use App\Controllers\IndicadorController;
 use App\Controllers\UsuarioController;
@@ -48,5 +49,8 @@ $router->post('/vendas/{id}/excluir', [VendaController::class, 'excluir']);
 
 $router->get('/indicadores', [IndicadorController::class, 'index']);
 $router->post('/indicadores', [IndicadorController::class, 'salvar']);
+
+$router->get('/fechamento', [FechamentoController::class, 'index']);
+$router->post('/fechamento/aprovar', [FechamentoController::class, 'aprovar']);
 
 $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI'] ?? '/');

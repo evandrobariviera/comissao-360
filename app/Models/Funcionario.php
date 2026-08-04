@@ -63,6 +63,24 @@ final class Funcionario
         return $stmt->fetchAll();
     }
 
+    /**
+     * Todos os funcionários ativos, com sua filial principal (fallback: a primeira vinculada,
+     * caso nenhuma esteja marcada como principal). Usado no fechamento mensal (rede toda).
+     */
+    public static function todosComFilialPrincipal(): array
+    {
+        return Database::pdo()->query(
+            'SELECT f.id AS funcionario_id, f.nome,
+                    COALESCE(
+                        (SELECT filial_id FROM funcionario_filial WHERE funcionario_id = f.id AND principal = 1 LIMIT 1),
+                        (SELECT filial_id FROM funcionario_filial WHERE funcionario_id = f.id ORDER BY filial_id LIMIT 1)
+                    ) AS filial_id
+             FROM funcionario f
+             WHERE f.ativo = 1
+             ORDER BY f.nome'
+        )->fetchAll();
+    }
+
     /** Funcionários ativos vinculados a uma filial (para lançamento de vendas). */
     public static function porFilial(int $filialId): array
     {
