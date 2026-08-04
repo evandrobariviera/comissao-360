@@ -5,9 +5,87 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Core\Database;
+use Throwable;
 
 final class Meta
 {
+    /**
+     * Mapa [funcionario_id][categoria_id] => meta_venda já lançada no período (0 se ainda não lançada).
+     *
+     * @param int[] $funcionarioIds
+     * @param int[] $categoriaIds
+     * @return array<int, array<int, float>>
+     */
+    public static function grid(array $funcionarioIds, array $categoriaIds, int $periodoId): array
+    {
+        $mapa = [];
+        foreach ($funcionarioIds as $fid) {
+            foreach ($categoriaIds as $cid) {
+                $mapa[$fid][$cid] = 0.0;
+            }
+        }
+        if (empty($funcionarioIds)) {
+            return $mapa;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($funcionarioIds), '?'));
+        $stmt = Database::pdo()->prepare(
+            "SELECT funcionario_id, categoria_id, meta_venda FROM meta_funcionario
+             WHERE periodo_id = ? AND funcionario_id IN ($placeholders)"
+        );
+        $stmt->execute([$periodoId, ...$funcionarioIds]);
+        foreach ($stmt->fetchAll() as $row) {
+            $mapa[(int) $row['funcionario_id']][(int) $row['categoria_id']] = (float) $row['meta_venda'];
+        }
+
+        return $mapa;
+    }
+
+    /**
+     * Salva a meta da filial e o grid de metas por funcionário/categoria numa única transação.
+     *
+     * @param array{meta_venda: float, meta_rentabilidade: float, valor_premio: float} $metaFilial
+     * @param array<int, array{funcionario_id:int, categoria_id:int, meta_venda:float}> $metasFuncionarios
+     */
+    public static function salvarTudo(int $periodoId, int $filialId, array $metaFilial, array $metasFuncionarios): void
+    {
+        $pdo = Database::pdo();
+        $pdo->beginTransaction();
+        try {
+            $pdo->prepare(
+                'INSERT INTO meta_filial (periodo_id, filial_id, meta_venda, meta_rentabilidade, valor_premio)
+                 VALUES (:periodo_id, :filial_id, :meta_venda, :meta_rentabilidade, :valor_premio)
+                 ON DUPLICATE KEY UPDATE
+                    meta_venda = VALUES(meta_venda), meta_rentabilidade = VALUES(meta_rentabilidade), valor_premio = VALUES(valor_premio)'
+            )->execute([
+                'periodo_id' => $periodoId,
+                'filial_id' => $filialId,
+                'meta_venda' => $metaFilial['meta_venda'],
+                'meta_rentabilidade' => $metaFilial['meta_rentabilidade'],
+                'valor_premio' => $metaFilial['valor_premio'],
+            ]);
+
+            $stmt = $pdo->prepare(
+                'INSERT INTO meta_funcionario (periodo_id, funcionario_id, categoria_id, meta_venda)
+                 VALUES (:periodo_id, :funcionario_id, :categoria_id, :meta_venda)
+                 ON DUPLICATE KEY UPDATE meta_venda = VALUES(meta_venda)'
+            );
+            foreach ($metasFuncionarios as $linha) {
+                $stmt->execute([
+                    'periodo_id' => $periodoId,
+                    'funcionario_id' => $linha['funcionario_id'],
+                    'categoria_id' => $linha['categoria_id'],
+                    'meta_venda' => $linha['meta_venda'],
+                ]);
+            }
+
+            $pdo->commit();
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    }
+
     /** Meta Individual Total = soma das metas por categoria do funcionário no período. */
     public static function totalIndividual(int $funcionarioId, int $periodoId): float
     {

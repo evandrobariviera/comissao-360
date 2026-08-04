@@ -8,6 +8,7 @@ use App\Controllers\DashboardController;
 use App\Controllers\FechamentoController;
 use App\Controllers\FilialController;
 use App\Controllers\IndicadorController;
+use App\Controllers\MetaController;
 use App\Controllers\UsuarioController;
 use App\Controllers\VendaController;
 use App\Core\Router;
@@ -52,5 +53,8 @@ $router->post('/indicadores', [IndicadorController::class, 'salvar']);
 
 $router->get('/fechamento', [FechamentoController::class, 'index']);
 $router->post('/fechamento/aprovar', [FechamentoController::class, 'aprovar']);
+
+$router->get('/metas', [MetaController::class, 'index']);
+$router->post('/metas', [MetaController::class, 'salvar']);
 
 $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI'] ?? '/');
