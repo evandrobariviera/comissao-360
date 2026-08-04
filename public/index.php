@@ -6,6 +6,7 @@ use App\Controllers\AuthController;
 use App\Controllers\CategoriaController;
 use App\Controllers\DashboardController;
 use App\Controllers\FilialController;
+use App\Controllers\IndicadorController;
 use App\Controllers\UsuarioController;
 use App\Controllers\VendaController;
 use App\Core\Router;
@@ -44,5 +45,8 @@ $router->post('/categorias/{id}/status', [CategoriaController::class, 'alternarS
 $router->get('/vendas', [VendaController::class, 'index']);
 $router->post('/vendas', [VendaController::class, 'criar']);
 $router->post('/vendas/{id}/excluir', [VendaController::class, 'excluir']);
+
+$router->get('/indicadores', [IndicadorController::class, 'index']);
+$router->post('/indicadores', [IndicadorController::class, 'salvar']);
 
 $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI'] ?? '/');

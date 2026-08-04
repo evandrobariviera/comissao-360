@@ -7,15 +7,17 @@ namespace App\Controllers;
 use App\Core\Audit;
 use App\Core\Auth;
 use App\Core\Controller;
+use App\Core\EscopoFilialTrait;
 use App\Core\Flash;
 use App\Models\Categoria;
-use App\Models\Filial;
 use App\Models\Funcionario;
 use App\Models\Periodo;
 use App\Models\Venda;
 
 final class VendaController extends Controller
 {
+    use EscopoFilialTrait;
+
     public function index(): void
     {
         Auth::require(Auth::PAPEL_ADMIN, Auth::PAPEL_GERENTE);
@@ -132,22 +134,5 @@ final class VendaController extends Controller
         }
 
         return null;
-    }
-
-    private function filiaisPermitidas(): array
-    {
-        return Auth::papel() === Auth::PAPEL_ADMIN
-            ? Filial::ativas()
-            : Funcionario::filiaisDoUsuario((int) Auth::id());
-    }
-
-    private function resolverFilialId(array $filiaisPermitidas, int $solicitada = 0): int
-    {
-        $ids = array_column($filiaisPermitidas, 'id');
-        if ($solicitada === 0) {
-            $solicitada = (int) ($this->input('filial_id', $ids[0] ?? 0));
-        }
-
-        return in_array($solicitada, $ids, true) ? $solicitada : (int) $ids[0];
     }
 }
