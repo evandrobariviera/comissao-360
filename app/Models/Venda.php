@@ -108,6 +108,14 @@ final class Venda
         return (float) $stmt->fetchColumn();
     }
 
+    public static function somaTotalPeriodo(int $periodoId): float
+    {
+        $stmt = Database::pdo()->prepare('SELECT COALESCE(SUM(valor), 0) FROM venda_lancamento WHERE periodo_id = :periodo_id');
+        $stmt->execute(['periodo_id' => $periodoId]);
+
+        return (float) $stmt->fetchColumn();
+    }
+
     public static function somaTotalFilial(int $filialId, int $periodoId): float
     {
         $stmt = Database::pdo()->prepare(

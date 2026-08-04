@@ -25,6 +25,9 @@ $flash = Flash::pull();
     --bg:#EEF2F1; --surface:#fff; --ink:#16232A; --ink-soft:#4C5E62; --ink-faint:#7C8C8F; --line:#D3DCD9;
     --primary:#1F6F63; --primary-ink:#0E4139; --primary-tint:#DCEBE7; --accent:#B8792E;
     --good:#3F8F5F; --bad:#AA4638; --good-tint:#E1F0E6; --bad-tint:#F6E4E0;
+    --warn:#B8862E; --warn-tint:#F3E9D2;
+    /* Paleta categórica validada (CVD-safe) — só para o gráfico dos 4 pilares da pontuação 360. */
+    --chart-individual:#2a78d6; --chart-filial:#eb6834; --chart-qualidade:#1baf7a; --chart-equipe:#eda100;
   }
   *{box-sizing:border-box}
   body{margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
@@ -79,6 +82,52 @@ $flash = Flash::pull();
   .flash{padding:.7rem 1rem; border-radius:0 8px 8px 0; font-size:.88rem; margin-bottom:1.2rem; border-left:3px solid;}
   .flash.sucesso{background:var(--good-tint); color:var(--good); border-color:var(--good);}
   .flash.erro{background:var(--bad-tint); color:var(--bad); border-color:var(--bad);}
+
+  /* ---- dashboard: stat tiles ---- */
+  .kpi-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:.9rem; margin:1rem 0 1.4rem;}
+  .stat-tile{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:1.1rem 1.2rem;}
+  .stat-tile .stat-label{display:block; font-size:.7rem; letter-spacing:.04em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:.45rem;}
+  .stat-tile .stat-value{display:block; font-size:1.55rem; font-weight:700; color:var(--ink); line-height:1.1;}
+  .stat-tile .stat-sub{display:block; font-size:.78rem; color:var(--ink-faint); margin-top:.35rem;}
+
+  /* ---- dashboard: seção ---- */
+  .secao{margin-top:2rem;}
+  .secao h3{font-family:Georgia,serif; font-size:1.05rem; margin:0 0 .2rem;}
+  .secao .secao-sub{font-size:.82rem; color:var(--ink-faint); margin:0 0 1rem;}
+
+  /* ---- meter: uma razão contra um limite (ex.: atingimento de meta) ---- */
+  .meter-row{display:grid; grid-template-columns:1fr 3.4rem; align-items:center; gap:.7rem; padding:.35rem 0;}
+  .meter-row .meter-nome{grid-column:1 / -1; font-size:.86rem; color:var(--ink); margin-bottom:.2rem; display:flex; justify-content:space-between; gap:.5rem;}
+  .meter-row .meter-nome .status-tag{font-size:.74rem; font-weight:600;}
+  .meter-track{height:10px; border-radius:999px; overflow:hidden;}
+  .meter-fill{height:100%; border-radius:999px;}
+  .meter-pct{text-align:right; font-size:.82rem; font-weight:600; font-variant-numeric:tabular-nums; color:var(--ink-soft);}
+  .status-good{color:var(--good)} .status-warn{color:var(--warn)} .status-bad{color:var(--bad)}
+
+  /* ---- ranking: magnitude simples, uma cor só ---- */
+  .rank-list{display:flex; flex-direction:column; gap:.55rem;}
+  .rank-row{display:grid; grid-template-columns:7.5rem 1fr 5.5rem; align-items:center; gap:.7rem; font-size:.85rem;}
+  .rank-name{color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .rank-track{height:10px; border-radius:999px; background:var(--bg); overflow:hidden;}
+  .rank-fill{height:100%; border-radius:999px; background:var(--primary);}
+  .rank-value{text-align:right; font-variant-numeric:tabular-nums; color:var(--ink-soft);}
+
+  /* ---- legenda (paleta categórica) ---- */
+  .legend{display:flex; flex-wrap:wrap; gap:.9rem 1.1rem; font-size:.78rem; color:var(--ink-soft); margin:0 0 1rem;}
+  .legend .sw{display:inline-block; width:.62rem; height:.62rem; border-radius:2px; margin-right:.4rem; vertical-align:middle;}
+
+  /* ---- barra empilhada: 4 pilares da pontuação 360 ---- */
+  .pilares-item{margin:.7rem 0;}
+  .pilares-item .pilares-topo{display:flex; justify-content:space-between; font-size:.85rem; color:var(--ink); margin-bottom:.3rem;}
+  .pilares-bar{display:flex; height:12px; border-radius:6px; overflow:hidden; background:var(--bg);}
+  .pilares-bar .seg{height:100%;}
+  .pilares-bar .seg + .seg{margin-left:2px;}
+
+  /* ---- distribuição de níveis (ordinal, uma cor) ---- */
+  .tier-row{display:grid; grid-template-columns:9.5rem 1fr 2.2rem; align-items:center; gap:.7rem; font-size:.85rem; padding:.3rem 0;}
+  .tier-track{height:10px; border-radius:999px; background:var(--bg); overflow:hidden;}
+  .tier-fill{height:100%; border-radius:999px; background:var(--primary);}
+  .tier-count{text-align:right; font-variant-numeric:tabular-nums; color:var(--ink-soft);}
 </style>
 </head>
 <body>

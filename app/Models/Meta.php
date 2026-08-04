@@ -97,6 +97,14 @@ final class Meta
         return (float) $stmt->fetchColumn();
     }
 
+    public static function totalRedeVenda(int $periodoId): float
+    {
+        $stmt = Database::pdo()->prepare('SELECT COALESCE(SUM(meta_venda), 0) FROM meta_filial WHERE periodo_id = :periodo_id');
+        $stmt->execute(['periodo_id' => $periodoId]);
+
+        return (float) $stmt->fetchColumn();
+    }
+
     public static function filial(int $filialId, int $periodoId): ?array
     {
         $stmt = Database::pdo()->prepare('SELECT * FROM meta_filial WHERE filial_id = :filial_id AND periodo_id = :periodo_id');
