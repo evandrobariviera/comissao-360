@@ -38,7 +38,7 @@ $pct = static fn ($v) => number_format((float) $v, 1, ',', '.') . '%';
 <?php endif; ?>
 
 <?php if (empty($linhas)): ?>
-<div class="card"><p>Nenhum funcionário ativo vinculado a esta filial ainda.</p></div>
+<div class="card"><p>Nenhum funcionário tem esta filial como <b>principal</b> ainda. Funcionários vinculados a mais de uma filial (ex.: Frai 1 + Frai 2) entram no fechamento só da sua filial principal — ajustável em <a href="/usuarios">Usuários</a>.</p></div>
 <?php else: ?>
 <div class="scrollx" style="overflow-x:auto">
 <table class="lista">

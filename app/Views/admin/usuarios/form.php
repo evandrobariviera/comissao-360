@@ -5,6 +5,7 @@
 use App\Core\Csrf;
 $editando = $usuario !== null && !empty($usuario['id']);
 $filiaisVinculadas = $usuario['filiais'] ?? [];
+$filialPrincipal = $usuario['filial_principal'] ?? ($filiaisVinculadas[0] ?? null);
 $papeis = ['admin' => 'Administrador', 'gerente' => 'Gerente de filial', 'funcionario' => 'Funcionário'];
 ?>
 <h2><?= $editando ? 'Editar usuário' : 'Novo usuário' ?></h2>
@@ -41,15 +42,20 @@ $papeis = ['admin' => 'Administrador', 'gerente' => 'Gerente de filial', 'funcio
 
     <fieldset>
       <legend>Filiais vinculadas</legend>
-      <div class="grade-checkbox">
-        <?php foreach ($filiais as $f): ?>
-          <label>
-            <input type="checkbox" name="filiais[]" value="<?= (int) $f['id'] ?>" <?= in_array((int) $f['id'], $filiaisVinculadas, true) ? 'checked' : '' ?>>
-            <?= htmlspecialchars($f['nome'], ENT_QUOTES) ?>
-          </label>
-        <?php endforeach; ?>
-      </div>
-      <p class="ajuda">A primeira filial marcada vira a filial principal da pessoa.</p>
+      <table class="faixas">
+        <thead><tr><th>Vinculada</th><th>Principal</th><th>Filial</th></tr></thead>
+        <tbody>
+          <?php foreach ($filiais as $f): $fid = (int) $f['id']; ?>
+          <tr>
+            <td><input type="checkbox" name="filiais[]" value="<?= $fid ?>" id="filial_<?= $fid ?>" <?= in_array($fid, $filiaisVinculadas, true) ? 'checked' : '' ?>></td>
+            <td><input type="radio" name="filial_principal" value="<?= $fid ?>" <?= $filialPrincipal === $fid ? 'checked' : '' ?>
+                  onclick="document.getElementById('filial_<?= $fid ?>').checked = true"></td>
+            <td><label for="filial_<?= $fid ?>" style="margin:0"><?= htmlspecialchars($f['nome'], ENT_QUOTES) ?></label></td>
+          </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+      <p class="ajuda">A filial principal decide de qual meta/rentabilidade a pessoa participa nos pilares de filial e no prêmio, quando vinculada a mais de uma.</p>
     </fieldset>
 
     <div class="acoes-form">

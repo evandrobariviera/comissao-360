@@ -34,6 +34,7 @@ final class Funcionario
             return null;
         }
         $row['filiais'] = self::filiaisVinculadas($id);
+        $row['filial_principal'] = self::filialPrincipal($id);
 
         return $row;
     }
@@ -45,6 +46,17 @@ final class Funcionario
         $stmt->execute(['id' => $funcionarioId]);
 
         return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+    }
+
+    public static function filialPrincipal(int $funcionarioId): ?int
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT filial_id FROM funcionario_filial WHERE funcionario_id = :id AND principal = 1 LIMIT 1'
+        );
+        $stmt->execute(['id' => $funcionarioId]);
+        $valor = $stmt->fetchColumn();
+
+        return $valor === false ? null : (int) $valor;
     }
 
     /** Filiais às quais o dono deste usuário (gerente/funcionário) está vinculado. */
@@ -81,6 +93,26 @@ final class Funcionario
         )->fetchAll();
     }
 
+    /**
+     * Funcionários ativos cuja filial PRINCIPAL é esta — usado no fechamento, onde os
+     * pilares de filial e o prêmio precisam de uma única filial "dona" por pessoa
+     * (evita, por exemplo, alguém vinculado a Frai 1 e Frai 2 aparecer com pontuação
+     * diferente dependendo de qual das duas telas de fechamento você está olhando).
+     */
+    public static function porFilialPrincipal(int $filialId): array
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT f.id, f.nome
+             FROM funcionario f
+             JOIN funcionario_filial ff ON ff.funcionario_id = f.id
+             WHERE ff.filial_id = :filial_id AND ff.principal = 1 AND f.ativo = 1
+             ORDER BY f.nome'
+        );
+        $stmt->execute(['filial_id' => $filialId]);
+
+        return $stmt->fetchAll();
+    }
+
     /** Funcionários ativos vinculados a uma filial (para lançamento de vendas). */
     public static function porFilial(int $filialId): array
     {
@@ -103,7 +135,8 @@ final class Funcionario
         string $email,
         string $senha,
         string $papel,
-        array $filialIds
+        array $filialIds,
+        ?int $filialPrincipal = null
     ): int {
         $pdo = Database::pdo();
         $pdo->beginTransaction();
@@ -120,7 +153,7 @@ final class Funcionario
             $stmt->execute(['usuario_id' => $usuarioId, 'nome' => $nome, 'cargo' => $cargo]);
             $funcionarioId = (int) $pdo->lastInsertId();
 
-            self::sincronizarFiliais($pdo, $funcionarioId, $filialIds);
+            self::sincronizarFiliais($pdo, $funcionarioId, $filialIds, $filialPrincipal);
 
             $pdo->commit();
 
@@ -140,7 +173,8 @@ final class Funcionario
         string $email,
         string $papel,
         ?string $novaSenha,
-        array $filialIds
+        array $filialIds,
+        ?int $filialPrincipal = null
     ): void {
         $pdo = Database::pdo();
         $pdo->beginTransaction();
@@ -161,7 +195,7 @@ final class Funcionario
             $stmt = $pdo->prepare('UPDATE funcionario SET nome = :nome, cargo = :cargo WHERE id = :id');
             $stmt->execute(['nome' => $nome, 'cargo' => $cargo, 'id' => $funcionarioId]);
 
-            self::sincronizarFiliais($pdo, $funcionarioId, $filialIds);
+            self::sincronizarFiliais($pdo, $funcionarioId, $filialIds, $filialPrincipal);
 
             $pdo->commit();
         } catch (Throwable $e) {
@@ -175,19 +209,28 @@ final class Funcionario
         Database::pdo()->prepare('UPDATE usuario SET ativo = NOT ativo WHERE id = :id')->execute(['id' => $usuarioId]);
     }
 
-    /** @param int[] $filialIds */
-    private static function sincronizarFiliais(PDO $pdo, int $funcionarioId, array $filialIds): void
+    /**
+     * @param int[] $filialIds
+     * A filial principal precisa estar entre as marcadas; se não vier informada
+     * (ou vier inválida), cai no comportamento antigo: a primeira da lista.
+     */
+    private static function sincronizarFiliais(PDO $pdo, int $funcionarioId, array $filialIds, ?int $filialPrincipal): void
     {
         $pdo->prepare('DELETE FROM funcionario_filial WHERE funcionario_id = :id')->execute(['id' => $funcionarioId]);
+
+        $filialIds = array_values($filialIds);
+        if ($filialPrincipal === null || !in_array($filialPrincipal, $filialIds, true)) {
+            $filialPrincipal = $filialIds[0] ?? null;
+        }
 
         $stmt = $pdo->prepare(
             'INSERT INTO funcionario_filial (funcionario_id, filial_id, principal) VALUES (:funcionario_id, :filial_id, :principal)'
         );
-        foreach (array_values($filialIds) as $index => $filialId) {
+        foreach ($filialIds as $filialId) {
             $stmt->execute([
                 'funcionario_id' => $funcionarioId,
                 'filial_id' => $filialId,
-                'principal' => $index === 0 ? 1 : 0,
+                'principal' => $filialId === $filialPrincipal ? 1 : 0,
             ]);
         }
     }

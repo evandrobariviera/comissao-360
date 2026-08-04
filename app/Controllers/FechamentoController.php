@@ -36,7 +36,7 @@ final class FechamentoController extends Controller
         $parametros = Parametro::todos();
 
         $linhas = [];
-        foreach (Funcionario::porFilial($filialId) as $f) {
+        foreach (Funcionario::porFilialPrincipal($filialId) as $f) {
             $linhas[] = self::calcularLinha((int) $f['id'], $f['nome'], $filialId, (int) $periodo['id'], $parametros);
         }
 

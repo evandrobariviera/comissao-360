@@ -44,7 +44,15 @@ final class UsuarioController extends Controller
         }
 
         try {
-            $id = Funcionario::create($dados['nome'], $dados['cargo'], $dados['email'], $dados['senha'], $dados['papel'], $dados['filiais']);
+            $id = Funcionario::create(
+                $dados['nome'],
+                $dados['cargo'],
+                $dados['email'],
+                $dados['senha'],
+                $dados['papel'],
+                $dados['filiais'],
+                $dados['filial_principal']
+            );
         } catch (PDOException) {
             $this->render('admin/usuarios/form', ['usuario' => $dados, 'filiais' => Filial::all(), 'erro' => 'Já existe um usuário com esse e-mail.']);
             return;
@@ -93,7 +101,8 @@ final class UsuarioController extends Controller
                 $dados['email'],
                 $dados['papel'],
                 $dados['senha'] !== '' ? $dados['senha'] : null,
-                $dados['filiais']
+                $dados['filiais'],
+                $dados['filial_principal']
             );
         } catch (PDOException) {
             $dados['id'] = $id;
@@ -137,6 +146,8 @@ final class UsuarioController extends Controller
         $senha = trim((string) $this->input('senha', ''));
         $filiaisPost = $this->input('filiais', []);
         $filiais = is_array($filiaisPost) ? array_map('intval', $filiaisPost) : [];
+        $filialPrincipalRaw = $this->input('filial_principal');
+        $filialPrincipal = $filialPrincipalRaw !== null && $filialPrincipalRaw !== '' ? (int) $filialPrincipalRaw : null;
 
         $dados = [
             'nome' => $nome,
@@ -145,6 +156,7 @@ final class UsuarioController extends Controller
             'papel' => $papel,
             'senha' => $senha,
             'filiais' => $filiais,
+            'filial_principal' => $filialPrincipal,
         ];
 
         if ($nome === '' || $email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
