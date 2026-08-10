@@ -17,6 +17,22 @@ final class Usuario
         return $row === false ? null : $row;
     }
 
+    public static function find(int $id): ?array
+    {
+        $stmt = Database::pdo()->prepare('SELECT * FROM usuario WHERE id = :id');
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch();
+
+        return $row === false ? null : $row;
+    }
+
+    public static function atualizarSenha(int $id, string $novoHash): void
+    {
+        Database::pdo()
+            ->prepare('UPDATE usuario SET senha_hash = :hash WHERE id = :id')
+            ->execute(['hash' => $novoHash, 'id' => $id]);
+    }
+
     public static function registrarTentativaFalha(int $id): void
     {
         $stmt = Database::pdo()->prepare(

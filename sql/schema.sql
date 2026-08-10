@@ -38,6 +38,7 @@ CREATE TABLE funcionario (
   usuario_id    INT UNSIGNED NOT NULL,
   nome          VARCHAR(150) NOT NULL,
   cargo         VARCHAR(80)  NULL,
+  avatar_path   VARCHAR(255) NULL,
   ativo         TINYINT(1)   NOT NULL DEFAULT 1,
   created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

@@ -9,6 +9,8 @@ use App\Controllers\FechamentoController;
 use App\Controllers\FilialController;
 use App\Controllers\IndicadorController;
 use App\Controllers\MetaController;
+use App\Controllers\MinhaAreaController;
+use App\Controllers\MinhaContaController;
 use App\Controllers\UsuarioController;
 use App\Controllers\VendaController;
 use App\Core\Router;
@@ -56,5 +58,12 @@ $router->post('/fechamento/aprovar', [FechamentoController::class, 'aprovar']);
 
 $router->get('/metas', [MetaController::class, 'index']);
 $router->post('/metas', [MetaController::class, 'salvar']);
+
+$router->get('/minhas-vendas', [MinhaAreaController::class, 'vendas']);
+$router->get('/minhas-metas', [MinhaAreaController::class, 'metas']);
+
+$router->get('/minha-conta', [MinhaContaController::class, 'index']);
+$router->post('/minha-conta/senha', [MinhaContaController::class, 'trocarSenha']);
+$router->post('/minha-conta/avatar', [MinhaContaController::class, 'atualizarAvatar']);
 
 $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI'] ?? '/');

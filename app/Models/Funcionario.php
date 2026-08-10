@@ -20,6 +20,38 @@ final class Funcionario
         )->fetchAll();
     }
 
+    /** Funcionário dono deste usuário (gerente/funcionário), ou 0 se não houver vínculo. */
+    public static function idPorUsuario(int $usuarioId): int
+    {
+        $stmt = Database::pdo()->prepare('SELECT id FROM funcionario WHERE usuario_id = :usuario_id');
+        $stmt->execute(['usuario_id' => $usuarioId]);
+        $id = $stmt->fetchColumn();
+
+        return $id === false ? 0 : (int) $id;
+    }
+
+    /** Funcionário (com dados do usuário) dono deste usuário logado, ou null se não houver vínculo. */
+    public static function porUsuario(int $usuarioId): ?array
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT f.id, f.nome, f.cargo, f.avatar_path, u.email, u.papel
+             FROM funcionario f
+             JOIN usuario u ON u.id = f.usuario_id
+             WHERE f.usuario_id = :usuario_id'
+        );
+        $stmt->execute(['usuario_id' => $usuarioId]);
+        $row = $stmt->fetch();
+
+        return $row === false ? null : $row;
+    }
+
+    public static function atualizarAvatar(int $funcionarioId, ?string $avatarPath): void
+    {
+        Database::pdo()
+            ->prepare('UPDATE funcionario SET avatar_path = :avatar_path WHERE id = :id')
+            ->execute(['avatar_path' => $avatarPath, 'id' => $funcionarioId]);
+    }
+
     public static function find(int $id): ?array
     {
         $stmt = Database::pdo()->prepare(

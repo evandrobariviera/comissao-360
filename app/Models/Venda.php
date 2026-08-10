@@ -24,6 +24,21 @@ final class Venda
         return $stmt->fetchAll();
     }
 
+    public static function porFuncionarioPeriodo(int $funcionarioId, int $periodoId, int $limite = 50): array
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT v.id, v.data, v.valor, v.eh_sn, c.nome AS categoria_nome
+             FROM venda_lancamento v
+             JOIN categoria c ON c.id = v.categoria_id
+             WHERE v.funcionario_id = :funcionario_id AND v.periodo_id = :periodo_id
+             ORDER BY v.data DESC, v.id DESC
+             LIMIT ' . $limite
+        );
+        $stmt->execute(['funcionario_id' => $funcionarioId, 'periodo_id' => $periodoId]);
+
+        return $stmt->fetchAll();
+    }
+
     public static function find(int $id): ?array
     {
         $stmt = Database::pdo()->prepare('SELECT * FROM venda_lancamento WHERE id = :id');

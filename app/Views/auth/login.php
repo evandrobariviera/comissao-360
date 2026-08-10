@@ -12,8 +12,9 @@
   *{box-sizing:border-box}
   body{margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; background:var(--bg); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; color:var(--ink);}
   form{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:2.2rem 2rem; width:100%; max-width:340px; box-shadow:0 6px 20px rgba(16,27,30,.08);}
-  h1{font-family:Georgia,serif; font-size:1.3rem; margin:0 0 .2rem;}
-  p.sub{color:var(--ink-soft); font-size:.85rem; margin:0 0 1.4rem;}
+  .login-logo{display:block; width:100%; max-width:220px; height:auto; margin:0 auto 1.2rem;}
+  h1{font-family:Georgia,serif; font-size:1.3rem; margin:0 0 .2rem; text-align:center;}
+  p.sub{color:var(--ink-soft); font-size:.85rem; margin:0 0 1.4rem; text-align:center;}
   label{display:block; font-size:.82rem; color:var(--ink-soft); margin:.9rem 0 .3rem;}
   input{width:100%; padding:.6rem .7rem; border:1px solid var(--line); border-radius:8px; font-size:.95rem;}
   input:focus{outline:2px solid var(--primary); outline-offset:1px; border-color:var(--primary);}
@@ -24,7 +25,8 @@
 </head>
 <body>
 <form method="post" action="/login" novalidate>
-  <h1>💊 Comissão 360</h1>
+  <img src="/assets/img/logo.jpg" alt="Farmácia Geremias" class="login-logo">
+  <h1>Comissão 360</h1>
   <p class="sub">Farmácia Geremias</p>
   <?php if (!empty($erro)): ?>
     <div class="erro"><?= htmlspecialchars($erro, ENT_QUOTES) ?></div>

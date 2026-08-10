@@ -3,5 +3,8 @@
 !/storage/logs/.gitkeep
 /storage/exports/*
 !/storage/exports/.gitkeep
+/public/uploads/avatares/*
+!/public/uploads/avatares/.gitkeep
+!/public/uploads/avatares/.htaccess
 .DS_Store
 Thumbs.db

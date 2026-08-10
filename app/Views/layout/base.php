@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Core\Auth;
 use App\Core\Flash;
+use App\Models\Funcionario;
 
 /** @var string $content */
 $rotulosPapel = [
@@ -13,6 +14,7 @@ $rotulosPapel = [
 ];
 $papel = Auth::papel();
 $flash = Flash::pull();
+$minhaConta = Funcionario::porUsuario((int) Auth::id());
 ?>
 <!doctype html>
 <html lang="pt-BR">
@@ -34,9 +36,13 @@ $flash = Flash::pull();
   header.app{background:var(--surface); border-bottom:1px solid var(--line); padding:.9rem 1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.6rem;}
   header.app .brand{font-weight:700; font-family:Georgia,serif; color:var(--ink); font-size:1.05rem;}
   header.app .brand span{color:var(--primary-ink)}
+  header.app .brand img{display:block; height:34px; width:auto;}
   header.app .top-right{display:flex; align-items:center; gap:1.2rem;}
   header.app .top-right a{color:var(--ink-soft); text-decoration:none; font-size:.9rem}
   header.app .top-right a:hover{color:var(--primary-ink)}
+  header.app .avatar-link{display:flex; align-items:center; gap:.4rem;}
+  header.app .avatar-mini{width:26px; height:26px; border-radius:999px; object-fit:cover; border:1px solid var(--line);}
+  header.app .avatar-mini.placeholder{background:var(--primary-tint); color:var(--primary-ink); display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:700;}
   nav.admin-nav{background:var(--surface); border-bottom:1px solid var(--line); padding:0 1.5rem; display:flex; gap:1.4rem; overflow-x:auto;}
   nav.admin-nav a{display:inline-block; padding:.7rem 0; color:var(--ink-soft); text-decoration:none; font-size:.88rem; border-bottom:2px solid transparent; white-space:nowrap;}
   nav.admin-nav a:hover{color:var(--ink)}
@@ -144,10 +150,18 @@ $flash = Flash::pull();
 </head>
 <body>
 <header class="app">
-  <div class="brand">💊 Comissão <span>360</span></div>
+  <div class="brand"><img src="/assets/img/logo.jpg" alt="Farmácia Geremias · Comissão 360"></div>
   <div class="top-right">
     <span class="pill"><?= htmlspecialchars($rotulosPapel[$papel] ?? $papel, ENT_QUOTES) ?></span>
     <a href="/dashboard">Dashboard</a>
+    <a href="/minha-conta" class="avatar-link">
+      <?php if (!empty($minhaConta['avatar_path'])): ?>
+        <img src="<?= htmlspecialchars($minhaConta['avatar_path'], ENT_QUOTES) ?>" alt="" class="avatar-mini">
+      <?php else: ?>
+        <span class="avatar-mini placeholder"><?= htmlspecialchars(mb_strtoupper(mb_substr($minhaConta['nome'] ?? '?', 0, 1)), ENT_QUOTES) ?></span>
+      <?php endif; ?>
+      Minha conta
+    </a>
     <a href="/logout">Sair</a>
   </div>
 </header>
@@ -168,6 +182,11 @@ $flash = Flash::pull();
   <a href="/vendas" class="<?= str_starts_with($rota, '/vendas') ? 'active' : '' ?>">Lançar vendas</a>
   <a href="/indicadores" class="<?= str_starts_with($rota, '/indicadores') ? 'active' : '' ?>">Indicadores</a>
   <a href="/fechamento" class="<?= str_starts_with($rota, '/fechamento') ? 'active' : '' ?>">Fechamento</a>
+</nav>
+<?php elseif ($papel === 'funcionario'): ?>
+<nav class="admin-nav">
+  <a href="/minhas-vendas" class="<?= str_starts_with($rota, '/minhas-vendas') ? 'active' : '' ?>">Minhas vendas</a>
+  <a href="/minhas-metas" class="<?= str_starts_with($rota, '/minhas-metas') ? 'active' : '' ?>">Minhas metas</a>
 </nav>
 <?php endif; ?>
 <main>

@@ -154,7 +154,7 @@ final class DashboardController extends Controller
 
     private function pessoal(int $periodoId, array $periodo): void
     {
-        $funcionario = Funcionario::find(self::funcionarioIdDoUsuarioLogado());
+        $funcionario = Funcionario::find(Funcionario::idPorUsuario((int) Auth::id()));
         if ($funcionario === null) {
             $this->render('dashboard/sem_filial', []);
             return;
@@ -193,12 +193,4 @@ final class DashboardController extends Controller
         ]);
     }
 
-    private static function funcionarioIdDoUsuarioLogado(): int
-    {
-        $stmt = Database::pdo()->prepare('SELECT id FROM funcionario WHERE usuario_id = :usuario_id');
-        $stmt->execute(['usuario_id' => Auth::id()]);
-        $id = $stmt->fetchColumn();
-
-        return $id === false ? 0 : (int) $id;
-    }
 }
