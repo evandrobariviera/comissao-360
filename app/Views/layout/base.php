@@ -30,105 +30,113 @@ $minhaConta = Funcionario::porUsuario((int) Auth::id());
     --warn:#B8862E; --warn-tint:#F3E9D2; --accent-tint:#F3E4CE;
     /* Paleta categórica validada (CVD-safe) — só para o gráfico dos 4 pilares da pontuação 360. */
     --chart-individual:#2a78d6; --chart-filial:#eb6834; --chart-qualidade:#1baf7a; --chart-equipe:#eda100;
+    /* Sistema de forma/elevação — consistente em cards, tabelas, botões e inputs. */
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", "Inter", system-ui, Roboto, Helvetica, Arial, sans-serif;
+    --radius-sm:8px; --radius-md:12px; --radius-lg:16px;
+    --shadow-sm:0 1px 2px rgba(16,27,30,.05);
+    --shadow-md:0 1px 2px rgba(16,27,30,.04), 0 8px 20px rgba(16,27,30,.06);
   }
   *{box-sizing:border-box}
-  body{margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
-  header.app{background:var(--surface); border-bottom:1px solid var(--line); padding:.9rem 1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.6rem;}
-  header.app .brand{font-weight:700; font-family:Georgia,serif; color:var(--ink); font-size:1.05rem;}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--font); line-height:1.5; -webkit-font-smoothing:antialiased;}
+  a{transition:color .12s ease}
+  header.app{background:var(--surface); border-bottom:1px solid var(--line); padding:1.05rem 1.75rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.6rem;}
+  header.app .brand{font-weight:700; color:var(--ink); font-size:1.05rem;}
   header.app .brand span{color:var(--primary-ink)}
-  header.app .brand img{display:block; height:34px; width:auto;}
-  header.app .top-right{display:flex; align-items:center; gap:1.2rem;}
-  header.app .top-right a{color:var(--ink-soft); text-decoration:none; font-size:.9rem}
+  header.app .brand img{display:block; height:36px; width:auto;}
+  header.app .top-right{display:flex; align-items:center; gap:1.5rem;}
+  header.app .top-right a{color:var(--ink-soft); text-decoration:none; font-size:.89rem; font-weight:500;}
   header.app .top-right a:hover{color:var(--primary-ink)}
-  header.app .avatar-link{display:flex; align-items:center; gap:.4rem;}
-  header.app .avatar-mini{width:26px; height:26px; border-radius:999px; object-fit:cover; border:1px solid var(--line);}
+  header.app .avatar-link{display:flex; align-items:center; gap:.5rem;}
+  header.app .avatar-mini{width:27px; height:27px; border-radius:999px; object-fit:cover; border:1px solid var(--line);}
   header.app .avatar-mini.placeholder{background:var(--primary-tint); color:var(--primary-ink); display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:700;}
-  nav.admin-nav{background:var(--surface); border-bottom:1px solid var(--line); padding:0 1.5rem; display:flex; gap:1.4rem; overflow-x:auto;}
-  nav.admin-nav a{display:inline-block; padding:.7rem 0; color:var(--ink-soft); text-decoration:none; font-size:.88rem; border-bottom:2px solid transparent; white-space:nowrap;}
+  nav.admin-nav{background:var(--surface); border-bottom:1px solid var(--line); padding:0 1.75rem; display:flex; gap:.3rem; overflow-x:auto;}
+  nav.admin-nav a{display:inline-block; padding:.75rem .65rem; color:var(--ink-soft); text-decoration:none; font-size:.87rem; font-weight:500; border-bottom:2px solid transparent; white-space:nowrap; transition:color .12s ease, border-color .12s ease;}
   nav.admin-nav a:hover{color:var(--ink)}
-  nav.admin-nav a.active{color:var(--primary-ink); border-bottom-color:var(--primary); font-weight:600;}
-  main{max-width:960px; margin:0 auto; padding:2rem 1.5rem;}
-  h2{font-family:Georgia,serif; margin:0 0 .3rem;}
-  .subtitle{color:var(--ink-soft); font-size:.92rem; margin:0 0 1.2rem;}
-  .card{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:1.4rem 1.6rem; box-shadow:0 1px 2px rgba(16,27,30,.06); margin-top:1rem;}
-  .pill{display:inline-block; padding:.15em .6em; border-radius:999px; font-size:.75rem; font-weight:600; background:var(--primary-tint); color:var(--primary-ink)}
+  nav.admin-nav a.active{color:var(--primary-ink); border-bottom-color:var(--primary); font-weight:700;}
+  main{max-width:980px; margin:0 auto; padding:2.5rem 1.75rem 4rem;}
+  h2{font-family:var(--font); font-weight:800; letter-spacing:-.015em; font-size:1.55rem; margin:0 0 .35rem; color:var(--ink);}
+  .subtitle{color:var(--ink-soft); font-size:.94rem; margin:0 0 1.4rem; line-height:1.5;}
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md); padding:1.6rem 1.8rem; box-shadow:var(--shadow-sm); margin-top:1.1rem;}
+  .pill{display:inline-block; padding:.2em .65em; border-radius:999px; font-size:.75rem; font-weight:600; background:var(--primary-tint); color:var(--primary-ink)}
   .pill.status-ativo{background:var(--good-tint); color:var(--good)}
   .pill.status-inativo{background:var(--bad-tint); color:var(--bad)}
-  .toolbar{display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:1rem; flex-wrap:wrap;}
-  .btn{display:inline-block; padding:.55rem 1rem; border:none; border-radius:8px; background:var(--primary); color:#fff; font-weight:600; font-size:.88rem; cursor:pointer; text-decoration:none;}
-  .btn:hover{background:var(--primary-ink)}
+  .toolbar{display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:1.2rem; flex-wrap:wrap;}
+  .btn{display:inline-block; padding:.62rem 1.15rem; border:none; border-radius:var(--radius-sm); background:var(--primary); color:#fff; font-weight:600; font-size:.88rem; cursor:pointer; text-decoration:none; transition:background .12s ease, box-shadow .12s ease, transform .12s ease;}
+  .btn:hover{background:var(--primary-ink); box-shadow:var(--shadow-sm); transform:translateY(-1px);}
   .btn.secundario{background:var(--surface); color:var(--ink); border:1px solid var(--line);}
-  .btn.secundario:hover{background:var(--bg)}
-  .btn.pequeno{padding:.35rem .7rem; font-size:.8rem;}
+  .btn.secundario:hover{background:var(--bg); box-shadow:none; transform:none;}
+  .btn.pequeno{padding:.4rem .8rem; font-size:.8rem;}
   .btn.perigo{background:var(--bad)}
   .btn.perigo:hover{background:#8a372c}
-  table.lista{width:100%; border-collapse:collapse; background:var(--surface); border:1px solid var(--line); border-radius:10px; overflow:hidden; font-size:.9rem;}
-  table.lista th, table.lista td{padding:.65rem .9rem; text-align:left; border-bottom:1px solid var(--line); vertical-align:middle;}
-  table.lista th{background:var(--bg); font-size:.72rem; letter-spacing:.04em; text-transform:uppercase; color:var(--ink-soft);}
+  table.lista{width:100%; border-collapse:collapse; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md); overflow:hidden; font-size:.9rem; box-shadow:var(--shadow-sm);}
+  table.lista th, table.lista td{padding:.75rem 1rem; text-align:left; border-bottom:1px solid var(--line); vertical-align:middle;}
+  table.lista th{background:var(--bg); font-size:.7rem; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft); font-weight:700;}
+  table.lista tbody tr{transition:background .1s ease;}
+  table.lista tbody tr:hover{background:var(--bg);}
   table.lista tbody tr:last-child td{border-bottom:none}
   table.lista td.acoes{text-align:right; white-space:nowrap;}
   table.lista td.acoes form{display:inline-block; margin-left:.4rem;}
   form.form-padrao{max-width:520px;}
-  form.form-padrao label{display:block; font-size:.82rem; color:var(--ink-soft); margin:1rem 0 .3rem;}
+  form.form-padrao label{display:block; font-size:.83rem; font-weight:600; color:var(--ink-soft); margin:1.1rem 0 .35rem;}
   form.form-padrao label:first-of-type{margin-top:0}
   form.form-padrao input[type=text], form.form-padrao input[type=email], form.form-padrao input[type=password], form.form-padrao input[type=number], form.form-padrao select{
-    width:100%; padding:.55rem .7rem; border:1px solid var(--line); border-radius:8px; font-size:.92rem; background:#fff; color:var(--ink);
+    width:100%; padding:.62rem .8rem; border:1px solid var(--line); border-radius:var(--radius-sm); font-size:.92rem; background:#fff; color:var(--ink); transition:border-color .12s ease, box-shadow .12s ease;
   }
-  form.form-padrao input:focus, form.form-padrao select:focus{outline:2px solid var(--primary); outline-offset:1px; border-color:var(--primary);}
-  form.form-padrao .ajuda{font-size:.78rem; color:var(--ink-faint); margin-top:.25rem;}
-  form.form-padrao .acoes-form{margin-top:1.6rem; display:flex; gap:.7rem;}
-  form.form-padrao fieldset{border:1px solid var(--line); border-radius:8px; margin-top:1.6rem; padding:1rem 1.1rem;}
-  form.form-padrao legend{padding:0 .4rem; font-size:.85rem; font-weight:600; color:var(--ink);}
+  form.form-padrao input:focus, form.form-padrao select:focus{outline:none; border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-tint);}
+  form.form-padrao .ajuda{font-size:.78rem; color:var(--ink-faint); margin-top:.3rem;}
+  form.form-padrao .acoes-form{margin-top:1.8rem; display:flex; gap:.7rem;}
+  form.form-padrao fieldset{border:1px solid var(--line); border-radius:var(--radius-sm); margin-top:1.8rem; padding:1.1rem 1.2rem;}
+  form.form-padrao legend{padding:0 .4rem; font-size:.85rem; font-weight:700; color:var(--ink);}
   .grade-checkbox{display:flex; flex-wrap:wrap; gap:.5rem 1.2rem;}
   .grade-checkbox label{display:flex; align-items:center; gap:.4rem; font-size:.88rem; color:var(--ink); margin:0;}
   table.faixas{width:100%; border-collapse:collapse; font-size:.86rem;}
   table.faixas th{text-align:left; font-size:.72rem; text-transform:uppercase; color:var(--ink-soft); padding:.3rem .4rem;}
   table.faixas td{padding:.3rem .4rem;}
   table.faixas input{width:100%; padding:.4rem .5rem; border:1px solid var(--line); border-radius:6px; font-size:.86rem;}
-  .flash{padding:.7rem 1rem; border-radius:0 8px 8px 0; font-size:.88rem; margin-bottom:1.2rem; border-left:3px solid;}
+  .flash{padding:.75rem 1.05rem; border-radius:0 var(--radius-sm) var(--radius-sm) 0; font-size:.88rem; margin-bottom:1.3rem; border-left:3px solid;}
   .flash.sucesso{background:var(--good-tint); color:var(--good); border-color:var(--good);}
   .flash.erro{background:var(--bad-tint); color:var(--bad); border-color:var(--bad);}
 
   /* ---- ajuda: callouts, fórmula e exemplo (reaproveitável fora da tela de Ajuda também) ---- */
-  .callout{padding:.9rem 1.1rem; border-radius:0 8px 8px 0; border-left:3px solid; margin:1.1rem 0; font-size:.9rem;}
+  .callout{padding:.95rem 1.15rem; border-radius:0 var(--radius-sm) var(--radius-sm) 0; border-left:3px solid; margin:1.1rem 0; font-size:.9rem;}
   .callout .callout-label{display:block; font-weight:700; font-size:.82rem; margin-bottom:.35rem;}
   .callout.armadilha{background:var(--bad-tint); border-color:var(--bad);}
   .callout.armadilha .callout-label{color:var(--bad);}
   .callout.dica{background:var(--primary-tint); border-color:var(--primary);}
   .callout.dica .callout-label{color:var(--primary-ink);}
-  .callout.critico{background:var(--bad-tint); border-color:var(--bad); border-left-width:5px; padding:1.1rem 1.3rem;}
+  .callout.critico{background:var(--bad-tint); border-color:var(--bad); border-left-width:5px; padding:1.15rem 1.35rem;}
   .callout.critico .callout-label{color:var(--bad); font-size:.92rem;}
-  .formula{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:1rem 1.3rem; font-family:Georgia,serif; text-align:center; color:var(--primary-ink); margin:1rem 0;}
-  .formula .formula-label{display:block; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; font-size:.7rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint); margin-bottom:.45rem;}
-  .exemplo{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:1rem 1.2rem; margin:1rem 0;}
-  .exemplo h4{margin:0 0 .5rem; font-size:.85rem; text-transform:uppercase; letter-spacing:.03em; color:var(--accent);}
+  .formula{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md); padding:1.1rem 1.4rem; font-weight:700; letter-spacing:-.01em; text-align:center; color:var(--primary-ink); margin:1.1rem 0; box-shadow:var(--shadow-sm);}
+  .formula .formula-label{display:block; font-weight:600; font-size:.7rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint); margin-bottom:.5rem;}
+  .exemplo{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md); padding:1.1rem 1.3rem; margin:1.1rem 0; box-shadow:var(--shadow-sm);}
+  .exemplo h4{margin:0 0 .5rem; font-size:.85rem; text-transform:uppercase; letter-spacing:.04em; color:var(--accent);}
   .exemplo .resultado{font-weight:700; color:var(--good);}
   .badge-papel{display:inline-block; padding:.1em .5em; border-radius:6px; font-size:.72rem; font-weight:700; background:var(--primary-tint); color:var(--primary-ink);}
-  .ajuda-toc{list-style:none; padding:0; margin:1rem 0; display:grid; gap:.3rem;}
-  .ajuda-toc a{color:var(--ink-soft); text-decoration:none; font-size:.9rem;}
+  .ajuda-toc{list-style:none; padding:0; margin:1rem 0; display:grid; gap:.35rem;}
+  .ajuda-toc a{color:var(--ink-soft); text-decoration:none; font-size:.9rem; font-weight:500;}
   .ajuda-toc a:hover{color:var(--primary-ink)}
-  .ajuda h3{font-family:Georgia,serif; font-size:1.05rem; color:var(--primary-ink); margin:1.8rem 0 .5rem;}
-  .ajuda section{scroll-margin-top:1rem; padding-top:1.6rem; border-top:1px solid var(--line);}
+  .ajuda h3{font-weight:800; letter-spacing:-.01em; font-size:1.15rem; color:var(--primary-ink); margin:1.9rem 0 .55rem;}
+  .ajuda section{scroll-margin-top:1rem; padding-top:1.7rem; border-top:1px solid var(--line);}
   .ajuda section:first-of-type{padding-top:0; border-top:none;}
   .ajuda table{width:100%; border-collapse:collapse; font-size:.87rem; margin:.8rem 0;}
-  .ajuda table th{background:var(--bg); text-align:left; padding:.5rem .7rem; font-size:.72rem; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-soft);}
-  .ajuda table td{padding:.5rem .7rem; border-top:1px solid var(--line);}
-  .ajuda .tabela-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:8px;}
+  .ajuda table th{background:var(--bg); text-align:left; padding:.55rem .75rem; font-size:.7rem; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); font-weight:700;}
+  .ajuda table td{padding:.55rem .75rem; border-top:1px solid var(--line);}
+  .ajuda .tabela-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:var(--radius-sm);}
   .ajuda ul.checklist{list-style:none; padding:0; margin:.7rem 0;}
-  .ajuda ul.checklist li{padding:.25rem 0 .25rem 1.6rem; position:relative;}
+  .ajuda ul.checklist li{padding:.28rem 0 .28rem 1.6rem; position:relative;}
   .ajuda ul.checklist li::before{content:"☐"; position:absolute; left:0; color:var(--primary);}
 
   /* ---- dashboard: stat tiles ---- */
-  .kpi-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:.9rem; margin:1rem 0 1.4rem;}
-  .stat-tile{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:1.1rem 1.2rem;}
-  .stat-tile .stat-label{display:block; font-size:.7rem; letter-spacing:.04em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:.45rem;}
-  .stat-tile .stat-value{display:block; font-size:1.55rem; font-weight:700; color:var(--ink); line-height:1.1;}
-  .stat-tile .stat-sub{display:block; font-size:.78rem; color:var(--ink-faint); margin-top:.35rem;}
+  .kpi-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:1rem; margin:1.1rem 0 1.5rem;}
+  .stat-tile{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md); padding:1.2rem 1.3rem; box-shadow:var(--shadow-sm);}
+  .stat-tile .stat-label{display:block; font-size:.7rem; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft); font-weight:700; margin-bottom:.5rem;}
+  .stat-tile .stat-value{display:block; font-size:1.65rem; font-weight:800; letter-spacing:-.01em; color:var(--ink); line-height:1.1;}
+  .stat-tile .stat-sub{display:block; font-size:.78rem; color:var(--ink-faint); margin-top:.4rem;}
 
   /* ---- dashboard: seção ---- */
-  .secao{margin-top:2rem;}
-  .secao h3{font-family:Georgia,serif; font-size:1.05rem; margin:0 0 .2rem;}
-  .secao .secao-sub{font-size:.82rem; color:var(--ink-faint); margin:0 0 1rem;}
+  .secao{margin-top:2.2rem;}
+  .secao h3{font-weight:800; letter-spacing:-.01em; font-size:1.1rem; margin:0 0 .25rem;}
+  .secao .secao-sub{font-size:.82rem; color:var(--ink-faint); margin:0 0 1.1rem;}
 
   /* ---- meter: uma razão contra um limite (ex.: atingimento de meta) ---- */
   .meter-row{display:grid; grid-template-columns:1fr 3.4rem; align-items:center; gap:.7rem; padding:.35rem 0;}
