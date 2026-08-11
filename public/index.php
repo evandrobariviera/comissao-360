@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Controllers\AjudaController;
 use App\Controllers\AuthController;
 use App\Controllers\CategoriaController;
 use App\Controllers\DashboardController;
@@ -21,6 +22,7 @@ $router = new Router();
 
 $router->get('/', [DashboardController::class, 'index']);
 $router->get('/dashboard', [DashboardController::class, 'index']);
+$router->get('/ajuda', [AjudaController::class, 'index']);
 $router->get('/login', [AuthController::class, 'loginForm']);
 $router->post('/login', [AuthController::class, 'login']);
 $router->get('/logout', [AuthController::class, 'logout']);

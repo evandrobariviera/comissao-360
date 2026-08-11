@@ -89,6 +89,35 @@ $minhaConta = Funcionario::porUsuario((int) Auth::id());
   .flash.sucesso{background:var(--good-tint); color:var(--good); border-color:var(--good);}
   .flash.erro{background:var(--bad-tint); color:var(--bad); border-color:var(--bad);}
 
+  /* ---- ajuda: callouts, fórmula e exemplo (reaproveitável fora da tela de Ajuda também) ---- */
+  .callout{padding:.9rem 1.1rem; border-radius:0 8px 8px 0; border-left:3px solid; margin:1.1rem 0; font-size:.9rem;}
+  .callout .callout-label{display:block; font-weight:700; font-size:.82rem; margin-bottom:.35rem;}
+  .callout.armadilha{background:var(--bad-tint); border-color:var(--bad);}
+  .callout.armadilha .callout-label{color:var(--bad);}
+  .callout.dica{background:var(--primary-tint); border-color:var(--primary);}
+  .callout.dica .callout-label{color:var(--primary-ink);}
+  .callout.critico{background:var(--bad-tint); border-color:var(--bad); border-left-width:5px; padding:1.1rem 1.3rem;}
+  .callout.critico .callout-label{color:var(--bad); font-size:.92rem;}
+  .formula{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:1rem 1.3rem; font-family:Georgia,serif; text-align:center; color:var(--primary-ink); margin:1rem 0;}
+  .formula .formula-label{display:block; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; font-size:.7rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint); margin-bottom:.45rem;}
+  .exemplo{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:1rem 1.2rem; margin:1rem 0;}
+  .exemplo h4{margin:0 0 .5rem; font-size:.85rem; text-transform:uppercase; letter-spacing:.03em; color:var(--accent);}
+  .exemplo .resultado{font-weight:700; color:var(--good);}
+  .badge-papel{display:inline-block; padding:.1em .5em; border-radius:6px; font-size:.72rem; font-weight:700; background:var(--primary-tint); color:var(--primary-ink);}
+  .ajuda-toc{list-style:none; padding:0; margin:1rem 0; display:grid; gap:.3rem;}
+  .ajuda-toc a{color:var(--ink-soft); text-decoration:none; font-size:.9rem;}
+  .ajuda-toc a:hover{color:var(--primary-ink)}
+  .ajuda h3{font-family:Georgia,serif; font-size:1.05rem; color:var(--primary-ink); margin:1.8rem 0 .5rem;}
+  .ajuda section{scroll-margin-top:1rem; padding-top:1.6rem; border-top:1px solid var(--line);}
+  .ajuda section:first-of-type{padding-top:0; border-top:none;}
+  .ajuda table{width:100%; border-collapse:collapse; font-size:.87rem; margin:.8rem 0;}
+  .ajuda table th{background:var(--bg); text-align:left; padding:.5rem .7rem; font-size:.72rem; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-soft);}
+  .ajuda table td{padding:.5rem .7rem; border-top:1px solid var(--line);}
+  .ajuda .tabela-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:8px;}
+  .ajuda ul.checklist{list-style:none; padding:0; margin:.7rem 0;}
+  .ajuda ul.checklist li{padding:.25rem 0 .25rem 1.6rem; position:relative;}
+  .ajuda ul.checklist li::before{content:"☐"; position:absolute; left:0; color:var(--primary);}
+
   /* ---- dashboard: stat tiles ---- */
   .kpi-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:.9rem; margin:1rem 0 1.4rem;}
   .stat-tile{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:1.1rem 1.2rem;}
@@ -154,6 +183,7 @@ $minhaConta = Funcionario::porUsuario((int) Auth::id());
   <div class="top-right">
     <span class="pill"><?= htmlspecialchars($rotulosPapel[$papel] ?? $papel, ENT_QUOTES) ?></span>
     <a href="/dashboard">Dashboard</a>
+    <a href="/ajuda">Ajuda</a>
     <a href="/minha-conta" class="avatar-link">
       <?php if (!empty($minhaConta['avatar_path'])): ?>
         <img src="<?= htmlspecialchars($minhaConta['avatar_path'], ENT_QUOTES) ?>" alt="" class="avatar-mini">
