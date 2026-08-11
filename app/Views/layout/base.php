@@ -127,10 +127,10 @@ $minhaConta = Funcionario::porUsuario((int) Auth::id());
   .ajuda ul.checklist li::before{content:"☐"; position:absolute; left:0; color:var(--primary);}
 
   /* ---- dashboard: stat tiles ---- */
-  .kpi-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:1rem; margin:1.1rem 0 1.5rem;}
+  .kpi-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1rem; margin:1.1rem 0 1.5rem;}
   .stat-tile{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md); padding:1.2rem 1.3rem; box-shadow:var(--shadow-sm);}
   .stat-tile .stat-label{display:block; font-size:.7rem; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft); font-weight:700; margin-bottom:.5rem;}
-  .stat-tile .stat-value{display:block; font-size:1.65rem; font-weight:800; letter-spacing:-.01em; color:var(--ink); line-height:1.1;}
+  .stat-tile .stat-value{display:block; font-size:1.45rem; font-weight:800; letter-spacing:-.01em; color:var(--ink); line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .stat-tile .stat-sub{display:block; font-size:.78rem; color:var(--ink-faint); margin-top:.4rem;}
 
   /* ---- dashboard: seção ---- */
