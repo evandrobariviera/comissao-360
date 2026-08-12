@@ -28,6 +28,26 @@ final class Viz
         return $html . '</div>';
     }
 
+    /** Stat tile de percentual com barrinha de comparação embutida (realizado vs. meta), tipo rentabilidade. */
+    public static function statTilePct(string $label, float $realizado, float $meta): string
+    {
+        $atingimento = $meta > 0 ? ($realizado / $meta) * 100 : 0.0;
+        [, $cor, $tinta] = self::statusAtingimento($atingimento);
+        $largura = min(100.0, max(0.0, $atingimento));
+        $falta = max(0.0, $meta - $realizado);
+
+        $sub = 'meta ' . self::pct($meta) . ($falta > 0.05
+            ? ' · faltam ' . number_format($falta, 1, ',', '.') . ' p.p.'
+            : ' · meta batida');
+
+        $html = '<div class="stat-tile"><span class="stat-label">' . htmlspecialchars($label, ENT_QUOTES) . '</span>';
+        $html .= '<span class="stat-value">' . htmlspecialchars(self::pct($realizado), ENT_QUOTES) . '</span>';
+        $html .= '<div class="stat-bar-track" style="background:' . $tinta . '"><div class="stat-bar-fill" style="width:' . $largura . '%; background:' . $cor . '"></div></div>';
+        $html .= '<span class="stat-sub">' . htmlspecialchars($sub, ENT_QUOTES) . '</span>';
+
+        return $html . '</div>';
+    }
+
     /** @return array{0:string,1:string,2:string,3:string} [classe, cor, tinta, rótulo] */
     private static function statusAtingimento(float $atingimentoPct): array
     {

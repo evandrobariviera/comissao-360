@@ -4,6 +4,7 @@
 /** @var int $filialId */
 /** @var float $metaVenda */
 /** @var float $metaRentab */
+/** @var float $rentabRealizada */
 /** @var float $realizado */
 /** @var float $comissaoTotal */
 /** @var int $totalFuncionarios */
@@ -35,7 +36,7 @@ foreach ($filiaisPermitidas as $f) { if ((int) $f['id'] === $filialId) { $nomeFi
 <div class="kpi-row">
   <?= Viz::statTile('Comissão prevista', Viz::money($comissaoTotal), $totalFuncionarios . ' funcionários') ?>
   <?= Viz::statTile('Vendas realizadas', Viz::money($realizado), 'meta ' . Viz::money($metaVenda)) ?>
-  <?= Viz::statTile('Meta de rentabilidade', Viz::pct($metaRentab), 'parâmetro do mês') ?>
+  <?= Viz::statTilePct('Rentabilidade da filial', $rentabRealizada, $metaRentab) ?>
 </div>
 
 <div class="secao">
