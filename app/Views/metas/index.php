@@ -36,10 +36,10 @@ $fmt = static fn ($v) => rtrim(rtrim(number_format((float) $v, 2, '.', ''), '0')
 <?php endif; ?>
 
 <?php if (!$editavel && Auth::papel() !== Auth::PAPEL_ADMIN): ?>
-<div class="note">Só o administrador edita metas. Esta tela é somente leitura para o seu papel.</div>
+<div class="callout dica"><span class="callout-label">Somente leitura</span>Só o administrador edita metas. Esta tela é somente leitura para o seu papel.</div>
 <?php endif; ?>
 
-<form method="post" action="/metas">
+<form class="form-padrao" method="post" action="/metas" style="max-width:100%">
   <?= Csrf::field() ?>
   <input type="hidden" name="filial_id" value="<?= $filialId ?>">
 

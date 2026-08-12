@@ -113,4 +113,30 @@ final class Meta
 
         return $row === false ? null : $row;
     }
+
+    /** Venda bruta manual do mês, alimentada pelo gerente — não é derivada da grade de funcionários. */
+    public static function atualizarVendaBruta(int $periodoId, int $filialId, float $valor, int $usuarioId): void
+    {
+        Database::pdo()->prepare(
+            'INSERT INTO meta_filial (periodo_id, filial_id, venda_bruta_realizada, venda_bruta_atualizado_em, venda_bruta_atualizado_por)
+             VALUES (:periodo_id, :filial_id, :valor, NOW(), :usuario_id)
+             ON DUPLICATE KEY UPDATE
+                venda_bruta_realizada = VALUES(venda_bruta_realizada),
+                venda_bruta_atualizado_em = VALUES(venda_bruta_atualizado_em),
+                venda_bruta_atualizado_por = VALUES(venda_bruta_atualizado_por)'
+        )->execute([
+            'periodo_id' => $periodoId,
+            'filial_id' => $filialId,
+            'valor' => $valor,
+            'usuario_id' => $usuarioId,
+        ]);
+    }
+
+    public static function totalRedeVendaBrutaRealizada(int $periodoId): float
+    {
+        $stmt = Database::pdo()->prepare('SELECT COALESCE(SUM(venda_bruta_realizada), 0) FROM meta_filial WHERE periodo_id = :periodo_id');
+        $stmt->execute(['periodo_id' => $periodoId]);
+
+        return (float) $stmt->fetchColumn();
+    }
 }

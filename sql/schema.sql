@@ -112,9 +112,16 @@ CREATE TABLE meta_filial (
   meta_venda          DECIMAL(12,2) NOT NULL DEFAULT 0,
   meta_rentabilidade  DECIMAL(5,2)  NOT NULL DEFAULT 0,
   valor_premio        DECIMAL(10,2) NOT NULL DEFAULT 0,
+  -- Venda bruta do mês alimentada manualmente pelo gerente (inclui vendas que não
+  -- passam pela grade por funcionário/categoria). É o "realizado" usado nos
+  -- medidores de meta e no prêmio de filial (Bloco 3) — não é derivado de soma.
+  venda_bruta_realizada       DECIMAL(12,2) NOT NULL DEFAULT 0,
+  venda_bruta_atualizado_em   DATETIME NULL,
+  venda_bruta_atualizado_por  INT UNSIGNED NULL,
   UNIQUE KEY uq_meta_filial (periodo_id, filial_id),
   CONSTRAINT fk_mf_periodo FOREIGN KEY (periodo_id) REFERENCES periodo(id),
-  CONSTRAINT fk_mf_filial FOREIGN KEY (filial_id) REFERENCES filial(id)
+  CONSTRAINT fk_mf_filial FOREIGN KEY (filial_id) REFERENCES filial(id),
+  CONSTRAINT fk_mf_venda_bruta_usuario FOREIGN KEY (venda_bruta_atualizado_por) REFERENCES usuario(id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE meta_funcionario (
@@ -129,6 +136,10 @@ CREATE TABLE meta_funcionario (
   CONSTRAINT fk_mfu_categoria FOREIGN KEY (categoria_id) REFERENCES categoria(id)
 ) ENGINE=InnoDB;
 
+-- Cada linha é um AJUSTE (diferença entre o total novo e o total anterior no mês),
+-- gerado quando o gerente atualiza a grade por funcionário/categoria em /vendas —
+-- não é lançamento de venda individual por dia. `data` marca quando o ajuste foi
+-- feito. A soma de todos os ajustes do período é o total realizado da categoria.
 CREATE TABLE venda_lancamento (
   id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   periodo_id    INT UNSIGNED NOT NULL,

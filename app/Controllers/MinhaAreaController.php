@@ -30,10 +30,21 @@ final class MinhaAreaController extends Controller
         }
 
         $periodo = Periodo::atual();
+        $periodoId = (int) $periodo['id'];
+        $categorias = Categoria::ativas();
+
+        $linhas = [];
+        foreach ($categorias as $categoria) {
+            $linhas[] = [
+                'categoria' => $categoria['nome'],
+                'valor' => Venda::somaPorCategoria($funcionarioId, $periodoId, (int) $categoria['id']),
+            ];
+        }
 
         $this->render('minha_area/vendas', [
             'periodo' => $periodo,
-            'vendas' => Venda::porFuncionarioPeriodo($funcionarioId, (int) $periodo['id']),
+            'linhas' => $linhas,
+            'total' => array_sum(array_column($linhas, 'valor')),
         ]);
     }
 

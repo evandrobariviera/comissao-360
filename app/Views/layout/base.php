@@ -93,6 +93,7 @@ $minhaConta = Funcionario::porUsuario((int) Auth::id());
   table.faixas th{text-align:left; font-size:.72rem; text-transform:uppercase; color:var(--ink-soft); padding:.3rem .4rem;}
   table.faixas td{padding:.3rem .4rem;}
   table.faixas input{width:100%; padding:.4rem .5rem; border:1px solid var(--line); border-radius:6px; font-size:.86rem;}
+  .scrollx{overflow-x:auto;}
   .flash{padding:.75rem 1.05rem; border-radius:0 var(--radius-sm) var(--radius-sm) 0; font-size:.88rem; margin-bottom:1.3rem; border-left:3px solid;}
   .flash.sucesso{background:var(--good-tint); color:var(--good); border-color:var(--good);}
   .flash.erro{background:var(--bad-tint); color:var(--bad); border-color:var(--bad);}
@@ -132,6 +133,8 @@ $minhaConta = Funcionario::porUsuario((int) Auth::id());
   .stat-tile .stat-label{display:block; font-size:.7rem; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft); font-weight:700; margin-bottom:.5rem;}
   .stat-tile .stat-value{display:block; font-size:1.45rem; font-weight:800; letter-spacing:-.01em; color:var(--ink); line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .stat-tile .stat-sub{display:block; font-size:.78rem; color:var(--ink-faint); margin-top:.4rem;}
+  .stat-bar-track{height:6px; border-radius:999px; overflow:hidden; margin-top:.55rem;}
+  .stat-bar-fill{height:100%; border-radius:999px;}
 
   /* ---- dashboard: seção ---- */
   .secao{margin-top:2.2rem;}

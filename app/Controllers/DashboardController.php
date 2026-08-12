@@ -9,6 +9,7 @@ use App\Core\Controller;
 use App\Core\Database;
 use App\Models\Filial;
 use App\Models\Funcionario;
+use App\Models\Indicador;
 use App\Models\Meta;
 use App\Models\Periodo;
 use App\Models\Venda;
@@ -36,7 +37,7 @@ final class DashboardController extends Controller
         $filiais = Filial::ativas();
 
         $comissaoTotal = array_sum(array_column($linhas, 'total'));
-        $vendaRealizada = Venda::somaTotalPeriodo($periodoId);
+        $vendaRealizada = Meta::totalRedeVendaBrutaRealizada($periodoId);
         $metaRede = Meta::totalRedeVenda($periodoId);
 
         $filiaisComMeta = [];
@@ -45,7 +46,7 @@ final class DashboardController extends Controller
             $filialId = (int) $f['id'];
             $meta = Meta::filial($filialId, $periodoId);
             $metaVenda = $meta !== null ? (float) $meta['meta_venda'] : 0.0;
-            $realizado = Venda::somaTotalFilial($filialId, $periodoId);
+            $realizado = $meta !== null ? (float) $meta['venda_bruta_realizada'] : 0.0;
             if ($metaVenda > 0 && $realizado >= $metaVenda) {
                 $filiaisBateram++;
             }
@@ -99,7 +100,9 @@ final class DashboardController extends Controller
         $meta = Meta::filial($filialId, $periodoId);
         $metaVenda = $meta !== null ? (float) $meta['meta_venda'] : 0.0;
         $metaRentab = $meta !== null ? (float) $meta['meta_rentabilidade'] : 0.0;
-        $realizado = Venda::somaTotalFilial($filialId, $periodoId);
+        $realizado = $meta !== null ? (float) $meta['venda_bruta_realizada'] : 0.0;
+        $rentabFilial = Indicador::rentabilidadeFilial($filialId, $periodoId);
+        $rentabRealizada = $rentabFilial !== null ? (float) $rentabFilial['rentabilidade_pct'] : 0.0;
         $comissaoTotal = array_sum(array_column($linhas, 'total'));
 
         $ranking = array_map(
@@ -114,6 +117,7 @@ final class DashboardController extends Controller
             'filialId' => $filialId,
             'metaVenda' => $metaVenda,
             'metaRentab' => $metaRentab,
+            'rentabRealizada' => $rentabRealizada,
             'realizado' => $realizado,
             'comissaoTotal' => $comissaoTotal,
             'totalFuncionarios' => count($linhas),

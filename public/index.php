@@ -49,7 +49,8 @@ $router->post('/categorias/{id}', [CategoriaController::class, 'atualizar']);
 $router->post('/categorias/{id}/status', [CategoriaController::class, 'alternarStatus']);
 
 $router->get('/vendas', [VendaController::class, 'index']);
-$router->post('/vendas', [VendaController::class, 'criar']);
+$router->post('/vendas', [VendaController::class, 'salvarGrade']);
+$router->post('/vendas/bruta', [VendaController::class, 'atualizarBruta']);
 $router->post('/vendas/{id}/excluir', [VendaController::class, 'excluir']);
 
 $router->get('/indicadores', [IndicadorController::class, 'index']);
