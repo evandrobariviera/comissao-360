@@ -46,15 +46,16 @@ $check = static function (?array $checklist, string $col): string {
 
   <fieldset>
     <legend>Indicadores por funcionário</legend>
-    <p class="ajuda" style="margin-top:0">Preencha desconto médio e rentabilidade juntos (ou deixe os dois em branco para não lançar ainda).</p>
+    <p class="ajuda" style="margin-top:0">Preencha desconto médio, rentabilidade e ticket médio juntos (ou deixe os três em branco para não lançar ainda).</p>
     <table class="faixas">
-      <thead><tr><th>Funcionário</th><th style="width:8rem">Desconto médio (%)</th><th style="width:8rem">Rentabilidade (%)</th></tr></thead>
+      <thead><tr><th>Funcionário</th><th style="width:8rem">Desconto médio (%)</th><th style="width:8rem">Rentabilidade (%)</th><th style="width:8rem">Ticket médio (R$)</th></tr></thead>
       <tbody>
         <?php foreach ($funcionarios as $f): ?>
         <tr>
           <td><?= htmlspecialchars($f['nome'], ENT_QUOTES) ?></td>
           <td><input type="text" name="desconto[<?= (int) $f['id'] ?>]" value="<?= $fmt($f['desconto_medio']) ?>"></td>
           <td><input type="text" name="rentab[<?= (int) $f['id'] ?>]" value="<?= $fmt($f['rentabilidade_pct']) ?>"></td>
+          <td><input type="text" name="ticket[<?= (int) $f['id'] ?>]" value="<?= $fmt($f['ticket_medio']) ?>"></td>
         </tr>
         <?php endforeach; ?>
       </tbody>
@@ -75,6 +76,9 @@ $check = static function (?array $checklist, string $col): string {
       <label style="display:flex; align-items:center; gap:.5rem;"><input type="checkbox" name="c3" style="width:auto" <?= $check($checklist, 'c3_setor_organizado') ?>> Setor organizado / sem ruptura</label>
       <label style="display:flex; align-items:center; gap:.5rem;"><input type="checkbox" name="c4" style="width:auto" <?= $check($checklist, 'c4_ajudou_treinou_colega') ?>> Ajudou ou treinou colega</label>
       <label style="display:flex; align-items:center; gap:.5rem;"><input type="checkbox" name="c5" style="width:auto" <?= $check($checklist, 'c5_loja_bateu_meta_coletiva') ?>> Loja bateu a meta coletiva</label>
+      <label style="display:flex; align-items:center; gap:.5rem;"><input type="checkbox" name="c6" style="width:auto" <?= $check($checklist, 'c6_venda_5_catalogos') ?>> Venda 5 catálogos</label>
+      <label style="display:flex; align-items:center; gap:.5rem;"><input type="checkbox" name="c7" style="width:auto" <?= $check($checklist, 'c7_venda_30_a_vencer') ?>> Venda 30 a vencer</label>
+      <label style="display:flex; align-items:center; gap:.5rem;"><input type="checkbox" name="c8" style="width:auto" <?= $check($checklist, 'c8_venda_30_linha_propria') ?>> Venda 30 linha própria</label>
     </div>
   </fieldset>
 

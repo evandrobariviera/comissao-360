@@ -118,6 +118,10 @@ CREATE TABLE meta_filial (
   venda_bruta_realizada       DECIMAL(12,2) NOT NULL DEFAULT 0,
   venda_bruta_atualizado_em   DATETIME NULL,
   venda_bruta_atualizado_por  INT UNSIGNED NULL,
+  -- Piso/teto de ticket médio (R$) usados no sub-pilar Qualidade da Meta 360 (faixa
+  -- linear, igual desconto médio). 0/0 = não configurado para esta filial/período.
+  ticket_medio_piso  DECIMAL(10,2) NOT NULL DEFAULT 0,
+  ticket_medio_teto  DECIMAL(10,2) NOT NULL DEFAULT 0,
   UNIQUE KEY uq_meta_filial (periodo_id, filial_id),
   CONSTRAINT fk_mf_periodo FOREIGN KEY (periodo_id) REFERENCES periodo(id),
   CONSTRAINT fk_mf_filial FOREIGN KEY (filial_id) REFERENCES filial(id),
@@ -166,6 +170,7 @@ CREATE TABLE indicador_funcionario (
   funcionario_id    INT UNSIGNED NOT NULL,
   desconto_medio    DECIMAL(5,2) NOT NULL DEFAULT 0,
   rentabilidade_pct DECIMAL(5,2) NOT NULL DEFAULT 0,
+  ticket_medio      DECIMAL(10,2) NOT NULL DEFAULT 0,
   UNIQUE KEY uq_indicador_funcionario (periodo_id, funcionario_id),
   CONSTRAINT fk_ind_periodo FOREIGN KEY (periodo_id) REFERENCES periodo(id),
   CONSTRAINT fk_ind_funcionario FOREIGN KEY (funcionario_id) REFERENCES funcionario(id)
@@ -190,6 +195,9 @@ CREATE TABLE checklist_equipe (
   c3_setor_organizado            TINYINT(1) NOT NULL DEFAULT 0,
   c4_ajudou_treinou_colega       TINYINT(1) NOT NULL DEFAULT 0,
   c5_loja_bateu_meta_coletiva    TINYINT(1) NOT NULL DEFAULT 0,
+  c6_venda_5_catalogos           TINYINT(1) NOT NULL DEFAULT 0,
+  c7_venda_30_a_vencer           TINYINT(1) NOT NULL DEFAULT 0,
+  c8_venda_30_linha_propria      TINYINT(1) NOT NULL DEFAULT 0,
   UNIQUE KEY uq_checklist_filial (periodo_id, filial_id),
   CONSTRAINT fk_chk_periodo FOREIGN KEY (periodo_id) REFERENCES periodo(id),
   CONSTRAINT fk_chk_filial FOREIGN KEY (filial_id) REFERENCES filial(id)
@@ -365,9 +373,10 @@ SELECT id, 'flag_venda', 'eh_sn' FROM categoria WHERE nome = 'Manipulação';
 INSERT INTO parametro (chave, valor, descricao) VALUES
   ('desconto_piso_pct', '12', 'Desconto médio (%) que dá a pontuação cheia do sub-pilar desconto'),
   ('desconto_teto_pct', '25', 'Desconto médio (%) que zera o sub-pilar desconto'),
-  ('desconto_pts_max', '6', 'Pontos máximos do sub-pilar desconto médio'),
-  ('rentab_filial_pts', '7', 'Pontos do sub-pilar rentabilidade da filial (liga/desliga)'),
-  ('rentab_funcionario_pts', '7', 'Pontos do sub-pilar rentabilidade do funcionário (liga/desliga)'),
+  ('desconto_pts_max', '5', 'Pontos máximos do sub-pilar desconto médio'),
+  ('rentab_filial_pts', '5', 'Pontos do sub-pilar rentabilidade da filial (liga/desliga)'),
+  ('rentab_funcionario_pts', '5', 'Pontos do sub-pilar rentabilidade do funcionário (liga/desliga)'),
+  ('ticket_medio_pts_max', '5', 'Pontos máximos do sub-pilar ticket médio (faixa linear entre piso/teto da filial)'),
   ('meta_rentab_individual_pct', '28', 'Meta de rentabilidade individual (%) — parâmetro global, usado no sub-pilar rentabilidade do funcionário'),
   ('peso_individual_max', '40', 'Pontuação máxima do pilar Resultado Individual'),
   ('peso_filial_max', '30', 'Pontuação máxima do pilar Resultado da Filial'),

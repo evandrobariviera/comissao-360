@@ -13,7 +13,7 @@ final class Indicador
     public static function funcionariosComIndicador(int $filialId, int $periodoId): array
     {
         $stmt = Database::pdo()->prepare(
-            'SELECT f.id, f.nome, i.desconto_medio, i.rentabilidade_pct
+            'SELECT f.id, f.nome, i.desconto_medio, i.rentabilidade_pct, i.ticket_medio
              FROM funcionario f
              JOIN funcionario_filial ff ON ff.funcionario_id = f.id
              LEFT JOIN indicador_funcionario i ON i.funcionario_id = f.id AND i.periodo_id = :periodo_id
@@ -50,8 +50,8 @@ final class Indicador
     /**
      * Salva os três blocos do fechamento numa única transação (upsert por período+filial/funcionário).
      *
-     * @param array<int, array{funcionario_id:int, desconto_medio:float, rentabilidade_pct:float}> $indicadoresFuncionarios
-     * @param array<string, bool> $checklist chaves = colunas c1_...c5_..., valores = marcado ou não
+     * @param array<int, array{funcionario_id:int, desconto_medio:float, rentabilidade_pct:float, ticket_medio:float}> $indicadoresFuncionarios
+     * @param array<string, bool> $checklist chaves = colunas c1_...c8_..., valores = marcado ou não
      */
     public static function salvarTudo(
         int $periodoId,
@@ -64,9 +64,9 @@ final class Indicador
         $pdo->beginTransaction();
         try {
             $stmt = $pdo->prepare(
-                'INSERT INTO indicador_funcionario (periodo_id, funcionario_id, desconto_medio, rentabilidade_pct)
-                 VALUES (:periodo_id, :funcionario_id, :desconto_medio, :rentabilidade_pct)
-                 ON DUPLICATE KEY UPDATE desconto_medio = VALUES(desconto_medio), rentabilidade_pct = VALUES(rentabilidade_pct)'
+                'INSERT INTO indicador_funcionario (periodo_id, funcionario_id, desconto_medio, rentabilidade_pct, ticket_medio)
+                 VALUES (:periodo_id, :funcionario_id, :desconto_medio, :rentabilidade_pct, :ticket_medio)
+                 ON DUPLICATE KEY UPDATE desconto_medio = VALUES(desconto_medio), rentabilidade_pct = VALUES(rentabilidade_pct), ticket_medio = VALUES(ticket_medio)'
             );
             foreach ($indicadoresFuncionarios as $linha) {
                 $stmt->execute([
@@ -74,6 +74,7 @@ final class Indicador
                     'funcionario_id' => $linha['funcionario_id'],
                     'desconto_medio' => $linha['desconto_medio'],
                     'rentabilidade_pct' => $linha['rentabilidade_pct'],
+                    'ticket_medio' => $linha['ticket_medio'],
                 ]);
             }
 
@@ -87,15 +88,19 @@ final class Indicador
                 'INSERT INTO checklist_equipe (
                     periodo_id, filial_id,
                     c1_sem_falta_injustificada, c2_cumpriu_escala, c3_setor_organizado,
-                    c4_ajudou_treinou_colega, c5_loja_bateu_meta_coletiva
+                    c4_ajudou_treinou_colega, c5_loja_bateu_meta_coletiva,
+                    c6_venda_5_catalogos, c7_venda_30_a_vencer, c8_venda_30_linha_propria
                  ) VALUES (
-                    :periodo_id, :filial_id, :c1, :c2, :c3, :c4, :c5
+                    :periodo_id, :filial_id, :c1, :c2, :c3, :c4, :c5, :c6, :c7, :c8
                  ) ON DUPLICATE KEY UPDATE
                     c1_sem_falta_injustificada = VALUES(c1_sem_falta_injustificada),
                     c2_cumpriu_escala = VALUES(c2_cumpriu_escala),
                     c3_setor_organizado = VALUES(c3_setor_organizado),
                     c4_ajudou_treinou_colega = VALUES(c4_ajudou_treinou_colega),
-                    c5_loja_bateu_meta_coletiva = VALUES(c5_loja_bateu_meta_coletiva)'
+                    c5_loja_bateu_meta_coletiva = VALUES(c5_loja_bateu_meta_coletiva),
+                    c6_venda_5_catalogos = VALUES(c6_venda_5_catalogos),
+                    c7_venda_30_a_vencer = VALUES(c7_venda_30_a_vencer),
+                    c8_venda_30_linha_propria = VALUES(c8_venda_30_linha_propria)'
             )->execute([
                 'periodo_id' => $periodoId,
                 'filial_id' => $filialId,
@@ -104,6 +109,9 @@ final class Indicador
                 'c3' => !empty($checklist['c3_setor_organizado']) ? 1 : 0,
                 'c4' => !empty($checklist['c4_ajudou_treinou_colega']) ? 1 : 0,
                 'c5' => !empty($checklist['c5_loja_bateu_meta_coletiva']) ? 1 : 0,
+                'c6' => !empty($checklist['c6_venda_5_catalogos']) ? 1 : 0,
+                'c7' => !empty($checklist['c7_venda_30_a_vencer']) ? 1 : 0,
+                'c8' => !empty($checklist['c8_venda_30_linha_propria']) ? 1 : 0,
             ]);
 
             $pdo->commit();

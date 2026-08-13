@@ -61,11 +61,26 @@ final class MetaController extends Controller
         $metaVendaRaw = trim(str_replace(',', '.', (string) $this->input('meta_venda_filial', '')));
         $metaRentabRaw = trim(str_replace(',', '.', (string) $this->input('meta_rentabilidade_filial', '')));
         $valorPremioRaw = trim(str_replace(',', '.', (string) $this->input('valor_premio', '')));
+        $ticketPisoRaw = trim(str_replace(',', '.', (string) $this->input('ticket_medio_piso', '0')));
+        $ticketTetoRaw = trim(str_replace(',', '.', (string) $this->input('ticket_medio_teto', '0')));
+        if ($ticketPisoRaw === '') {
+            $ticketPisoRaw = '0';
+        }
+        if ($ticketTetoRaw === '') {
+            $ticketTetoRaw = '0';
+        }
 
         if (!is_numeric($metaVendaRaw) || (float) $metaVendaRaw < 0
             || !is_numeric($metaRentabRaw) || (float) $metaRentabRaw < 0 || (float) $metaRentabRaw > 100
             || !is_numeric($valorPremioRaw) || (float) $valorPremioRaw < 0) {
             Flash::set('erro', 'Preencha meta de venda, rentabilidade (0 a 100%) e prêmio da filial com valores válidos.');
+            $this->redirect("/metas?filial_id={$filialId}");
+        }
+
+        if (!is_numeric($ticketPisoRaw) || (float) $ticketPisoRaw < 0
+            || !is_numeric($ticketTetoRaw) || (float) $ticketTetoRaw < 0
+            || (float) $ticketTetoRaw > 0 && (float) $ticketTetoRaw <= (float) $ticketPisoRaw) {
+            Flash::set('erro', 'Ticket médio: piso e teto precisam ser válidos e o teto maior que o piso (ou deixe os dois em 0 para não usar essa pontuação ainda).');
             $this->redirect("/metas?filial_id={$filialId}");
         }
 
@@ -100,6 +115,8 @@ final class MetaController extends Controller
                 'meta_venda' => (float) $metaVendaRaw,
                 'meta_rentabilidade' => (float) $metaRentabRaw,
                 'valor_premio' => (float) $valorPremioRaw,
+                'ticket_medio_piso' => (float) $ticketPisoRaw,
+                'ticket_medio_teto' => (float) $ticketTetoRaw,
             ],
             $metasFuncionarios
         );

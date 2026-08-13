@@ -44,7 +44,7 @@ final class Meta
     /**
      * Salva a meta da filial e o grid de metas por funcionário/categoria numa única transação.
      *
-     * @param array{meta_venda: float, meta_rentabilidade: float, valor_premio: float} $metaFilial
+     * @param array{meta_venda: float, meta_rentabilidade: float, valor_premio: float, ticket_medio_piso: float, ticket_medio_teto: float} $metaFilial
      * @param array<int, array{funcionario_id:int, categoria_id:int, meta_venda:float}> $metasFuncionarios
      */
     public static function salvarTudo(int $periodoId, int $filialId, array $metaFilial, array $metasFuncionarios): void
@@ -53,16 +53,19 @@ final class Meta
         $pdo->beginTransaction();
         try {
             $pdo->prepare(
-                'INSERT INTO meta_filial (periodo_id, filial_id, meta_venda, meta_rentabilidade, valor_premio)
-                 VALUES (:periodo_id, :filial_id, :meta_venda, :meta_rentabilidade, :valor_premio)
+                'INSERT INTO meta_filial (periodo_id, filial_id, meta_venda, meta_rentabilidade, valor_premio, ticket_medio_piso, ticket_medio_teto)
+                 VALUES (:periodo_id, :filial_id, :meta_venda, :meta_rentabilidade, :valor_premio, :ticket_medio_piso, :ticket_medio_teto)
                  ON DUPLICATE KEY UPDATE
-                    meta_venda = VALUES(meta_venda), meta_rentabilidade = VALUES(meta_rentabilidade), valor_premio = VALUES(valor_premio)'
+                    meta_venda = VALUES(meta_venda), meta_rentabilidade = VALUES(meta_rentabilidade), valor_premio = VALUES(valor_premio),
+                    ticket_medio_piso = VALUES(ticket_medio_piso), ticket_medio_teto = VALUES(ticket_medio_teto)'
             )->execute([
                 'periodo_id' => $periodoId,
                 'filial_id' => $filialId,
                 'meta_venda' => $metaFilial['meta_venda'],
                 'meta_rentabilidade' => $metaFilial['meta_rentabilidade'],
                 'valor_premio' => $metaFilial['valor_premio'],
+                'ticket_medio_piso' => $metaFilial['ticket_medio_piso'],
+                'ticket_medio_teto' => $metaFilial['ticket_medio_teto'],
             ]);
 
             $stmt = $pdo->prepare(

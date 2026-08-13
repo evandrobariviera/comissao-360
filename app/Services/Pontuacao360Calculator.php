@@ -24,7 +24,7 @@ final class Pontuacao360Calculator
         $pontosIndividual = self::pontosIndividual($funcionarioId, $periodoId);
         $pontosFilial = self::pontosFilial($filialId, $periodoId);
         $pontosQualidade = self::pontosQualidade($funcionarioId, $filialId, $periodoId, $parametros);
-        $pontosEquipe = self::pontosEquipe($filialId, $periodoId);
+        $pontosEquipe = self::pontosEquipe($filialId, $periodoId, $parametros);
 
         $total = $pontosIndividual + $pontosFilial + $pontosQualidade + $pontosEquipe;
         [$multiplicador, $nivel] = self::multiplicador($total);
@@ -64,17 +64,19 @@ final class Pontuacao360Calculator
     {
         $desconto = null;
         $rentabFunc = null;
+        $ticketMedio = null;
         foreach (Indicador::funcionariosComIndicador($filialId, $periodoId) as $f) {
             if ((int) $f['id'] === $funcionarioId) {
                 $desconto = $f['desconto_medio'];
                 $rentabFunc = $f['rentabilidade_pct'];
+                $ticketMedio = $f['ticket_medio'];
                 break;
             }
         }
 
         $piso = (float) ($parametros['desconto_piso_pct'] ?? 12);
         $teto = (float) ($parametros['desconto_teto_pct'] ?? 25);
-        $ptsMaxDesconto = (float) ($parametros['desconto_pts_max'] ?? 6);
+        $ptsMaxDesconto = (float) ($parametros['desconto_pts_max'] ?? 5);
 
         $pontosDesconto = 0.0;
         if ($desconto !== null) {
@@ -86,21 +88,31 @@ final class Pontuacao360Calculator
         $pontosRentabFilial = 0.0;
         if ($rentabFilial !== null && $metaFilial !== null
             && (float) $rentabFilial['rentabilidade_pct'] >= (float) $metaFilial['meta_rentabilidade']) {
-            $pontosRentabFilial = (float) ($parametros['rentab_filial_pts'] ?? 7);
+            $pontosRentabFilial = (float) ($parametros['rentab_filial_pts'] ?? 5);
         }
 
         $metaRentabIndividual = (float) ($parametros['meta_rentab_individual_pct'] ?? 28);
         $pontosRentabFunc = 0.0;
         if ($rentabFunc !== null && (float) $rentabFunc >= $metaRentabIndividual) {
-            $pontosRentabFunc = (float) ($parametros['rentab_funcionario_pts'] ?? 7);
+            $pontosRentabFunc = (float) ($parametros['rentab_funcionario_pts'] ?? 5);
+        }
+
+        // Faixa linear igual desconto médio, mas invertida: ticket médio ALTO é bom.
+        // Piso/teto = 0 (não configurado na filial) desativa a pontuação, evitando divisão por zero.
+        $ptsMaxTicket = (float) ($parametros['ticket_medio_pts_max'] ?? 5);
+        $ticketPiso = $metaFilial !== null ? (float) $metaFilial['ticket_medio_piso'] : 0.0;
+        $ticketTeto = $metaFilial !== null ? (float) $metaFilial['ticket_medio_teto'] : 0.0;
+        $pontosTicket = 0.0;
+        if ($ticketMedio !== null && $ticketTeto > $ticketPiso) {
+            $pontosTicket = max(0.0, min($ptsMaxTicket, $ptsMaxTicket * ((float) $ticketMedio - $ticketPiso) / ($ticketTeto - $ticketPiso)));
         }
 
         $ptsMaxQualidade = (float) ($parametros['peso_qualidade_max'] ?? 20);
 
-        return min($ptsMaxQualidade, $pontosDesconto + $pontosRentabFilial + $pontosRentabFunc);
+        return min($ptsMaxQualidade, $pontosDesconto + $pontosRentabFilial + $pontosRentabFunc + $pontosTicket);
     }
 
-    private static function pontosEquipe(int $filialId, int $periodoId): float
+    private static function pontosEquipe(int $filialId, int $periodoId, array $parametros): float
     {
         $checklist = Indicador::checklist($filialId, $periodoId);
         if ($checklist === null) {
@@ -110,11 +122,15 @@ final class Pontuacao360Calculator
         $criterios = [
             'c1_sem_falta_injustificada', 'c2_cumpriu_escala', 'c3_setor_organizado',
             'c4_ajudou_treinou_colega', 'c5_loja_bateu_meta_coletiva',
+            'c6_venda_5_catalogos', 'c7_venda_30_a_vencer', 'c8_venda_30_linha_propria',
         ];
+        $ptsMaxEquipe = (float) ($parametros['peso_equipe_max'] ?? 10);
+        $pontosPorItem = $ptsMaxEquipe / count($criterios);
+
         $pontos = 0.0;
         foreach ($criterios as $c) {
             if (!empty($checklist[$c])) {
-                $pontos += 2;
+                $pontos += $pontosPorItem;
             }
         }
 

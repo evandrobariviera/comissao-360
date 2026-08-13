@@ -72,6 +72,9 @@ final class IndicadorController extends Controller
             'c3_setor_organizado' => $this->input('c3') !== null,
             'c4_ajudou_treinou_colega' => $this->input('c4') !== null,
             'c5_loja_bateu_meta_coletiva' => $this->input('c5') !== null,
+            'c6_venda_5_catalogos' => $this->input('c6') !== null,
+            'c7_venda_30_a_vencer' => $this->input('c7') !== null,
+            'c8_venda_30_linha_propria' => $this->input('c8') !== null,
         ];
 
         Indicador::salvarTudo((int) $periodo['id'], $filialId, $indicadoresFuncionarios, (float) $rentabRaw, $checklist);
@@ -87,19 +90,22 @@ final class IndicadorController extends Controller
         $idsValidos = array_column(Funcionario::porFilial($filialId), 'id');
         $descontoPost = $this->input('desconto', []);
         $rentabPost = $this->input('rentab', []);
+        $ticketPost = $this->input('ticket', []);
         $desconto = is_array($descontoPost) ? $descontoPost : [];
         $rentab = is_array($rentabPost) ? $rentabPost : [];
+        $ticket = is_array($ticketPost) ? $ticketPost : [];
 
         $linhas = [];
         foreach ($idsValidos as $funcionarioId) {
             $descontoRaw = trim(str_replace(',', '.', (string) ($desconto[$funcionarioId] ?? '')));
             $rentabRaw = trim(str_replace(',', '.', (string) ($rentab[$funcionarioId] ?? '')));
+            $ticketRaw = trim(str_replace(',', '.', (string) ($ticket[$funcionarioId] ?? '')));
 
-            if ($descontoRaw === '' && $rentabRaw === '') {
+            if ($descontoRaw === '' && $rentabRaw === '' && $ticketRaw === '') {
                 continue;
             }
-            if ($descontoRaw === '' || $rentabRaw === '') {
-                return [[], 'Preencha desconto médio e rentabilidade juntos para cada funcionário (ou deixe os dois em branco).'];
+            if ($descontoRaw === '' || $rentabRaw === '' || $ticketRaw === '') {
+                return [[], 'Preencha desconto médio, rentabilidade e ticket médio juntos para cada funcionário (ou deixe os três em branco).'];
             }
             if (!is_numeric($descontoRaw) || (float) $descontoRaw < 0 || (float) $descontoRaw > 100) {
                 return [[], 'Desconto médio inválido para um dos funcionários (use 0 a 100).'];
@@ -107,11 +113,15 @@ final class IndicadorController extends Controller
             if (!is_numeric($rentabRaw) || (float) $rentabRaw < 0 || (float) $rentabRaw > 100) {
                 return [[], 'Rentabilidade inválida para um dos funcionários (use 0 a 100).'];
             }
+            if (!is_numeric($ticketRaw) || (float) $ticketRaw < 0) {
+                return [[], 'Ticket médio inválido para um dos funcionários (use um valor em R$ maior ou igual a 0).'];
+            }
 
             $linhas[] = [
                 'funcionario_id' => (int) $funcionarioId,
                 'desconto_medio' => (float) $descontoRaw,
                 'rentabilidade_pct' => (float) $rentabRaw,
+                'ticket_medio' => (float) $ticketRaw,
             ];
         }
 

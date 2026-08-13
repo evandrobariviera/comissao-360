@@ -70,7 +70,24 @@ $fmt = static fn ($v) => rtrim(rtrim(number_format((float) $v, 2, '.', ''), '0')
           <p><?= $fmt($metaFilial['valor_premio'] ?? 250) ?></p>
         <?php endif; ?>
       </div>
+      <div>
+        <label for="ticket_medio_piso">Ticket médio — piso (R$, 0 pts)</label>
+        <?php if ($editavel): ?>
+          <input type="text" id="ticket_medio_piso" name="ticket_medio_piso" value="<?= $fmt($metaFilial['ticket_medio_piso'] ?? 0) ?>">
+        <?php else: ?>
+          <p><?= $fmt($metaFilial['ticket_medio_piso'] ?? 0) ?></p>
+        <?php endif; ?>
+      </div>
+      <div>
+        <label for="ticket_medio_teto">Ticket médio — teto (R$, pontos cheios)</label>
+        <?php if ($editavel): ?>
+          <input type="text" id="ticket_medio_teto" name="ticket_medio_teto" value="<?= $fmt($metaFilial['ticket_medio_teto'] ?? 0) ?>">
+        <?php else: ?>
+          <p><?= $fmt($metaFilial['ticket_medio_teto'] ?? 0) ?></p>
+        <?php endif; ?>
+      </div>
     </div>
+    <p class="ajuda">Usado no pilar Qualidade da Meta 360: abaixo do piso vale 0 pts, no teto ou acima vale os pontos cheios do sub-pilar, entre os dois é proporcional. Deixe os dois em 0 para não pontuar ticket médio ainda nesta filial.</p>
   </fieldset>
 
   <?php if (empty($funcionarios)): ?>
