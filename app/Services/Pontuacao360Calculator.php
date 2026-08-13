@@ -54,7 +54,7 @@ final class Pontuacao360Calculator
     {
         $meta = Meta::filial($filialId, $periodoId);
         $metaVenda = $meta !== null ? (float) $meta['meta_venda'] : 0.0;
-        $realizado = Venda::somaTotalFilial($filialId, $periodoId);
+        $realizado = $meta !== null ? (float) $meta['venda_bruta_realizada'] : 0.0;
         $atingimento = $metaVenda > 0 ? ($realizado / $metaVenda) * 100 : 0.0;
 
         return self::escala($atingimento, [100 => 30, 90 => 22, 80 => 15]);
