@@ -149,20 +149,26 @@ final class ParametroController extends Controller
 
         $post = $this->input('mix', []);
         $post = is_array($post) ? $post : [];
+        $tipoPost = $this->input('mix_tipo', []);
+        $tipoPost = is_array($tipoPost) ? $tipoPost : [];
         $categoriaIdsValidos = array_column(Categoria::ativas(), 'id');
 
         $pares = [];
         foreach ($categoriaIdsValidos as $categoriaId) {
             $valorRaw = trim(str_replace(',', '.', (string) ($post[$categoriaId] ?? '')));
             if ($valorRaw === '') {
-                $pares[$categoriaId] = null;
+                $pares[$categoriaId] = ['valor' => null, 'tipo' => 'piso'];
                 continue;
             }
             if (!is_numeric($valorRaw) || (float) $valorRaw < 0 || (float) $valorRaw > 100) {
                 Flash::set('erro', 'Meta de mix precisa ser um percentual entre 0 e 100 (ou vazio pra não rastrear a categoria).');
                 $this->redirect('/parametros');
             }
-            $pares[$categoriaId] = $valorRaw;
+            $tipo = (string) ($tipoPost[$categoriaId] ?? 'piso');
+            if (!in_array($tipo, ['piso', 'teto'], true)) {
+                $tipo = 'piso';
+            }
+            $pares[$categoriaId] = ['valor' => $valorRaw, 'tipo' => $tipo];
         }
 
         Categoria::salvarMetasPercentuais($pares);

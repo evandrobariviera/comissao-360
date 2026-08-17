@@ -67,7 +67,10 @@ CREATE TABLE categoria (
   -- não afeta comissão/pontuação, só serve pra reportar % realizado x % meta por categoria.
   -- NULL = categoria não rastreada nesse mix; só categorias com valor aqui pedem o lançamento
   -- diário por categoria em /vendas (venda bruta da filial).
-  meta_percentual_pct DECIMAL(5,2) NULL,
+  meta_percentual_pct  DECIMAL(5,2) NULL,
+  -- piso = meta mínima (quanto mais alto melhor, ex. Similar); teto = meta máxima (quanto mais
+  -- baixo melhor, ex. RX). Só importa quando meta_percentual_pct não é NULL.
+  meta_percentual_tipo ENUM('piso','teto') NOT NULL DEFAULT 'piso',
   ativo  TINYINT(1) NOT NULL DEFAULT 1,
   UNIQUE KEY uq_categoria_nome (nome)
 ) ENGINE=InnoDB;

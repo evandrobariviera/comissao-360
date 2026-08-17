@@ -67,15 +67,20 @@ final class Categoria
             ->fetchAll();
     }
 
-    /** Atualiza a meta de mix (%) de cada categoria ativa; NULL = não rastrear essa categoria no mix. */
+    /**
+     * Atualiza a meta de mix (%) e o tipo (piso = mínimo desejado, teto = máximo desejado) de cada
+     * categoria ativa. valor NULL = não rastrear essa categoria no mix (tipo é ignorado nesse caso).
+     *
+     * @param array<int, array{valor: ?string, tipo: string}> $porCategoria
+     */
     public static function salvarMetasPercentuais(array $porCategoria): void
     {
         $pdo = Database::pdo();
-        $stmt = $pdo->prepare('UPDATE categoria SET meta_percentual_pct = :valor WHERE id = :id');
+        $stmt = $pdo->prepare('UPDATE categoria SET meta_percentual_pct = :valor, meta_percentual_tipo = :tipo WHERE id = :id');
         $pdo->beginTransaction();
         try {
-            foreach ($porCategoria as $categoriaId => $valor) {
-                $stmt->execute(['id' => $categoriaId, 'valor' => $valor]);
+            foreach ($porCategoria as $categoriaId => $linha) {
+                $stmt->execute(['id' => $categoriaId, 'valor' => $linha['valor'], 'tipo' => $linha['tipo']]);
             }
             $pdo->commit();
         } catch (Throwable $e) {

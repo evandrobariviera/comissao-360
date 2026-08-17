@@ -111,24 +111,37 @@ $campoOverride = static function (string $chave, string $rotulo) use ($metaFilia
 <div class="toolbar" style="margin-top:2.5rem">
   <div>
     <h2 style="font-size:1.25rem">Meta de mix de vendas por categoria</h2>
-    <p class="subtitle">Percentual ideal do total vendido pela rede em cada categoria (ex.: Similar 30%, RX 15%). Não afeta comissão nem a pontuação da Meta 360 — é só referência pra relatório de mix realizado x meta. Categoria com meta aqui passa a pedir o lançamento do dia também por categoria em Vendas → Venda bruta da filial; deixe vazio pra não rastrear.</p>
+    <p class="subtitle">Percentual ideal do total vendido pela rede em cada categoria (ex.: Similar 30%, RX 15%). Não afeta comissão nem a pontuação da Meta 360 — é só referência pra relatório de mix realizado x meta. Categoria com meta aqui passa a pedir o lançamento do dia também por categoria em Vendas → Venda bruta da filial; deixe vazio pra não rastrear. <strong>Tipo:</strong> piso = quanto mais alto melhor (meta mínima); teto = quanto mais baixo melhor (meta máxima, ex. RX).</p>
   </div>
 </div>
 
-<form class="form-padrao" method="post" action="/parametros/mix" style="max-width:900px">
+<form class="form-padrao" method="post" action="/parametros/mix" style="max-width:640px">
   <?= Csrf::field() ?>
   <fieldset>
     <legend>Meta de mix (%)</legend>
-    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:0 1rem">
-      <?php foreach ($categorias as $c): $catId = (int) $c['id']; ?>
-        <div>
-          <label for="mix_<?= $catId ?>"><?= htmlspecialchars($c['nome'], ENT_QUOTES) ?> (%)</label>
-          <input type="text" id="mix_<?= $catId ?>" name="mix[<?= $catId ?>]"
-                 value="<?= $c['meta_percentual_pct'] !== null ? $fmtVal($c['meta_percentual_pct']) : '' ?>"
-                 placeholder="não rastreada">
-        </div>
-      <?php endforeach; ?>
-    </div>
+    <table class="lista">
+      <thead>
+        <tr><th>Categoria</th><th>Meta (%)</th><th>Tipo</th></tr>
+      </thead>
+      <tbody>
+        <?php foreach ($categorias as $c): $catId = (int) $c['id']; ?>
+        <tr>
+          <td><?= htmlspecialchars($c['nome'], ENT_QUOTES) ?></td>
+          <td>
+            <input type="text" id="mix_<?= $catId ?>" name="mix[<?= $catId ?>]" style="width:6.5rem"
+                   value="<?= $c['meta_percentual_pct'] !== null ? $fmtVal($c['meta_percentual_pct']) : '' ?>"
+                   placeholder="não rastreada">
+          </td>
+          <td>
+            <select name="mix_tipo[<?= $catId ?>]" style="width:auto">
+              <option value="piso" <?= ($c['meta_percentual_tipo'] ?? 'piso') === 'piso' ? 'selected' : '' ?>>Piso (mínimo desejado)</option>
+              <option value="teto" <?= ($c['meta_percentual_tipo'] ?? 'piso') === 'teto' ? 'selected' : '' ?>>Teto (máximo desejado)</option>
+            </select>
+          </td>
+        </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
   </fieldset>
   <div class="acoes-form">
     <button type="submit" class="btn">Salvar meta de mix</button>
