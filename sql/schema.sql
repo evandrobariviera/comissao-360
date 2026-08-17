@@ -118,10 +118,15 @@ CREATE TABLE meta_filial (
   venda_bruta_realizada       DECIMAL(12,2) NOT NULL DEFAULT 0,
   venda_bruta_atualizado_em   DATETIME NULL,
   venda_bruta_atualizado_por  INT UNSIGNED NULL,
-  -- Piso/teto de ticket médio (R$) usados no sub-pilar Qualidade da Meta 360 (faixa
-  -- linear, igual desconto médio). 0/0 = não configurado para esta filial/período.
-  ticket_medio_piso  DECIMAL(10,2) NOT NULL DEFAULT 0,
-  ticket_medio_teto  DECIMAL(10,2) NOT NULL DEFAULT 0,
+  -- Overrides opcionais por filial dos parâmetros globais do sub-pilar Qualidade (Meta 360).
+  -- NULL = usa o padrão global da tabela `parametro` (ticket_medio_piso/teto, desconto_piso/teto_pct,
+  -- rentab_piso/teto_pct). Só preencher aqui quando a filial precisa de uma régua diferente da rede.
+  ticket_medio_piso  DECIMAL(10,2) NULL,
+  ticket_medio_teto  DECIMAL(10,2) NULL,
+  desconto_piso_pct  DECIMAL(5,2)  NULL,
+  desconto_teto_pct  DECIMAL(5,2)  NULL,
+  rentab_piso_pct    DECIMAL(5,2)  NULL,
+  rentab_teto_pct    DECIMAL(5,2)  NULL,
   UNIQUE KEY uq_meta_filial (periodo_id, filial_id),
   CONSTRAINT fk_mf_periodo FOREIGN KEY (periodo_id) REFERENCES periodo(id),
   CONSTRAINT fk_mf_filial FOREIGN KEY (filial_id) REFERENCES filial(id),
@@ -370,14 +375,19 @@ INSERT INTO categoria_composicao (categoria_regra_id, fonte_tipo, fonte_flag)
 SELECT id, 'flag_venda', 'eh_sn' FROM categoria WHERE nome = 'Manipulação';
 
 -- Parâmetros do Bloco 2 — Meta 360º (briefing §2.3)
+-- Piso/teto dos sub-pilares de Qualidade são "parâmetros mãe": valem pra rede toda e podem ser
+-- sobrescritos por filial em meta_filial (ver /parametros e /metas). Editáveis pelo admin em /parametros.
 INSERT INTO parametro (chave, valor, descricao) VALUES
-  ('desconto_piso_pct', '12', 'Desconto médio (%) que dá a pontuação cheia do sub-pilar desconto'),
-  ('desconto_teto_pct', '25', 'Desconto médio (%) que zera o sub-pilar desconto'),
+  ('desconto_piso_pct', '10', 'Desconto médio (%) que dá a pontuação cheia do sub-pilar desconto — padrão global, override opcional por filial em meta_filial'),
+  ('desconto_teto_pct', '15', 'Desconto médio (%) que zera o sub-pilar desconto — padrão global, override opcional por filial em meta_filial'),
   ('desconto_pts_max', '5', 'Pontos máximos do sub-pilar desconto médio'),
-  ('rentab_filial_pts', '5', 'Pontos do sub-pilar rentabilidade da filial (liga/desliga)'),
-  ('rentab_funcionario_pts', '5', 'Pontos do sub-pilar rentabilidade do funcionário (liga/desliga)'),
-  ('ticket_medio_pts_max', '5', 'Pontos máximos do sub-pilar ticket médio (faixa linear entre piso/teto da filial)'),
-  ('meta_rentab_individual_pct', '28', 'Meta de rentabilidade individual (%) — parâmetro global, usado no sub-pilar rentabilidade do funcionário'),
+  ('rentab_piso_pct', '35', 'Rentabilidade (%) que começa a pontuar no sub-pilar rentabilidade — padrão global (filial e funcionário), override opcional por filial em meta_filial'),
+  ('rentab_teto_pct', '40', 'Rentabilidade (%) que dá a pontuação cheia do sub-pilar rentabilidade — padrão global (filial e funcionário), override opcional por filial em meta_filial'),
+  ('rentab_filial_pts', '5', 'Pontos máximos do sub-pilar rentabilidade da filial (faixa linear entre rentab_piso_pct e rentab_teto_pct)'),
+  ('rentab_funcionario_pts', '5', 'Pontos máximos do sub-pilar rentabilidade do funcionário (faixa linear entre rentab_piso_pct e rentab_teto_pct)'),
+  ('ticket_medio_piso', '70', 'Ticket médio (R$) que começa a pontuar — padrão global, override opcional por filial em meta_filial'),
+  ('ticket_medio_teto', '100', 'Ticket médio (R$) que dá a pontuação cheia — padrão global, override opcional por filial em meta_filial'),
+  ('ticket_medio_pts_max', '5', 'Pontos máximos do sub-pilar ticket médio'),
   ('peso_individual_max', '40', 'Pontuação máxima do pilar Resultado Individual'),
   ('peso_filial_max', '30', 'Pontuação máxima do pilar Resultado da Filial'),
   ('peso_qualidade_max', '20', 'Pontuação máxima do pilar Qualidade/Rentabilidade'),

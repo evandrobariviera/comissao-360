@@ -212,6 +212,7 @@ $minhaConta = Funcionario::porUsuario((int) Auth::id());
   <a href="/filiais" class="<?= str_starts_with($rota, '/filiais') ? 'active' : '' ?>">Filiais</a>
   <a href="/usuarios" class="<?= str_starts_with($rota, '/usuarios') ? 'active' : '' ?>">Usuários</a>
   <a href="/categorias" class="<?= str_starts_with($rota, '/categorias') ? 'active' : '' ?>">Categorias</a>
+  <a href="/parametros" class="<?= str_starts_with($rota, '/parametros') ? 'active' : '' ?>">Parâmetros</a>
   <a href="/metas" class="<?= str_starts_with($rota, '/metas') ? 'active' : '' ?>">Metas</a>
   <a href="/vendas" class="<?= str_starts_with($rota, '/vendas') ? 'active' : '' ?>">Vendas</a>
   <a href="/indicadores" class="<?= str_starts_with($rota, '/indicadores') ? 'active' : '' ?>">Indicadores</a>

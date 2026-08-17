@@ -12,6 +12,7 @@ use App\Core\Flash;
 use App\Models\Categoria;
 use App\Models\Funcionario;
 use App\Models\Meta;
+use App\Models\Parametro;
 use App\Models\Periodo;
 
 final class MetaController extends Controller
@@ -41,6 +42,7 @@ final class MetaController extends Controller
             'categorias' => $categorias,
             'metaFilial' => Meta::filial($filialId, (int) $periodo['id']),
             'grid' => Meta::grid(array_column($funcionarios, 'id'), array_column($categorias, 'id'), (int) $periodo['id']),
+            'parametrosGlobais' => Parametro::todos(),
         ]);
     }
 
@@ -61,14 +63,6 @@ final class MetaController extends Controller
         $metaVendaRaw = trim(str_replace(',', '.', (string) $this->input('meta_venda_filial', '')));
         $metaRentabRaw = trim(str_replace(',', '.', (string) $this->input('meta_rentabilidade_filial', '')));
         $valorPremioRaw = trim(str_replace(',', '.', (string) $this->input('valor_premio', '')));
-        $ticketPisoRaw = trim(str_replace(',', '.', (string) $this->input('ticket_medio_piso', '0')));
-        $ticketTetoRaw = trim(str_replace(',', '.', (string) $this->input('ticket_medio_teto', '0')));
-        if ($ticketPisoRaw === '') {
-            $ticketPisoRaw = '0';
-        }
-        if ($ticketTetoRaw === '') {
-            $ticketTetoRaw = '0';
-        }
 
         if (!is_numeric($metaVendaRaw) || (float) $metaVendaRaw < 0
             || !is_numeric($metaRentabRaw) || (float) $metaRentabRaw < 0 || (float) $metaRentabRaw > 100
@@ -77,10 +71,13 @@ final class MetaController extends Controller
             $this->redirect("/metas?filial_id={$filialId}");
         }
 
-        if (!is_numeric($ticketPisoRaw) || (float) $ticketPisoRaw < 0
-            || !is_numeric($ticketTetoRaw) || (float) $ticketTetoRaw < 0
-            || (float) $ticketTetoRaw > 0 && (float) $ticketTetoRaw <= (float) $ticketPisoRaw) {
-            Flash::set('erro', 'Ticket médio: piso e teto precisam ser válidos e o teto maior que o piso (ou deixe os dois em 0 para não usar essa pontuação ainda).');
+        [$ticketPiso, $ticketTeto, $erroTicket] = $this->parOverride('ticket_medio_piso', 'ticket_medio_teto');
+        [$descontoPiso, $descontoTeto, $erroDesconto] = $this->parOverride('desconto_piso_pct', 'desconto_teto_pct');
+        [$rentabPiso, $rentabTeto, $erroRentab] = $this->parOverride('rentab_piso_pct', 'rentab_teto_pct');
+
+        $erroOverride = $erroTicket ?? $erroDesconto ?? $erroRentab;
+        if ($erroOverride !== null) {
+            Flash::set('erro', $erroOverride);
             $this->redirect("/metas?filial_id={$filialId}");
         }
 
@@ -115,8 +112,12 @@ final class MetaController extends Controller
                 'meta_venda' => (float) $metaVendaRaw,
                 'meta_rentabilidade' => (float) $metaRentabRaw,
                 'valor_premio' => (float) $valorPremioRaw,
-                'ticket_medio_piso' => (float) $ticketPisoRaw,
-                'ticket_medio_teto' => (float) $ticketTetoRaw,
+                'ticket_medio_piso' => $ticketPiso,
+                'ticket_medio_teto' => $ticketTeto,
+                'desconto_piso_pct' => $descontoPiso,
+                'desconto_teto_pct' => $descontoTeto,
+                'rentab_piso_pct' => $rentabPiso,
+                'rentab_teto_pct' => $rentabTeto,
             ],
             $metasFuncionarios
         );
@@ -124,5 +125,29 @@ final class MetaController extends Controller
         Audit::log('salvar', 'meta', $filialId, "periodo={$periodo['id']}");
         Flash::set('sucesso', 'Metas salvas.');
         $this->redirect("/metas?filial_id={$filialId}");
+    }
+
+    /**
+     * Lê um par piso/teto opcional (override de filial): os dois vazios = sem override (NULL, usa o
+     * padrão global); os dois preenchidos = override válido; só um preenchido = erro de preenchimento.
+     *
+     * @return array{0: ?float, 1: ?float, 2: ?string}
+     */
+    private function parOverride(string $campoPiso, string $campoTeto): array
+    {
+        $pisoRaw = trim(str_replace(',', '.', (string) $this->input($campoPiso, '')));
+        $tetoRaw = trim(str_replace(',', '.', (string) $this->input($campoTeto, '')));
+
+        if ($pisoRaw === '' && $tetoRaw === '') {
+            return [null, null, null];
+        }
+        if ($pisoRaw === '' || $tetoRaw === '') {
+            return [null, null, 'Preencha piso e teto juntos (ou deixe os dois vazios para usar o padrão global).'];
+        }
+        if (!is_numeric($pisoRaw) || (float) $pisoRaw < 0 || !is_numeric($tetoRaw) || (float) $tetoRaw <= (float) $pisoRaw) {
+            return [null, null, 'Piso e teto precisam ser números válidos, com o teto maior que o piso.'];
+        }
+
+        return [(float) $pisoRaw, (float) $tetoRaw, null];
     }
 }

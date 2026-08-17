@@ -24,4 +24,29 @@ final class Parametro
 
         return $valor === false ? $default : (float) $valor;
     }
+
+    /**
+     * @return array<int, array{chave:string, valor:string, descricao:?string}>
+     */
+    public static function todosDetalhados(): array
+    {
+        return Database::pdo()->query('SELECT chave, valor, descricao FROM parametro ORDER BY chave')->fetchAll();
+    }
+
+    /** Atualiza só os parâmetros já existentes (chave => novo valor); nunca cria chave nova. */
+    public static function atualizar(array $pares): void
+    {
+        $pdo = Database::pdo();
+        $stmt = $pdo->prepare('UPDATE parametro SET valor = :valor WHERE chave = :chave');
+        $pdo->beginTransaction();
+        try {
+            foreach ($pares as $chave => $valor) {
+                $stmt->execute(['chave' => $chave, 'valor' => $valor]);
+            }
+            $pdo->commit();
+        } catch (\Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    }
 }

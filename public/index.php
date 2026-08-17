@@ -12,6 +12,7 @@ use App\Controllers\IndicadorController;
 use App\Controllers\MetaController;
 use App\Controllers\MinhaAreaController;
 use App\Controllers\MinhaContaController;
+use App\Controllers\ParametroController;
 use App\Controllers\UsuarioController;
 use App\Controllers\VendaController;
 use App\Core\Router;
@@ -61,6 +62,9 @@ $router->post('/fechamento/aprovar', [FechamentoController::class, 'aprovar']);
 
 $router->get('/metas', [MetaController::class, 'index']);
 $router->post('/metas', [MetaController::class, 'salvar']);
+
+$router->get('/parametros', [ParametroController::class, 'index']);
+$router->post('/parametros', [ParametroController::class, 'salvar']);
 
 $router->get('/minhas-vendas', [MinhaAreaController::class, 'vendas']);
 $router->get('/minhas-metas', [MinhaAreaController::class, 'metas']);

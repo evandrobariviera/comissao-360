@@ -74,34 +74,41 @@ final class Pontuacao360Calculator
             }
         }
 
-        $piso = (float) ($parametros['desconto_piso_pct'] ?? 12);
-        $teto = (float) ($parametros['desconto_teto_pct'] ?? 25);
-        $ptsMaxDesconto = (float) ($parametros['desconto_pts_max'] ?? 5);
+        $metaFilial = Meta::filial($filialId, $periodoId);
 
+        // Desconto médio: faixa linear invertida (desconto BAIXO é bom) — piso = pontuação
+        // cheia, teto = zero. Piso/teto são "parâmetro mãe" global, com override opcional por filial.
+        $descontoPiso = self::resolvido($metaFilial, 'desconto_piso_pct', $parametros, 10.0);
+        $descontoTeto = self::resolvido($metaFilial, 'desconto_teto_pct', $parametros, 15.0);
+        $ptsMaxDesconto = (float) ($parametros['desconto_pts_max'] ?? 5);
         $pontosDesconto = 0.0;
-        if ($desconto !== null) {
-            $pontosDesconto = max(0.0, min($ptsMaxDesconto, $ptsMaxDesconto * ($teto - (float) $desconto) / ($teto - $piso)));
+        if ($desconto !== null && $descontoTeto > $descontoPiso) {
+            $pontosDesconto = max(0.0, min($ptsMaxDesconto, $ptsMaxDesconto * ($descontoTeto - (float) $desconto) / ($descontoTeto - $descontoPiso)));
         }
+
+        // Rentabilidade: mesma régua linear pra filial e funcionário — piso começa a pontuar,
+        // teto dá a pontuação cheia. Piso/teto também são globais com override opcional por filial.
+        $rentabPiso = self::resolvido($metaFilial, 'rentab_piso_pct', $parametros, 35.0);
+        $rentabTeto = self::resolvido($metaFilial, 'rentab_teto_pct', $parametros, 40.0);
 
         $rentabFilial = Indicador::rentabilidadeFilial($filialId, $periodoId);
-        $metaFilial = Meta::filial($filialId, $periodoId);
+        $ptsMaxRentabFilial = (float) ($parametros['rentab_filial_pts'] ?? 5);
         $pontosRentabFilial = 0.0;
-        if ($rentabFilial !== null && $metaFilial !== null
-            && (float) $rentabFilial['rentabilidade_pct'] >= (float) $metaFilial['meta_rentabilidade']) {
-            $pontosRentabFilial = (float) ($parametros['rentab_filial_pts'] ?? 5);
+        if ($rentabFilial !== null && $rentabTeto > $rentabPiso) {
+            $pontosRentabFilial = max(0.0, min($ptsMaxRentabFilial, $ptsMaxRentabFilial * ((float) $rentabFilial['rentabilidade_pct'] - $rentabPiso) / ($rentabTeto - $rentabPiso)));
         }
 
-        $metaRentabIndividual = (float) ($parametros['meta_rentab_individual_pct'] ?? 28);
+        $ptsMaxRentabFunc = (float) ($parametros['rentab_funcionario_pts'] ?? 5);
         $pontosRentabFunc = 0.0;
-        if ($rentabFunc !== null && (float) $rentabFunc >= $metaRentabIndividual) {
-            $pontosRentabFunc = (float) ($parametros['rentab_funcionario_pts'] ?? 5);
+        if ($rentabFunc !== null && $rentabTeto > $rentabPiso) {
+            $pontosRentabFunc = max(0.0, min($ptsMaxRentabFunc, $ptsMaxRentabFunc * ((float) $rentabFunc - $rentabPiso) / ($rentabTeto - $rentabPiso)));
         }
 
-        // Faixa linear igual desconto médio, mas invertida: ticket médio ALTO é bom.
-        // Piso/teto = 0 (não configurado na filial) desativa a pontuação, evitando divisão por zero.
+        // Ticket médio: faixa linear igual desconto médio, mas invertida (ticket ALTO é bom).
+        // Mesmo mecanismo global + override por filial dos demais sub-pilares.
         $ptsMaxTicket = (float) ($parametros['ticket_medio_pts_max'] ?? 5);
-        $ticketPiso = $metaFilial !== null ? (float) $metaFilial['ticket_medio_piso'] : 0.0;
-        $ticketTeto = $metaFilial !== null ? (float) $metaFilial['ticket_medio_teto'] : 0.0;
+        $ticketPiso = self::resolvido($metaFilial, 'ticket_medio_piso', $parametros, 70.0);
+        $ticketTeto = self::resolvido($metaFilial, 'ticket_medio_teto', $parametros, 100.0);
         $pontosTicket = 0.0;
         if ($ticketMedio !== null && $ticketTeto > $ticketPiso) {
             $pontosTicket = max(0.0, min($ptsMaxTicket, $ptsMaxTicket * ((float) $ticketMedio - $ticketPiso) / ($ticketTeto - $ticketPiso)));
@@ -110,6 +117,19 @@ final class Pontuacao360Calculator
         $ptsMaxQualidade = (float) ($parametros['peso_qualidade_max'] ?? 20);
 
         return min($ptsMaxQualidade, $pontosDesconto + $pontosRentabFilial + $pontosRentabFunc + $pontosTicket);
+    }
+
+    /**
+     * Resolve um parâmetro do sub-pilar Qualidade: override da filial (meta_filial.$chave, se não
+     * for NULL) sobrescreve o padrão global (parametro.$chave); na ausência dos dois, usa $default.
+     */
+    private static function resolvido(?array $metaFilial, string $chave, array $parametros, float $default): float
+    {
+        if ($metaFilial !== null && $metaFilial[$chave] !== null) {
+            return (float) $metaFilial[$chave];
+        }
+
+        return (float) ($parametros[$chave] ?? $default);
     }
 
     private static function pontosEquipe(int $filialId, int $periodoId, array $parametros): float
