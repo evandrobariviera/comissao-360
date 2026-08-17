@@ -208,6 +208,16 @@ $minhaConta = Funcionario::porUsuario((int) Auth::id());
   .ritmo-chart{width:100%; height:auto; display:block;}
   .ritmo-chart .ritmo-eixo{font-size:9px; fill:var(--ink-faint);}
   .ritmo-chart circle.ritmo-marcador{fill:var(--surface); stroke-width:1.5;}
+
+  /* ---- painel do funcionário: 2 colunas (individual maior + filial menor) ---- */
+  main.main-wide{max-width:1400px;}
+  .dash-cols{display:grid; grid-template-columns:2fr 1fr; gap:0 2.2rem; align-items:start;}
+  .dash-col-filial{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md); padding:1.5rem 1.6rem; box-shadow:var(--shadow-sm); position:sticky; top:1.5rem;}
+  .dash-col-filial .kpi-row{margin-bottom:0}
+  @media (max-width: 960px){
+    .dash-cols{grid-template-columns:1fr;}
+    .dash-col-filial{position:static; margin-top:2.2rem;}
+  }
 </style>
 </head>
 <body>
@@ -253,7 +263,8 @@ $minhaConta = Funcionario::porUsuario((int) Auth::id());
   <a href="/minhas-metas" class="<?= str_starts_with($rota, '/minhas-metas') ? 'active' : '' ?>">Minhas metas</a>
 </nav>
 <?php endif; ?>
-<main>
+<?php $mainWide = $papel === 'funcionario' && ($rota === '/dashboard' || $rota === '/'); ?>
+<main class="<?= $mainWide ? 'main-wide' : '' ?>">
 <?php if ($flash): ?>
   <div class="flash <?= htmlspecialchars($flash['tipo'], ENT_QUOTES) ?>"><?= htmlspecialchars($flash['mensagem'], ENT_QUOTES) ?></div>
 <?php endif; ?>
