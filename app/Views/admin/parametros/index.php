@@ -1,24 +1,53 @@
 <?php
 /** @var array<string, array{chave:string, valor:string, descricao:?string}> $parametros */
+/** @var array<string,string> $parametrosGlobais */
+/** @var array $filiais */
+/** @var int $filialId */
+/** @var array $periodo */
+/** @var array|null $metaFilial */
+use App\Core\Auth;
 use App\Core\Csrf;
 
 $fmt = static fn (string $chave, float $default = 0) => rtrim(rtrim(
     number_format((float) ($parametros[$chave]['valor'] ?? $default), 2, '.', ''), '0'), '.');
 
-$campo = static function (string $chave, string $rotulo, string $sufixo = '') use ($parametros, $fmt): string {
+$campo = static function (string $chave, string $rotulo) use ($parametros, $fmt): string {
     $ajuda = htmlspecialchars($parametros[$chave]['descricao'] ?? '', ENT_QUOTES);
     return '<div>'
         . '<label for="p_' . $chave . '">' . htmlspecialchars($rotulo, ENT_QUOTES) . '</label>'
         . '<input type="text" id="p_' . $chave . '" name="valor[' . $chave . ']" value="' . $fmt($chave) . '">'
-        . ($sufixo !== '' ? '<span class="ajuda-inline">' . htmlspecialchars($sufixo, ENT_QUOTES) . '</span>' : '')
         . ($ajuda !== '' ? '<p class="ajuda">' . $ajuda . '</p>' : '')
         . '</div>';
+};
+
+$editavel = Auth::papel() === Auth::PAPEL_ADMIN && $periodo['status'] === 'aberto';
+$fmtVal = static fn ($v) => rtrim(rtrim(number_format((float) $v, 2, '.', ''), '0'), '.');
+
+$filialNome = '';
+foreach ($filiais as $f) {
+    if ((int) $f['id'] === $filialId) {
+        $filialNome = $f['nome'];
+        break;
+    }
+}
+
+// Campo de override opcional (aba de filial): valor salvo (se houver) ou vazio; placeholder mostra o padrão global.
+$campoOverride = static function (string $chave, string $rotulo) use ($metaFilial, $parametrosGlobais, $editavel, $fmtVal): string {
+    $valor = $metaFilial[$chave] ?? null;
+    $global = $fmtVal($parametrosGlobais[$chave] ?? 0);
+    if (!$editavel) {
+        $texto = $valor !== null ? $fmtVal($valor) : "(padrão global: {$global})";
+        return '<div><label>' . htmlspecialchars($rotulo, ENT_QUOTES) . '</label><p>' . htmlspecialchars($texto, ENT_QUOTES) . '</p></div>';
+    }
+    $val = $valor !== null ? htmlspecialchars($fmtVal($valor), ENT_QUOTES) : '';
+    return '<div><label for="' . $chave . '">' . htmlspecialchars($rotulo, ENT_QUOTES) . '</label>'
+        . '<input type="text" id="' . $chave . '" name="' . $chave . '" value="' . $val . '" placeholder="padrão: ' . $global . '"></div>';
 };
 ?>
 <div class="toolbar">
   <div>
     <h2>Parâmetros globais</h2>
-    <p class="subtitle">"Parâmetros mãe" da Meta 360 — valem pra todas as filiais da rede. Uma filial específica pode sobrescrever os piso/teto de Qualidade em <a href="/metas">Metas</a>; sem override, vale o que está aqui.</p>
+    <p class="subtitle">"Parâmetros mãe" da Meta 360 — valem pra todas as filiais da rede. Selecione uma filial abaixo pra sobrescrever o piso/teto de Qualidade só nela; sem override, vale o padrão global.</p>
   </div>
 </div>
 
@@ -74,6 +103,58 @@ $campo = static function (string $chave, string $rotulo, string $sufixo = '') us
   </fieldset>
 
   <div class="acoes-form">
-    <button type="submit" class="btn">Salvar parâmetros</button>
+    <button type="submit" class="btn">Salvar parâmetros globais</button>
   </div>
+</form>
+
+<div class="toolbar" style="margin-top:2.5rem">
+  <div>
+    <h2 style="font-size:1.25rem">Override por filial</h2>
+    <p class="subtitle">Só preencha aqui se esta filial precisar de uma régua diferente da rede. Campo vazio = segue o padrão global acima.</p>
+  </div>
+</div>
+
+<nav class="tabs-filial">
+  <?php foreach ($filiais as $f): ?>
+    <a href="/parametros?filial_id=<?= (int) $f['id'] ?>" class="<?= (int) $f['id'] === $filialId ? 'active' : '' ?>"><?= htmlspecialchars($f['nome'], ENT_QUOTES) ?></a>
+  <?php endforeach; ?>
+</nav>
+
+<?php if (!$editavel && Auth::papel() !== Auth::PAPEL_ADMIN): ?>
+<div class="callout dica"><span class="callout-label">Somente leitura</span>Só o administrador edita overrides.</div>
+<?php endif; ?>
+
+<form class="form-padrao" method="post" action="/parametros/filial" style="max-width:900px">
+  <?= Csrf::field() ?>
+  <input type="hidden" name="filial_id" value="<?= $filialId ?>">
+
+  <fieldset>
+    <legend>Desconto médio — <?= htmlspecialchars($filialNome, ENT_QUOTES) ?></legend>
+    <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:0 1rem">
+      <?= $campoOverride('desconto_piso_pct', 'Piso (%)') ?>
+      <?= $campoOverride('desconto_teto_pct', 'Teto (%)') ?>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Rentabilidade</legend>
+    <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:0 1rem">
+      <?= $campoOverride('rentab_piso_pct', 'Piso (%)') ?>
+      <?= $campoOverride('rentab_teto_pct', 'Teto (%)') ?>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Ticket médio</legend>
+    <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:0 1rem">
+      <?= $campoOverride('ticket_medio_piso', 'Piso (R$)') ?>
+      <?= $campoOverride('ticket_medio_teto', 'Teto (R$)') ?>
+    </div>
+  </fieldset>
+
+  <?php if ($editavel): ?>
+  <div class="acoes-form">
+    <button type="submit" class="btn">Salvar override desta filial</button>
+  </div>
+  <?php endif; ?>
 </form>

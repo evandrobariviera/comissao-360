@@ -53,6 +53,10 @@ $minhaConta = Funcionario::porUsuario((int) Auth::id());
   nav.admin-nav a{display:inline-block; padding:.75rem .65rem; color:var(--ink-soft); text-decoration:none; font-size:.87rem; font-weight:500; border-bottom:2px solid transparent; white-space:nowrap; transition:color .12s ease, border-color .12s ease;}
   nav.admin-nav a:hover{color:var(--ink)}
   nav.admin-nav a.active{color:var(--primary-ink); border-bottom-color:var(--primary); font-weight:700;}
+  nav.tabs-filial{display:flex; gap:.4rem; overflow-x:auto; margin-bottom:1.4rem; border-bottom:1px solid var(--line); padding-bottom:0;}
+  nav.tabs-filial a{display:inline-block; padding:.55rem 1rem; color:var(--ink-soft); text-decoration:none; font-size:.86rem; font-weight:600; white-space:nowrap; border-radius:var(--radius-sm) var(--radius-sm) 0 0; border:1px solid transparent; border-bottom:none; transition:color .12s ease, background .12s ease;}
+  nav.tabs-filial a:hover{color:var(--ink); background:var(--bg);}
+  nav.tabs-filial a.active{color:var(--primary-ink); background:var(--surface); border-color:var(--line); position:relative; top:1px;}
   main{max-width:980px; margin:0 auto; padding:2.5rem 1.75rem 4rem;}
   h2{font-family:var(--font); font-weight:800; letter-spacing:-.015em; font-size:1.55rem; margin:0 0 .35rem; color:var(--ink);}
   .subtitle{color:var(--ink-soft); font-size:.94rem; margin:0 0 1.4rem; line-height:1.5;}

@@ -6,7 +6,6 @@
 /** @var array $categorias */
 /** @var array|null $metaFilial */
 /** @var array $grid */
-/** @var array<string,string> $parametrosGlobais */
 use App\Core\Auth;
 use App\Core\Csrf;
 
@@ -15,19 +14,6 @@ $rotuloPeriodo = $nomesMes[(int) $periodo['mes']] . '/' . $periodo['ano'];
 $editavel = Auth::papel() === Auth::PAPEL_ADMIN && $periodo['status'] === 'aberto';
 
 $fmt = static fn ($v) => rtrim(rtrim(number_format((float) $v, 2, '.', ''), '0'), '.');
-
-// Campo de override opcional: valor salvo (se houver) ou vazio; placeholder mostra o padrão global vigente.
-$campoOverride = static function (string $chave, string $id, string $rotulo) use ($metaFilial, $parametrosGlobais, $editavel, $fmt): string {
-    $valor = $metaFilial[$chave] ?? null;
-    $global = $fmt($parametrosGlobais[$chave] ?? 0);
-    if (!$editavel) {
-        $texto = $valor !== null ? $fmt($valor) : "(padrão global: {$global})";
-        return "<div><label>{$rotulo}</label><p>" . htmlspecialchars($texto, ENT_QUOTES) . '</p></div>';
-    }
-    $val = $valor !== null ? htmlspecialchars($fmt($valor), ENT_QUOTES) : '';
-    return "<div><label for=\"{$id}\">{$rotulo}</label>"
-        . "<input type=\"text\" id=\"{$id}\" name=\"{$id}\" value=\"{$val}\" placeholder=\"padrão: {$global}\"></div>";
-};
 ?>
 <div class="toolbar">
   <div>
@@ -85,22 +71,7 @@ $campoOverride = static function (string $chave, string $id, string $rotulo) use
         <?php endif; ?>
       </div>
     </div>
-    <p class="ajuda">Meta de rentabilidade acima é só o valor mostrado no comparativo do dashboard da filial — não entra mais na pontuação (ver piso/teto de rentabilidade abaixo).</p>
-  </fieldset>
-
-  <fieldset>
-    <legend>Overrides de Qualidade (Meta 360) — só nesta filial</legend>
-    <p class="ajuda">Estes 3 sub-pilares usam o <strong>padrão global</strong> definido em <a href="/parametros">Parâmetros</a>. Preencha aqui só se esta filial precisar de uma régua diferente da rede — deixe os campos vazios para seguir o padrão global (mostrado como dica no campo).</p>
-    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:0 1rem; max-width:900px">
-      <?= $campoOverride('desconto_piso_pct', 'desconto_piso_pct', 'Desconto médio — piso (%, pontos cheios)') ?>
-      <?= $campoOverride('desconto_teto_pct', 'desconto_teto_pct', 'Desconto médio — teto (%, zera)') ?>
-      <div></div>
-      <?= $campoOverride('rentab_piso_pct', 'rentab_piso_pct', 'Rentabilidade — piso (%, começa a pontuar)') ?>
-      <?= $campoOverride('rentab_teto_pct', 'rentab_teto_pct', 'Rentabilidade — teto (%, pontos cheios)') ?>
-      <div></div>
-      <?= $campoOverride('ticket_medio_piso', 'ticket_medio_piso', 'Ticket médio — piso (R$, 0 pts)') ?>
-      <?= $campoOverride('ticket_medio_teto', 'ticket_medio_teto', 'Ticket médio — teto (R$, pontos cheios)') ?>
-    </div>
+    <p class="ajuda">Meta de rentabilidade acima é só o valor mostrado no comparativo do dashboard da filial. O piso/teto usados na pontuação da Meta 360 (desconto, rentabilidade, ticket médio) ficam em <a href="/parametros">Parâmetros</a>.</p>
   </fieldset>
 
   <?php if (empty($funcionarios)): ?>
