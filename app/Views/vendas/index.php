@@ -8,6 +8,7 @@
 /** @var array $grid */
 /** @var array $gridSn */
 /** @var array $ajustes */
+/** @var array $lancamentosBruta */
 use App\Core\Csrf;
 
 $nomesMes = [1=>'janeiro',2=>'fevereiro',3=>'março',4=>'abril',5=>'maio',6=>'junho',7=>'julho',8=>'agosto',9=>'setembro',10=>'outubro',11=>'novembro',12=>'dezembro'];
@@ -26,7 +27,7 @@ foreach ($categorias as $c) {
 <div class="toolbar">
   <div>
     <h2>Vendas</h2>
-    <p class="subtitle">Período aberto: <strong><?= htmlspecialchars($rotuloPeriodo, ENT_QUOTES) ?></strong>. Atualize o total já vendido no mês — não é preciso lançar venda por venda, só manter o acumulado em dia.</p>
+    <p class="subtitle">Período aberto: <strong><?= htmlspecialchars($rotuloPeriodo, ENT_QUOTES) ?></strong>. Venda bruta da filial: lance o valor de cada dia. Realizado por funcionário: mantenha o total acumulado do mês em dia.</p>
   </div>
 </div>
 
@@ -47,28 +48,63 @@ foreach ($categorias as $c) {
 <div class="callout dica"><span class="callout-label">Somente leitura</span>Este período já foi fechado — as telas abaixo são somente leitura.</div>
 <?php endif; ?>
 
-<form class="form-padrao" method="post" action="/vendas/bruta" style="max-width:340px">
+<h3 style="margin-bottom:.3rem">Venda bruta da filial</h3>
+<p class="subtitle" style="margin-top:0">Total vendido no mês pela filial inteira, incluindo vendas que não passam pela grade abaixo. Lance o valor de cada dia — o total soma automaticamente. Usado na meta da filial e no prêmio de filial.</p>
+
+<div class="kpi-row" style="max-width:340px; margin-top:.5rem">
+  <div class="stat-tile">
+    <span class="stat-label">Total acumulado no mês</span>
+    <span class="stat-value">R$ <?= number_format((float) ($metaFilial['venda_bruta_realizada'] ?? 0), 2, ',', '.') ?></span>
+    <?php if (!empty($metaFilial['venda_bruta_atualizado_em'])): ?>
+      <span class="stat-sub">Último lançamento: <?= (new DateTime($metaFilial['venda_bruta_atualizado_em']))->format('d/m/Y H:i') ?></span>
+    <?php endif; ?>
+  </div>
+</div>
+
+<?php if ($editavel): ?>
+<form class="form-padrao" method="post" action="/vendas/bruta" style="max-width:400px; margin-top:1.1rem">
   <?= Csrf::field() ?>
   <input type="hidden" name="filial_id" value="<?= $filialId ?>">
-  <fieldset>
-    <legend>Venda bruta da filial</legend>
-    <p class="ajuda" style="margin-top:0">Total vendido no mês pela filial inteira, incluindo vendas que não passam pela grade abaixo. Usado na meta da filial e no prêmio de filial.</p>
-    <label for="venda_bruta">Venda bruta realizada (R$)</label>
-    <?php if ($editavel): ?>
-      <input type="text" id="venda_bruta" name="venda_bruta" value="<?= $fmt($metaFilial['venda_bruta_realizada'] ?? 0) ?>">
-    <?php else: ?>
-      <p><?= $fmt($metaFilial['venda_bruta_realizada'] ?? 0) ?></p>
-    <?php endif; ?>
-    <?php if (!empty($metaFilial['venda_bruta_atualizado_em'])): ?>
-      <p class="ajuda">Última atualização: <?= (new DateTime($metaFilial['venda_bruta_atualizado_em']))->format('d/m/Y H:i') ?></p>
-    <?php endif; ?>
-  </fieldset>
-  <?php if ($editavel): ?>
-  <div class="acoes-form">
-    <button type="submit" class="btn">Salvar venda bruta</button>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:0 1rem">
+    <div>
+      <label for="data_bruta">Dia</label>
+      <input type="date" id="data_bruta" name="data_bruta" value="<?= date('Y-m-d') ?>">
+    </div>
+    <div>
+      <label for="venda_bruta">Valor do dia (R$)</label>
+      <input type="text" id="venda_bruta" name="venda_bruta" placeholder="0,00">
+    </div>
   </div>
-  <?php endif; ?>
+  <div class="acoes-form">
+    <button type="submit" class="btn">Adicionar lançamento</button>
+  </div>
 </form>
+<?php endif; ?>
+
+<table class="lista" style="margin-top:1rem; max-width:500px">
+  <thead>
+    <tr><th>Dia</th><th>Valor</th><th></th></tr>
+  </thead>
+  <tbody>
+    <?php foreach ($lancamentosBruta as $l): ?>
+    <tr>
+      <td><?= (new DateTime($l['data']))->format('d/m/Y') ?></td>
+      <td>R$ <?= number_format((float) $l['valor'], 2, ',', '.') ?></td>
+      <td class="acoes">
+        <?php if ($editavel): ?>
+        <form method="post" action="/vendas/bruta/<?= (int) $l['id'] ?>/excluir" onsubmit="return confirm('Excluir este lançamento? Isso reduz o total acumulado do mês.');">
+          <?= Csrf::field() ?>
+          <button type="submit" class="btn perigo pequeno">Excluir</button>
+        </form>
+        <?php endif; ?>
+      </td>
+    </tr>
+    <?php endforeach; ?>
+    <?php if (empty($lancamentosBruta)): ?>
+    <tr><td colspan="3" style="color:var(--ink-faint)">Nenhum lançamento de venda bruta neste período ainda.</td></tr>
+    <?php endif; ?>
+  </tbody>
+</table>
 
 <?php if (empty($funcionarios)): ?>
   <div class="card" style="margin-top:1rem"><p>Nenhum funcionário ativo vinculado a esta filial ainda.</p></div>

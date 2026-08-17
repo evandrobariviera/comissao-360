@@ -14,6 +14,7 @@ use App\Models\Funcionario;
 use App\Models\Meta;
 use App\Models\Periodo;
 use App\Models\Venda;
+use DateTime;
 
 final class VendaController extends Controller
 {
@@ -43,6 +44,7 @@ final class VendaController extends Controller
             'funcionarios' => $funcionarios,
             'categorias' => $categorias,
             'metaFilial' => Meta::filial($filialId, $periodoId),
+            'lancamentosBruta' => Meta::lancamentosVendaBruta($filialId, $periodoId),
             'grid' => Venda::gridTotais($funcionarioIds, array_column($categorias, 'id'), $periodoId),
             'gridSn' => Venda::mapaSemNota($funcionarioIds, $periodoId),
             'ajustes' => Venda::porFilialPeriodo($filialId, $periodoId),
@@ -59,20 +61,62 @@ final class VendaController extends Controller
         $periodo = Periodo::atual();
 
         if ($periodo['status'] !== 'aberto') {
-            Flash::set('erro', 'Este período já foi fechado — não é mais possível alterar a venda bruta.');
+            Flash::set('erro', 'Este período já foi fechado — não é mais possível lançar venda bruta.');
+            $this->redirect("/vendas?filial_id={$filialId}");
+        }
+
+        $dataRaw = trim((string) $this->input('data_bruta', ''));
+        if ($dataRaw === '') {
+            $dataRaw = date('Y-m-d');
+        }
+        $data = DateTime::createFromFormat('Y-m-d', $dataRaw);
+        if ($data === false || $data->format('Y-m-d') !== $dataRaw
+            || (int) $data->format('Y') !== (int) $periodo['ano'] || (int) $data->format('n') !== (int) $periodo['mes']) {
+            Flash::set('erro', 'Data inválida — precisa ser um dia dentro do período aberto.');
             $this->redirect("/vendas?filial_id={$filialId}");
         }
 
         $valorRaw = trim(str_replace(',', '.', (string) $this->input('venda_bruta', '')));
-        if (!is_numeric($valorRaw) || (float) $valorRaw < 0) {
-            Flash::set('erro', 'Informe um valor de venda bruta válido.');
+        if (!is_numeric($valorRaw) || (float) $valorRaw <= 0) {
+            Flash::set('erro', 'Informe um valor de venda bruta válido (maior que zero).');
             $this->redirect("/vendas?filial_id={$filialId}");
         }
 
-        Meta::atualizarVendaBruta((int) $periodo['id'], $filialId, (float) $valorRaw, (int) Auth::id());
+        Meta::adicionarLancamentoVendaBruta((int) $periodo['id'], $filialId, $dataRaw, (float) $valorRaw, (int) Auth::id());
 
-        Audit::log('atualizar_venda_bruta', 'meta_filial', $filialId, "periodo={$periodo['id']}, valor={$valorRaw}");
-        Flash::set('sucesso', 'Venda bruta da filial atualizada.');
+        Audit::log('lancar_venda_bruta', 'venda_bruta_lancamento', $filialId, "periodo={$periodo['id']}, data={$dataRaw}, valor={$valorRaw}");
+        Flash::set('sucesso', 'Lançamento de venda bruta adicionado.');
+        $this->redirect("/vendas?filial_id={$filialId}");
+    }
+
+    public function excluirBruta(string $id): void
+    {
+        Auth::require(Auth::PAPEL_ADMIN, Auth::PAPEL_GERENTE);
+        $this->requireCsrf();
+
+        $lancamento = Meta::lancamentoVendaBruta((int) $id);
+        if ($lancamento === null) {
+            Flash::set('erro', 'Lançamento não encontrado.');
+            $this->redirect('/vendas');
+        }
+
+        $filialId = (int) $lancamento['filial_id'];
+        $filiaisPermitidas = $this->filiaisPermitidas();
+        $idsPermitidos = array_column($filiaisPermitidas, 'id');
+        if (!in_array($filialId, $idsPermitidos, true)) {
+            Flash::set('erro', 'Você não tem acesso a essa filial.');
+            $this->redirect('/vendas');
+        }
+
+        $periodo = Periodo::find((int) $lancamento['periodo_id']);
+        if ($periodo === null || $periodo['status'] !== 'aberto') {
+            Flash::set('erro', 'Este período já foi fechado — não é mais possível excluir lançamentos.');
+            $this->redirect("/vendas?filial_id={$filialId}");
+        }
+
+        Meta::excluirLancamentoVendaBruta((int) $id, (int) Auth::id());
+        Audit::log('excluir', 'venda_bruta_lancamento', (int) $id);
+        Flash::set('sucesso', 'Lançamento excluído.');
         $this->redirect("/vendas?filial_id={$filialId}");
     }
 

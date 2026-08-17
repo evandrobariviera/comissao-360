@@ -154,10 +154,94 @@ final class Meta
         ]);
     }
 
-    /** Venda bruta manual do mês, alimentada pelo gerente — não é derivada da grade de funcionários. */
-    public static function atualizarVendaBruta(int $periodoId, int $filialId, float $valor, int $usuarioId): void
+    /** Lançamentos diários da venda bruta da filial, mais recentes primeiro. */
+    public static function lancamentosVendaBruta(int $filialId, int $periodoId, int $limite = 60): array
     {
-        Database::pdo()->prepare(
+        $stmt = Database::pdo()->prepare(
+            "SELECT id, data, valor FROM venda_bruta_lancamento
+             WHERE filial_id = :filial_id AND periodo_id = :periodo_id
+             ORDER BY data DESC, id DESC
+             LIMIT {$limite}"
+        );
+        $stmt->execute(['filial_id' => $filialId, 'periodo_id' => $periodoId]);
+
+        return $stmt->fetchAll();
+    }
+
+    public static function lancamentoVendaBruta(int $id): ?array
+    {
+        $stmt = Database::pdo()->prepare('SELECT * FROM venda_bruta_lancamento WHERE id = :id');
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch();
+
+        return $row === false ? null : $row;
+    }
+
+    /**
+     * Acrescenta um lançamento diário de venda bruta (dia + valor) — SOMA ao total do período,
+     * não sobrescreve. `meta_filial.venda_bruta_realizada` é recalculado como SUM(valor) logo em
+     * seguida, na mesma transação, pra continuar servindo de cache pros outros lugares que já leem
+     * essa coluna (dashboard, PremioFilialService, Pontuacao360Calculator).
+     */
+    public static function adicionarLancamentoVendaBruta(
+        int $periodoId,
+        int $filialId,
+        string $data,
+        float $valor,
+        int $usuarioId
+    ): void {
+        $pdo = Database::pdo();
+        $pdo->beginTransaction();
+        try {
+            $pdo->prepare(
+                'INSERT INTO venda_bruta_lancamento (periodo_id, filial_id, data, valor, criado_por)
+                 VALUES (:periodo_id, :filial_id, :data, :valor, :criado_por)'
+            )->execute([
+                'periodo_id' => $periodoId,
+                'filial_id' => $filialId,
+                'data' => $data,
+                'valor' => $valor,
+                'criado_por' => $usuarioId,
+            ]);
+
+            self::recalcularVendaBrutaRealizada($pdo, $periodoId, $filialId, $usuarioId);
+
+            $pdo->commit();
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    /** Exclui um lançamento diário e recalcula o total do período/filial dele. */
+    public static function excluirLancamentoVendaBruta(int $id, int $usuarioId): void
+    {
+        $lancamento = self::lancamentoVendaBruta($id);
+        if ($lancamento === null) {
+            return;
+        }
+
+        $pdo = Database::pdo();
+        $pdo->beginTransaction();
+        try {
+            $pdo->prepare('DELETE FROM venda_bruta_lancamento WHERE id = :id')->execute(['id' => $id]);
+            self::recalcularVendaBrutaRealizada($pdo, (int) $lancamento['periodo_id'], (int) $lancamento['filial_id'], $usuarioId);
+            $pdo->commit();
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    private static function recalcularVendaBrutaRealizada(\PDO $pdo, int $periodoId, int $filialId, int $usuarioId): void
+    {
+        $stmt = $pdo->prepare(
+            'SELECT COALESCE(SUM(valor), 0) FROM venda_bruta_lancamento WHERE periodo_id = :periodo_id AND filial_id = :filial_id'
+        );
+        $stmt->execute(['periodo_id' => $periodoId, 'filial_id' => $filialId]);
+        $total = (float) $stmt->fetchColumn();
+
+        $pdo->prepare(
             'INSERT INTO meta_filial (periodo_id, filial_id, venda_bruta_realizada, venda_bruta_atualizado_em, venda_bruta_atualizado_por)
              VALUES (:periodo_id, :filial_id, :valor, NOW(), :usuario_id)
              ON DUPLICATE KEY UPDATE
@@ -167,7 +251,7 @@ final class Meta
         )->execute([
             'periodo_id' => $periodoId,
             'filial_id' => $filialId,
-            'valor' => $valor,
+            'valor' => $total,
             'usuario_id' => $usuarioId,
         ]);
     }

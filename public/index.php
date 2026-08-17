@@ -52,6 +52,7 @@ $router->post('/categorias/{id}/status', [CategoriaController::class, 'alternarS
 $router->get('/vendas', [VendaController::class, 'index']);
 $router->post('/vendas', [VendaController::class, 'salvarGrade']);
 $router->post('/vendas/bruta', [VendaController::class, 'atualizarBruta']);
+$router->post('/vendas/bruta/{id}/excluir', [VendaController::class, 'excluirBruta']);
 $router->post('/vendas/{id}/excluir', [VendaController::class, 'excluir']);
 
 $router->get('/indicadores', [IndicadorController::class, 'index']);

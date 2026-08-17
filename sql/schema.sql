@@ -112,9 +112,10 @@ CREATE TABLE meta_filial (
   meta_venda          DECIMAL(12,2) NOT NULL DEFAULT 0,
   meta_rentabilidade  DECIMAL(5,2)  NOT NULL DEFAULT 0,
   valor_premio        DECIMAL(10,2) NOT NULL DEFAULT 0,
-  -- Venda bruta do mês alimentada manualmente pelo gerente (inclui vendas que não
-  -- passam pela grade por funcionário/categoria). É o "realizado" usado nos
-  -- medidores de meta e no prêmio de filial (Bloco 3) — não é derivado de soma.
+  -- Venda bruta do mês (inclui vendas que não passam pela grade por funcionário/categoria).
+  -- É o "realizado" usado nos medidores de meta e no prêmio de filial (Bloco 3).
+  -- Cache: sempre igual a SUM(valor) de venda_bruta_lancamento pra este período/filial —
+  -- recalculado a cada lançamento/exclusão (ver Meta::adicionarLancamentoVendaBruta).
   venda_bruta_realizada       DECIMAL(12,2) NOT NULL DEFAULT 0,
   venda_bruta_atualizado_em   DATETIME NULL,
   venda_bruta_atualizado_por  INT UNSIGNED NULL,
@@ -167,6 +168,23 @@ CREATE TABLE venda_lancamento (
   CONSTRAINT fk_venda_filial FOREIGN KEY (filial_id) REFERENCES filial(id),
   CONSTRAINT fk_venda_categoria FOREIGN KEY (categoria_id) REFERENCES categoria(id),
   CONSTRAINT fk_venda_usuario FOREIGN KEY (criado_por) REFERENCES usuario(id)
+) ENGINE=InnoDB;
+
+-- Lançamento diário da venda bruta da filial (dia + valor). Cada linha SOMA ao total do
+-- período — não sobrescreve como a grade por funcionário/categoria (ver venda_lancamento).
+-- meta_filial.venda_bruta_realizada é sempre recalculado como SUM(valor) após inserir/excluir.
+CREATE TABLE venda_bruta_lancamento (
+  id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  periodo_id    INT UNSIGNED NOT NULL,
+  filial_id     INT UNSIGNED NOT NULL,
+  data          DATE NOT NULL,
+  valor         DECIMAL(12,2) NOT NULL,
+  criado_por    INT UNSIGNED NOT NULL,
+  created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY ix_venda_bruta_periodo_filial (periodo_id, filial_id),
+  CONSTRAINT fk_venda_bruta_periodo FOREIGN KEY (periodo_id) REFERENCES periodo(id),
+  CONSTRAINT fk_venda_bruta_filial FOREIGN KEY (filial_id) REFERENCES filial(id),
+  CONSTRAINT fk_venda_bruta_usuario FOREIGN KEY (criado_por) REFERENCES usuario(id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE indicador_funcionario (
