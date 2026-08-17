@@ -25,6 +25,36 @@ final class Indicador
         return $stmt->fetchAll();
     }
 
+    /** Indicadores de UM funcionário (desconto médio, rentabilidade, ticket médio) — para o painel pessoal. */
+    public static function doFuncionario(int $funcionarioId, int $periodoId): ?array
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT * FROM indicador_funcionario WHERE funcionario_id = :funcionario_id AND periodo_id = :periodo_id'
+        );
+        $stmt->execute(['funcionario_id' => $funcionarioId, 'periodo_id' => $periodoId]);
+        $row = $stmt->fetch();
+
+        return $row === false ? null : $row;
+    }
+
+    /** Médias da filial (desconto médio e ticket médio) entre quem já tem indicador lançado no período. */
+    public static function mediasFilial(int $filialId, int $periodoId): array
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT AVG(i.desconto_medio) AS desconto_medio, AVG(i.ticket_medio) AS ticket_medio
+             FROM indicador_funcionario i
+             JOIN funcionario_filial ff ON ff.funcionario_id = i.funcionario_id
+             WHERE ff.filial_id = :filial_id AND i.periodo_id = :periodo_id'
+        );
+        $stmt->execute(['filial_id' => $filialId, 'periodo_id' => $periodoId]);
+        $row = $stmt->fetch();
+
+        return [
+            'desconto_medio' => $row !== false && $row['desconto_medio'] !== null ? (float) $row['desconto_medio'] : null,
+            'ticket_medio' => $row !== false && $row['ticket_medio'] !== null ? (float) $row['ticket_medio'] : null,
+        ];
+    }
+
     public static function rentabilidadeFilial(int $filialId, int $periodoId): ?array
     {
         $stmt = Database::pdo()->prepare(

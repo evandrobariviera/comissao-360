@@ -188,6 +188,182 @@ final class Viz
     }
 
     /**
+     * Faixa piso→teto de um indicador individual (rentabilidade, desconto médio, ticket médio),
+     * mostrando quantos pontos (%) da pontuação máxima do sub-pilar aquele valor já garante.
+     * $maiorMelhor = false inverte a direção (ex.: desconto médio — valor baixo é bom).
+     */
+    public static function faixaGauge(string $label, ?float $valor, float $piso, float $teto, bool $maiorMelhor, string $sufixo = '%', string $prefixo = ''): string
+    {
+        if ($valor === null) {
+            return '<div class="stat-tile"><span class="stat-label">' . htmlspecialchars($label, ENT_QUOTES) . '</span>'
+                . '<span class="stat-value" style="color:var(--ink-faint)">—</span>'
+                . '<span class="stat-sub">Ainda não lançado neste período</span></div>';
+        }
+
+        $amplitude = $teto - $piso;
+        $pct = $amplitude > 0
+            ? ($maiorMelhor ? ($valor - $piso) / $amplitude : ($teto - $valor) / $amplitude) * 100
+            : 0.0;
+        $pct = max(0.0, min(100.0, $pct));
+        [, $cor, $tinta] = self::statusAtingimento($pct);
+
+        $fmt = static fn (float $v) => $prefixo . number_format($v, 1, ',', '.') . $sufixo;
+        $extremoRuim = $maiorMelhor ? $fmt($piso) : $fmt($teto);
+        $extremoBom = $maiorMelhor ? $fmt($teto) : $fmt($piso);
+
+        $html = '<div class="stat-tile"><span class="stat-label">' . htmlspecialchars($label, ENT_QUOTES) . '</span>';
+        $html .= '<span class="stat-value">' . htmlspecialchars($fmt($valor), ENT_QUOTES) . '</span>';
+        $html .= '<div class="gauge-track" style="background:' . $tinta . '"><div class="gauge-fill" style="width:' . $pct . '%; background:' . $cor . '"></div></div>';
+        $html .= '<div class="gauge-extremos"><span>' . htmlspecialchars($extremoRuim, ENT_QUOTES) . '</span><span>' . htmlspecialchars($extremoBom, ENT_QUOTES) . '</span></div>';
+        $html .= '<span class="stat-sub">' . number_format($pct, 0) . '% da pontuação deste indicador</span>';
+
+        return $html . '</div>';
+    }
+
+    /** @param array<string, bool> $checklist chaves c1_...c8_... => marcado ou não */
+    public static function checklistList(array $checklist): string
+    {
+        $itens = [
+            'c1_sem_falta_injustificada' => 'Sem falta injustificada',
+            'c2_cumpriu_escala' => 'Cumpriu a escala',
+            'c3_setor_organizado' => 'Setor organizado',
+            'c4_ajudou_treinou_colega' => 'Ajudou/treinou colega',
+            'c5_loja_bateu_meta_coletiva' => 'Loja bateu meta coletiva',
+            'c6_venda_5_catalogos' => 'Venda de 5 catálogos',
+            'c7_venda_30_a_vencer' => 'Venda de 30 a vencer',
+            'c8_venda_30_linha_propria' => 'Venda de 30 linha própria',
+        ];
+
+        $html = '<ul class="checklist-status">';
+        foreach ($itens as $chave => $rotulo) {
+            $marcado = !empty($checklist[$chave]);
+            $html .= '<li class="' . ($marcado ? 'ok' : 'pendente') . '">' . htmlspecialchars($rotulo, ENT_QUOTES) . '</li>';
+        }
+
+        return $html . '</ul>';
+    }
+
+    /**
+     * Gráfico de ritmo diário: trajetória acumulada (meta ideal x realizado) ao longo do mês,
+     * ignorando domingo no cálculo da meta ideal (ver RitmoDiarioCalculator).
+     *
+     * @param array{
+     *   meta_venda: float, meta_hoje: float, meta_restante: float, dias_uteis_restantes: int,
+     *   pontos: array<int, array{dia:int, domingo:bool, hoje:bool, ideal_acumulado:float, realizado_acumulado: ?float}>
+     * } $ritmo
+     */
+    public static function ritmoDiarioChart(array $ritmo): string
+    {
+        $pontos = $ritmo['pontos'];
+        $n = count($pontos);
+        if ($n === 0) {
+            return '<p class="subtitle" style="margin:0">Sem dados de período pra montar o ritmo diário.</p>';
+        }
+
+        $larguraTotal = 640;
+        $alturaTotal = 200;
+        $padEsq = 8;
+        $padDir = 8;
+        $padTopo = 14;
+        $padBase = 24;
+        $plotW = $larguraTotal - $padEsq - $padDir;
+        $plotH = $alturaTotal - $padTopo - $padBase;
+
+        $maxY = max($ritmo['meta_venda'], 1.0);
+        foreach ($pontos as $p) {
+            if ($p['realizado_acumulado'] !== null) {
+                $maxY = max($maxY, $p['realizado_acumulado']);
+            }
+        }
+
+        $xFor = static fn (int $dia) => $n > 1 ? $padEsq + ($dia - 1) / ($n - 1) * $plotW : $padEsq + $plotW / 2;
+        $yFor = static fn (float $v) => $padTopo + $plotH - min(1.0, $v / $maxY) * $plotH;
+        $baseY = $yFor(0.0);
+        $larguraDia = $n > 1 ? $plotW / ($n - 1) : $plotW;
+
+        // Faixas de fundo nos domingos — só pra explicar visualmente por que a linha ideal "descansa" ali.
+        $bandas = '';
+        foreach ($pontos as $p) {
+            if (!$p['domingo']) {
+                continue;
+            }
+            $x = $xFor($p['dia']) - $larguraDia / 2;
+            $bandas .= '<rect x="' . $x . '" y="' . $padTopo . '" width="' . $larguraDia . '" height="' . $plotH . '" fill="var(--bg)" />';
+        }
+
+        $ultimoReal = null;
+        foreach ($pontos as $p) {
+            if ($p['realizado_acumulado'] !== null) {
+                $ultimoReal = $p;
+            }
+        }
+
+        // Status da linha "realizado": compara o último ponto real com o ideal do mesmo dia.
+        // Calculado ANTES dos marcadores pra colorir os círculos com a mesma cor da linha.
+        $cor = 'var(--ink-soft)';
+        if ($ultimoReal !== null) {
+            $razao = $ultimoReal['ideal_acumulado'] > 0 ? $ultimoReal['realizado_acumulado'] / $ultimoReal['ideal_acumulado'] * 100 : 100.0;
+            [, $cor] = self::statusAtingimento($razao);
+        }
+
+        $pontosIdeal = [];
+        $pontosReal = [];
+        $marcadoresReal = '';
+        $xHoje = null;
+        foreach ($pontos as $p) {
+            $x = $xFor($p['dia']);
+            $pontosIdeal[] = $x . ',' . $yFor($p['ideal_acumulado']);
+            if ($p['hoje']) {
+                $xHoje = $x;
+            }
+            if ($p['realizado_acumulado'] !== null) {
+                $yReal = $yFor($p['realizado_acumulado']);
+                $pontosReal[] = $x . ',' . $yReal;
+                $titulo = 'Dia ' . $p['dia'] . ': ' . self::money($p['realizado_acumulado']) . ' acumulado';
+                $marcadoresReal .= '<circle cx="' . $x . '" cy="' . $yReal . '" r="3" class="ritmo-marcador" stroke="' . $cor . '"><title>'
+                    . htmlspecialchars($titulo, ENT_QUOTES) . '</title></circle>';
+            }
+        }
+
+        $areaReal = '';
+        if (count($pontosReal) > 1) {
+            $primeiroX = explode(',', $pontosReal[0])[0];
+            $ultimoX = explode(',', $pontosReal[count($pontosReal) - 1])[0];
+            $areaReal = '<polygon points="' . $primeiroX . ',' . $baseY . ' ' . implode(' ', $pontosReal) . ' ' . $ultimoX . ',' . $baseY
+                . '" fill="' . $cor . '" opacity="0.12" />';
+        }
+
+        $linhaHoje = $xHoje !== null
+            ? '<line x1="' . $xHoje . '" y1="' . $padTopo . '" x2="' . $xHoje . '" y2="' . $baseY . '" stroke="var(--ink-faint)" stroke-width="1" stroke-dasharray="2 3" />'
+            : '';
+
+        $primeiroDia = (int) $pontos[0]['dia'];
+        $ultimoDia = (int) $pontos[$n - 1]['dia'];
+        $meioDia = $pontos[intdiv($n, 2)]['dia'];
+
+        $html = '<div class="legend">'
+            . '<span><span class="sw" style="background:var(--ink-faint)"></span>Meta ideal (sem domingo)</span>'
+            . '<span><span class="sw" style="background:' . $cor . '"></span>Realizado acumulado</span>'
+            . '</div>';
+
+        $html .= '<svg viewBox="0 0 ' . $larguraTotal . ' ' . $alturaTotal . '" class="ritmo-chart" preserveAspectRatio="none">';
+        $html .= $bandas;
+        $html .= $linhaHoje;
+        $html .= $areaReal;
+        $html .= '<polyline points="' . implode(' ', $pontosIdeal) . '" fill="none" stroke="var(--ink-faint)" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round" />';
+        if (count($pontosReal) > 1) {
+            $html .= '<polyline points="' . implode(' ', $pontosReal) . '" fill="none" stroke="' . $cor . '" stroke-width="2" stroke-linecap="round" />';
+        }
+        $html .= $marcadoresReal;
+        $html .= '<text x="' . $xFor($primeiroDia) . '" y="' . ($alturaTotal - 6) . '" class="ritmo-eixo">' . $primeiroDia . '</text>';
+        $html .= '<text x="' . $xFor($meioDia) . '" y="' . ($alturaTotal - 6) . '" class="ritmo-eixo" text-anchor="middle">' . $meioDia . '</text>';
+        $html .= '<text x="' . $xFor($ultimoDia) . '" y="' . ($alturaTotal - 6) . '" class="ritmo-eixo" text-anchor="end">' . $ultimoDia . '</text>';
+        $html .= '</svg>';
+
+        return $html;
+    }
+
+    /**
      * Mesma ideia, agregada por várias pessoas — para o dashboard de gerente/rede.
      * @param array<int, array{nome:string, categoria:string, falta:float, ganho:float, percentual:float, percentual_proximo:float}> $linhas já ordenadas
      */

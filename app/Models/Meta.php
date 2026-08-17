@@ -316,4 +316,26 @@ final class Meta
 
         return (float) $stmt->fetchColumn();
     }
+
+    /**
+     * Venda bruta somada por dia do mês (não acumulado) — base para o gráfico de ritmo diário.
+     *
+     * @return array<string, float> ['Y-m-d' => valor do dia]
+     */
+    public static function vendaBrutaPorDia(int $filialId, int $periodoId): array
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT data, SUM(valor) AS total FROM venda_bruta_lancamento
+             WHERE filial_id = :filial_id AND periodo_id = :periodo_id
+             GROUP BY data'
+        );
+        $stmt->execute(['filial_id' => $filialId, 'periodo_id' => $periodoId]);
+
+        $porDia = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $porDia[$row['data']] = (float) $row['total'];
+        }
+
+        return $porDia;
+    }
 }

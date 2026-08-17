@@ -14,6 +14,7 @@ use App\Models\Meta;
 use App\Models\Periodo;
 use App\Models\Venda;
 use App\Services\ResumoCalculator;
+use App\Services\RitmoDiarioCalculator;
 
 final class DashboardController extends Controller
 {
@@ -123,6 +124,8 @@ final class DashboardController extends Controller
             'totalFuncionarios' => count($linhas),
             'ranking' => $ranking,
             'oportunidades' => self::oportunidades($linhas, 5),
+            'ritmo' => RitmoDiarioCalculator::calcular($filialId, $periodoId, $periodo),
+            'mediasFilial' => Indicador::mediasFilial($filialId, $periodoId),
         ]);
     }
 
@@ -186,6 +189,9 @@ final class DashboardController extends Controller
         $metaIndividual = Meta::totalIndividual((int) $funcionario['id'], $periodoId);
         $realizadoIndividual = Venda::somaTotalFuncionario((int) $funcionario['id'], $periodoId);
 
+        $metaFilial = Meta::filial($filialPrincipal, $periodoId);
+        $rentabFilialRow = Indicador::rentabilidadeFilial($filialPrincipal, $periodoId);
+
         $this->render('dashboard/pessoal', [
             'periodo' => $periodo,
             'nome' => $funcionario['nome'],
@@ -194,6 +200,12 @@ final class DashboardController extends Controller
             'totalNaFilial' => count($linhas),
             'metaIndividual' => $metaIndividual,
             'realizadoIndividual' => $realizadoIndividual,
+            'metaVendaFilial' => $metaFilial !== null ? (float) $metaFilial['meta_venda'] : 0.0,
+            'realizadoFilial' => $metaFilial !== null ? (float) $metaFilial['venda_bruta_realizada'] : 0.0,
+            'metaRentabFilial' => $metaFilial !== null ? (float) $metaFilial['meta_rentabilidade'] : 0.0,
+            'rentabFilialRealizada' => $rentabFilialRow !== null ? (float) $rentabFilialRow['rentabilidade_pct'] : 0.0,
+            'ritmo' => RitmoDiarioCalculator::calcular($filialPrincipal, $periodoId, $periodo),
+            'checklist' => Indicador::checklist($filialPrincipal, $periodoId),
         ]);
     }
 

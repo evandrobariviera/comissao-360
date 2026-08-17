@@ -16,18 +16,22 @@ final class Pontuacao360Calculator
      * @param array<string,string> $parametros Parametro::todos()
      * @return array{
      *   pontos_individual: float, pontos_filial: float, pontos_qualidade: float, pontos_equipe: float,
-     *   pontuacao_total: float, nivel: string, multiplicador: float, multiplicador_protegido: float
+     *   pontuacao_total: float, nivel: string, multiplicador: float, multiplicador_protegido: float,
+     *   detalhe_qualidade: array<string, array{valor: ?float, piso: float, teto: float, pontos: float, pts_max: float, maior_melhor: bool}>
      * }
      */
     public static function calcular(int $funcionarioId, int $filialId, int $periodoId, array $parametros): array
     {
         $pontosIndividual = self::pontosIndividual($funcionarioId, $periodoId);
         $pontosFilial = self::pontosFilial($filialId, $periodoId);
-        $pontosQualidade = self::pontosQualidade($funcionarioId, $filialId, $periodoId, $parametros);
+        $detalheQualidade = self::detalheQualidade($funcionarioId, $filialId, $periodoId, $parametros);
+        $pontosQualidade = $detalheQualidade['pontos_total'];
         $pontosEquipe = self::pontosEquipe($filialId, $periodoId, $parametros);
 
         $total = $pontosIndividual + $pontosFilial + $pontosQualidade + $pontosEquipe;
         [$multiplicador, $nivel] = self::multiplicador($total);
+
+        unset($detalheQualidade['pontos_total']);
 
         return [
             'pontos_individual' => $pontosIndividual,
@@ -38,6 +42,7 @@ final class Pontuacao360Calculator
             'nivel' => $nivel,
             'multiplicador' => $multiplicador,
             'multiplicador_protegido' => max(1.0, $multiplicador),
+            'detalhe_qualidade' => $detalheQualidade,
         ];
     }
 
@@ -60,7 +65,8 @@ final class Pontuacao360Calculator
         return self::escala($atingimento, [100 => 30, 90 => 22, 80 => 15]);
     }
 
-    private static function pontosQualidade(int $funcionarioId, int $filialId, int $periodoId, array $parametros): float
+    /** @return array{desconto:array, rentab_filial:array, rentab_funcionario:array, ticket_medio:array, pontos_total:float} */
+    private static function detalheQualidade(int $funcionarioId, int $filialId, int $periodoId, array $parametros): array
     {
         $desconto = null;
         $rentabFunc = null;
@@ -115,8 +121,27 @@ final class Pontuacao360Calculator
         }
 
         $ptsMaxQualidade = (float) ($parametros['peso_qualidade_max'] ?? 20);
+        $rentabFilialValor = $rentabFilial !== null ? (float) $rentabFilial['rentabilidade_pct'] : null;
 
-        return min($ptsMaxQualidade, $pontosDesconto + $pontosRentabFilial + $pontosRentabFunc + $pontosTicket);
+        return [
+            'desconto' => [
+                'valor' => $desconto !== null ? (float) $desconto : null, 'piso' => $descontoPiso, 'teto' => $descontoTeto,
+                'pontos' => $pontosDesconto, 'pts_max' => $ptsMaxDesconto, 'maior_melhor' => false,
+            ],
+            'rentab_filial' => [
+                'valor' => $rentabFilialValor, 'piso' => $rentabPiso, 'teto' => $rentabTeto,
+                'pontos' => $pontosRentabFilial, 'pts_max' => $ptsMaxRentabFilial, 'maior_melhor' => true,
+            ],
+            'rentab_funcionario' => [
+                'valor' => $rentabFunc !== null ? (float) $rentabFunc : null, 'piso' => $rentabPiso, 'teto' => $rentabTeto,
+                'pontos' => $pontosRentabFunc, 'pts_max' => $ptsMaxRentabFunc, 'maior_melhor' => true,
+            ],
+            'ticket_medio' => [
+                'valor' => $ticketMedio !== null ? (float) $ticketMedio : null, 'piso' => $ticketPiso, 'teto' => $ticketTeto,
+                'pontos' => $pontosTicket, 'pts_max' => $ptsMaxTicket, 'maior_melhor' => true,
+            ],
+            'pontos_total' => min($ptsMaxQualidade, $pontosDesconto + $pontosRentabFilial + $pontosRentabFunc + $pontosTicket),
+        ];
     }
 
     /**

@@ -191,6 +191,23 @@ $minhaConta = Funcionario::porUsuario((int) Auth::id());
   .tier-track{height:10px; border-radius:999px; background:var(--bg); overflow:hidden;}
   .tier-fill{height:100%; border-radius:999px; background:var(--primary);}
   .tier-count{text-align:right; font-variant-numeric:tabular-nums; color:var(--ink-soft);}
+
+  /* ---- gauge: faixa piso→teto de um indicador individual ---- */
+  .gauge-track{height:8px; border-radius:999px; overflow:hidden; margin-top:.6rem;}
+  .gauge-fill{height:100%; border-radius:999px;}
+  .gauge-extremos{display:flex; justify-content:space-between; font-size:.7rem; color:var(--ink-faint); margin-top:.3rem; font-variant-numeric:tabular-nums;}
+
+  /* ---- checklist de equipe (binário, sem gráfico) ---- */
+  ul.checklist-status{list-style:none; padding:0; margin:0; display:grid; gap:.5rem;}
+  ul.checklist-status li{padding:.4rem .1rem .4rem 1.7rem; position:relative; font-size:.87rem; color:var(--ink);}
+  ul.checklist-status li.ok::before{content:"✓"; position:absolute; left:0; color:var(--good); font-weight:700;}
+  ul.checklist-status li.pendente{color:var(--ink-faint);}
+  ul.checklist-status li.pendente::before{content:"·"; position:absolute; left:.3rem; color:var(--ink-faint); font-weight:700;}
+
+  /* ---- ritmo diário: trajetória acumulada (SVG, sem lib de gráfico) ---- */
+  .ritmo-chart{width:100%; height:auto; display:block;}
+  .ritmo-chart .ritmo-eixo{font-size:9px; fill:var(--ink-faint);}
+  .ritmo-chart circle.ritmo-marcador{fill:var(--surface); stroke-width:1.5;}
 </style>
 </head>
 <body>

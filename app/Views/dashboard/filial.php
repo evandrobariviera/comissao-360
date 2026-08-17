@@ -10,6 +10,8 @@
 /** @var int $totalFuncionarios */
 /** @var array $ranking */
 /** @var array $oportunidades */
+/** @var array $ritmo */
+/** @var array{desconto_medio: ?float, ticket_medio: ?float} $mediasFilial */
 use App\Core\Viz;
 
 $nomesMes = [1=>'janeiro',2=>'fevereiro',3=>'março',4=>'abril',5=>'maio',6=>'junho',7=>'julho',8=>'agosto',9=>'setembro',10=>'outubro',11=>'novembro',12=>'dezembro'];
@@ -42,6 +44,25 @@ foreach ($filiaisPermitidas as $f) { if ((int) $f['id'] === $filialId) { $nomeFi
 <div class="secao">
   <h3>Atingimento de meta</h3>
   <div class="card"><?= Viz::meterRow($nomeFilial ?: 'Filial', $realizado, $metaVenda) ?></div>
+</div>
+
+<div class="secao">
+  <h3>Ritmo diário</h3>
+  <p class="secao-sub">Quanto falta vender por dia útil (sem domingo) pra bater a meta do mês, e a trajetória até agora.</p>
+  <div class="kpi-row" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+    <?= Viz::statTile('Meta de hoje', Viz::money($ritmo['meta_hoje']), $ritmo['dias_uteis_restantes'] . ' dia(s) útil(eis) restante(s)') ?>
+    <?= Viz::statTile('Falta no mês', Viz::money($ritmo['meta_restante']), 'de ' . Viz::money($ritmo['meta_venda']) . ' de meta') ?>
+  </div>
+  <div class="card"><?= Viz::ritmoDiarioChart($ritmo) ?></div>
+</div>
+
+<div class="secao">
+  <h3>Indicadores da equipe</h3>
+  <p class="secao-sub">Média entre quem já tem indicador lançado no período.</p>
+  <div class="kpi-row" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+    <?= Viz::statTile('Desconto médio (equipe)', $mediasFilial['desconto_medio'] !== null ? Viz::pct($mediasFilial['desconto_medio']) : '—') ?>
+    <?= Viz::statTile('Ticket médio (equipe)', $mediasFilial['ticket_medio'] !== null ? Viz::money($mediasFilial['ticket_medio']) : '—') ?>
+  </div>
 </div>
 
 <div class="secao">
