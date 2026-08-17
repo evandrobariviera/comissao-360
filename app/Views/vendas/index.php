@@ -9,6 +9,7 @@
 /** @var array $gridSn */
 /** @var array $ajustes */
 /** @var array $lancamentosBruta */
+/** @var array $categoriasMix */
 use App\Core\Csrf;
 
 $nomesMes = [1=>'janeiro',2=>'fevereiro',3=>'março',4=>'abril',5=>'maio',6=>'junho',7=>'julho',8=>'agosto',9=>'setembro',10=>'outubro',11=>'novembro',12=>'dezembro'];
@@ -75,20 +76,40 @@ foreach ($categorias as $c) {
       <input type="text" id="venda_bruta" name="venda_bruta" placeholder="0,00">
     </div>
   </div>
+  <?php if (!empty($categoriasMix)): ?>
+  <p class="ajuda">Opcional — recorte do dia por categoria, só pra acompanhar o mix de vendas (não precisa somar o valor total acima).</p>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:0 1rem">
+    <?php foreach ($categoriasMix as $c): ?>
+      <div>
+        <label for="categoria_valor_<?= (int) $c['id'] ?>"><?= htmlspecialchars($c['nome'], ENT_QUOTES) ?> (R$) — meta <?= $fmt($c['meta_percentual_pct']) ?>%</label>
+        <input type="text" id="categoria_valor_<?= (int) $c['id'] ?>" name="categoria_valor[<?= (int) $c['id'] ?>]" placeholder="0,00">
+      </div>
+    <?php endforeach; ?>
+  </div>
+  <?php endif; ?>
   <div class="acoes-form">
     <button type="submit" class="btn">Adicionar lançamento</button>
   </div>
 </form>
 <?php endif; ?>
 
-<table class="lista" style="margin-top:1rem; max-width:500px">
+<table class="lista" style="margin-top:1rem; max-width:640px">
   <thead>
     <tr><th>Dia</th><th>Valor</th><th></th></tr>
   </thead>
   <tbody>
     <?php foreach ($lancamentosBruta as $l): ?>
     <tr>
-      <td><?= (new DateTime($l['data']))->format('d/m/Y') ?></td>
+      <td><?= (new DateTime($l['data']))->format('d/m/Y') ?>
+        <?php if (!empty($l['categorias'])): ?>
+          <br><span class="ajuda" style="margin:0">
+            <?= implode(' · ', array_map(
+                static fn ($c) => htmlspecialchars($c['nome'], ENT_QUOTES) . ': R$ ' . number_format((float) $c['valor'], 2, ',', '.'),
+                $l['categorias']
+            )) ?>
+          </span>
+        <?php endif; ?>
+      </td>
       <td>R$ <?= number_format((float) $l['valor'], 2, ',', '.') ?></td>
       <td class="acoes">
         <?php if ($editavel): ?>

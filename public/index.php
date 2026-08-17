@@ -67,6 +67,7 @@ $router->post('/metas', [MetaController::class, 'salvar']);
 $router->get('/parametros', [ParametroController::class, 'index']);
 $router->post('/parametros', [ParametroController::class, 'salvar']);
 $router->post('/parametros/filial', [ParametroController::class, 'salvarFilial']);
+$router->post('/parametros/mix', [ParametroController::class, 'salvarMix']);
 
 $router->get('/minhas-vendas', [MinhaAreaController::class, 'vendas']);
 $router->get('/minhas-metas', [MinhaAreaController::class, 'metas']);

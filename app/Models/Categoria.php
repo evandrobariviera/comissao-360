@@ -59,6 +59,31 @@ final class Categoria
         Database::pdo()->prepare('UPDATE categoria SET ativo = NOT ativo WHERE id = :id')->execute(['id' => $id]);
     }
 
+    /** Categorias ativas com meta de mix (%) configurada — só essas pedem lançamento diário por categoria em /vendas. */
+    public static function comMetaPercentual(): array
+    {
+        return Database::pdo()
+            ->query('SELECT * FROM categoria WHERE ativo = 1 AND meta_percentual_pct IS NOT NULL ORDER BY ordem, nome')
+            ->fetchAll();
+    }
+
+    /** Atualiza a meta de mix (%) de cada categoria ativa; NULL = não rastrear essa categoria no mix. */
+    public static function salvarMetasPercentuais(array $porCategoria): void
+    {
+        $pdo = Database::pdo();
+        $stmt = $pdo->prepare('UPDATE categoria SET meta_percentual_pct = :valor WHERE id = :id');
+        $pdo->beginTransaction();
+        try {
+            foreach ($porCategoria as $categoriaId => $valor) {
+                $stmt->execute(['id' => $categoriaId, 'valor' => $valor]);
+            }
+            $pdo->commit();
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    }
+
     public static function faixas(int $categoriaId): array
     {
         $stmt = Database::pdo()->prepare('SELECT * FROM faixa_comissao WHERE categoria_id = :id ORDER BY ordem');

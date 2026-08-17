@@ -45,6 +45,7 @@ final class VendaController extends Controller
             'categorias' => $categorias,
             'metaFilial' => Meta::filial($filialId, $periodoId),
             'lancamentosBruta' => Meta::lancamentosVendaBruta($filialId, $periodoId),
+            'categoriasMix' => Categoria::comMetaPercentual(),
             'grid' => Venda::gridTotais($funcionarioIds, array_column($categorias, 'id'), $periodoId),
             'gridSn' => Venda::mapaSemNota($funcionarioIds, $periodoId),
             'ajustes' => Venda::porFilialPeriodo($filialId, $periodoId),
@@ -82,7 +83,23 @@ final class VendaController extends Controller
             $this->redirect("/vendas?filial_id={$filialId}");
         }
 
-        Meta::adicionarLancamentoVendaBruta((int) $periodo['id'], $filialId, $dataRaw, (float) $valorRaw, (int) Auth::id());
+        $categoriaPost = $this->input('categoria_valor', []);
+        $categoriaPost = is_array($categoriaPost) ? $categoriaPost : [];
+        $porCategoria = [];
+        foreach (Categoria::comMetaPercentual() as $c) {
+            $categoriaId = (int) $c['id'];
+            $bruto = trim(str_replace(',', '.', (string) ($categoriaPost[$categoriaId] ?? '')));
+            if ($bruto === '') {
+                continue;
+            }
+            if (!is_numeric($bruto) || (float) $bruto < 0) {
+                Flash::set('erro', "Valor inválido pra categoria \"{$c['nome']}\".");
+                $this->redirect("/vendas?filial_id={$filialId}");
+            }
+            $porCategoria[$categoriaId] = (float) $bruto;
+        }
+
+        Meta::adicionarLancamentoVendaBruta((int) $periodo['id'], $filialId, $dataRaw, (float) $valorRaw, (int) Auth::id(), $porCategoria);
 
         Audit::log('lancar_venda_bruta', 'venda_bruta_lancamento', $filialId, "periodo={$periodo['id']}, data={$dataRaw}, valor={$valorRaw}");
         Flash::set('sucesso', 'Lançamento de venda bruta adicionado.');

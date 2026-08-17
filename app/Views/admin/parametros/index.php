@@ -5,6 +5,7 @@
 /** @var int $filialId */
 /** @var array $periodo */
 /** @var array|null $metaFilial */
+/** @var array $categorias */
 use App\Core\Auth;
 use App\Core\Csrf;
 
@@ -104,6 +105,33 @@ $campoOverride = static function (string $chave, string $rotulo) use ($metaFilia
 
   <div class="acoes-form">
     <button type="submit" class="btn">Salvar parâmetros globais</button>
+  </div>
+</form>
+
+<div class="toolbar" style="margin-top:2.5rem">
+  <div>
+    <h2 style="font-size:1.25rem">Meta de mix de vendas por categoria</h2>
+    <p class="subtitle">Percentual ideal do total vendido pela rede em cada categoria (ex.: Similar 30%, RX 15%). Não afeta comissão nem a pontuação da Meta 360 — é só referência pra relatório de mix realizado x meta. Categoria com meta aqui passa a pedir o lançamento do dia também por categoria em Vendas → Venda bruta da filial; deixe vazio pra não rastrear.</p>
+  </div>
+</div>
+
+<form class="form-padrao" method="post" action="/parametros/mix" style="max-width:900px">
+  <?= Csrf::field() ?>
+  <fieldset>
+    <legend>Meta de mix (%)</legend>
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:0 1rem">
+      <?php foreach ($categorias as $c): $catId = (int) $c['id']; ?>
+        <div>
+          <label for="mix_<?= $catId ?>"><?= htmlspecialchars($c['nome'], ENT_QUOTES) ?> (%)</label>
+          <input type="text" id="mix_<?= $catId ?>" name="mix[<?= $catId ?>]"
+                 value="<?= $c['meta_percentual_pct'] !== null ? $fmtVal($c['meta_percentual_pct']) : '' ?>"
+                 placeholder="não rastreada">
+        </div>
+      <?php endforeach; ?>
+    </div>
+  </fieldset>
+  <div class="acoes-form">
+    <button type="submit" class="btn">Salvar meta de mix</button>
   </div>
 </form>
 

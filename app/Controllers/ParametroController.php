@@ -8,6 +8,7 @@ use App\Core\Audit;
 use App\Core\Auth;
 use App\Core\Controller;
 use App\Core\Flash;
+use App\Models\Categoria;
 use App\Models\Filial;
 use App\Models\Meta;
 use App\Models\Parametro;
@@ -46,6 +47,7 @@ final class ParametroController extends Controller
             'filialId' => $filialId,
             'periodo' => $periodo,
             'metaFilial' => $filialId > 0 ? Meta::filial($filialId, (int) $periodo['id']) : null,
+            'categorias' => Categoria::ativas(),
         ]);
     }
 
@@ -133,6 +135,40 @@ final class ParametroController extends Controller
         Audit::log('salvar_override', 'meta_filial', $filialId, "periodo={$periodo['id']}");
         Flash::set('sucesso', 'Override da filial salvo.');
         $this->redirect("/parametros?filial_id={$filialId}");
+    }
+
+    /**
+     * Salva a meta de mix (%) por categoria — parâmetro global, não afeta comissão/pontuação.
+     * Só serve de referência pros relatórios e pra decidir quais categorias pedem lançamento
+     * diário por categoria em /vendas (só as que tiverem meta aqui, ver Categoria::comMetaPercentual).
+     */
+    public function salvarMix(): void
+    {
+        Auth::require(Auth::PAPEL_ADMIN);
+        $this->requireCsrf();
+
+        $post = $this->input('mix', []);
+        $post = is_array($post) ? $post : [];
+        $categoriaIdsValidos = array_column(Categoria::ativas(), 'id');
+
+        $pares = [];
+        foreach ($categoriaIdsValidos as $categoriaId) {
+            $valorRaw = trim(str_replace(',', '.', (string) ($post[$categoriaId] ?? '')));
+            if ($valorRaw === '') {
+                $pares[$categoriaId] = null;
+                continue;
+            }
+            if (!is_numeric($valorRaw) || (float) $valorRaw < 0 || (float) $valorRaw > 100) {
+                Flash::set('erro', 'Meta de mix precisa ser um percentual entre 0 e 100 (ou vazio pra não rastrear a categoria).');
+                $this->redirect('/parametros');
+            }
+            $pares[$categoriaId] = $valorRaw;
+        }
+
+        Categoria::salvarMetasPercentuais($pares);
+        Audit::log('atualizar', 'categoria_meta_percentual', 0);
+        Flash::set('sucesso', 'Meta de mix por categoria salva.');
+        $this->redirect('/parametros');
     }
 
     private function resolverFilialId(array $filiais, int $solicitada = 0): int

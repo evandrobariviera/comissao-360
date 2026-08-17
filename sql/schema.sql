@@ -63,6 +63,11 @@ CREATE TABLE categoria (
   id     INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   nome   VARCHAR(60) NOT NULL,
   ordem  INT NOT NULL DEFAULT 0,
+  -- Meta de mix (%) do total vendido pela rede — parâmetro global (editável em /parametros),
+  -- não afeta comissão/pontuação, só serve pra reportar % realizado x % meta por categoria.
+  -- NULL = categoria não rastreada nesse mix; só categorias com valor aqui pedem o lançamento
+  -- diário por categoria em /vendas (venda bruta da filial).
+  meta_percentual_pct DECIMAL(5,2) NULL,
   ativo  TINYINT(1) NOT NULL DEFAULT 1,
   UNIQUE KEY uq_categoria_nome (nome)
 ) ENGINE=InnoDB;
@@ -185,6 +190,19 @@ CREATE TABLE venda_bruta_lancamento (
   CONSTRAINT fk_venda_bruta_periodo FOREIGN KEY (periodo_id) REFERENCES periodo(id),
   CONSTRAINT fk_venda_bruta_filial FOREIGN KEY (filial_id) REFERENCES filial(id),
   CONSTRAINT fk_venda_bruta_usuario FOREIGN KEY (criado_por) REFERENCES usuario(id)
+) ENGINE=InnoDB;
+
+-- Recorte por categoria de UM lançamento diário de venda bruta (venda_bruta_lancamento) —
+-- só existe pras categorias com meta_percentual_pct configurada. É informativo (não precisa
+-- somar o valor total do dia, já que a filial vende outras categorias sem meta também).
+CREATE TABLE venda_bruta_categoria_lancamento (
+  id                          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  venda_bruta_lancamento_id   BIGINT UNSIGNED NOT NULL,
+  categoria_id                INT UNSIGNED NOT NULL,
+  valor                       DECIMAL(12,2) NOT NULL,
+  UNIQUE KEY uq_vbcl (venda_bruta_lancamento_id, categoria_id),
+  CONSTRAINT fk_vbcl_lancamento FOREIGN KEY (venda_bruta_lancamento_id) REFERENCES venda_bruta_lancamento(id) ON DELETE CASCADE,
+  CONSTRAINT fk_vbcl_categoria FOREIGN KEY (categoria_id) REFERENCES categoria(id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE indicador_funcionario (

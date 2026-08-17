@@ -154,7 +154,12 @@ final class Meta
         ]);
     }
 
-    /** Lançamentos diários da venda bruta da filial, mais recentes primeiro. */
+    /**
+     * Lançamentos diários da venda bruta da filial, mais recentes primeiro, com o recorte por
+     * categoria de cada um (só as categorias com meta de mix configurada têm recorte).
+     *
+     * @return array<int, array{id:int, data:string, valor:string, categorias: array<int, array{categoria_id:int, nome:string, valor:string}>}>
+     */
     public static function lancamentosVendaBruta(int $filialId, int $periodoId, int $limite = 60): array
     {
         $stmt = Database::pdo()->prepare(
@@ -164,8 +169,35 @@ final class Meta
              LIMIT {$limite}"
         );
         $stmt->execute(['filial_id' => $filialId, 'periodo_id' => $periodoId]);
+        $lancamentos = $stmt->fetchAll();
+        if (empty($lancamentos)) {
+            return [];
+        }
 
-        return $stmt->fetchAll();
+        $ids = array_column($lancamentos, 'id');
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmtCat = Database::pdo()->prepare(
+            "SELECT vbcl.venda_bruta_lancamento_id, vbcl.categoria_id, c.nome, vbcl.valor
+             FROM venda_bruta_categoria_lancamento vbcl
+             JOIN categoria c ON c.id = vbcl.categoria_id
+             WHERE vbcl.venda_bruta_lancamento_id IN ($placeholders)"
+        );
+        $stmtCat->execute($ids);
+
+        $porLancamento = [];
+        foreach ($stmtCat->fetchAll() as $row) {
+            $porLancamento[(int) $row['venda_bruta_lancamento_id']][] = [
+                'categoria_id' => (int) $row['categoria_id'],
+                'nome' => $row['nome'],
+                'valor' => $row['valor'],
+            ];
+        }
+
+        foreach ($lancamentos as &$l) {
+            $l['categorias'] = $porLancamento[(int) $l['id']] ?? [];
+        }
+
+        return $lancamentos;
     }
 
     public static function lancamentoVendaBruta(int $id): ?array
@@ -182,13 +214,19 @@ final class Meta
      * não sobrescreve. `meta_filial.venda_bruta_realizada` é recalculado como SUM(valor) logo em
      * seguida, na mesma transação, pra continuar servindo de cache pros outros lugares que já leem
      * essa coluna (dashboard, PremioFilialService, Pontuacao360Calculator).
+     *
+     * $porCategoria é opcional e informativo (não precisa somar o valor total do dia) — só pras
+     * categorias com meta de mix configurada (ver Categoria::comMetaPercentual).
+     *
+     * @param array<int, float> $porCategoria [categoria_id => valor do dia]
      */
     public static function adicionarLancamentoVendaBruta(
         int $periodoId,
         int $filialId,
         string $data,
         float $valor,
-        int $usuarioId
+        int $usuarioId,
+        array $porCategoria = []
     ): void {
         $pdo = Database::pdo();
         $pdo->beginTransaction();
@@ -203,6 +241,21 @@ final class Meta
                 'valor' => $valor,
                 'criado_por' => $usuarioId,
             ]);
+            $lancamentoId = (int) $pdo->lastInsertId();
+
+            if (!empty($porCategoria)) {
+                $stmtCat = $pdo->prepare(
+                    'INSERT INTO venda_bruta_categoria_lancamento (venda_bruta_lancamento_id, categoria_id, valor)
+                     VALUES (:lancamento_id, :categoria_id, :valor)'
+                );
+                foreach ($porCategoria as $categoriaId => $valorCategoria) {
+                    $stmtCat->execute([
+                        'lancamento_id' => $lancamentoId,
+                        'categoria_id' => $categoriaId,
+                        'valor' => $valorCategoria,
+                    ]);
+                }
+            }
 
             self::recalcularVendaBrutaRealizada($pdo, $periodoId, $filialId, $usuarioId);
 

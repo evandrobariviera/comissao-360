@@ -83,9 +83,10 @@ $minhaConta = Funcionario::porUsuario((int) Auth::id());
   form.form-padrao{max-width:520px;}
   form.form-padrao label{display:block; font-size:.83rem; font-weight:600; color:var(--ink-soft); margin:1.1rem 0 .35rem;}
   form.form-padrao label:first-of-type{margin-top:0}
-  form.form-padrao input[type=text], form.form-padrao input[type=email], form.form-padrao input[type=password], form.form-padrao input[type=number], form.form-padrao select{
+  form.form-padrao input[type=text], form.form-padrao input[type=email], form.form-padrao input[type=password], form.form-padrao input[type=number], form.form-padrao input[type=date], form.form-padrao select{
     width:100%; padding:.62rem .8rem; border:1px solid var(--line); border-radius:var(--radius-sm); font-size:.92rem; background:#fff; color:var(--ink); transition:border-color .12s ease, box-shadow .12s ease;
   }
+  form.form-padrao input[type=date]{font-family:inherit;}
   form.form-padrao input:focus, form.form-padrao select:focus{outline:none; border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-tint);}
   form.form-padrao .ajuda{font-size:.78rem; color:var(--ink-faint); margin-top:.3rem;}
   form.form-padrao .acoes-form{margin-top:1.8rem; display:flex; gap:.7rem;}
