@@ -12,6 +12,7 @@
 /** @var float $rentabFilialRealizada */
 /** @var array $ritmo */
 /** @var array|null $checklist */
+use App\Core\Auth;
 use App\Core\Viz;
 
 $nomesMes = [1=>'janeiro',2=>'fevereiro',3=>'março',4=>'abril',5=>'maio',6=>'junho',7=>'julho',8=>'agosto',9=>'setembro',10=>'outubro',11=>'novembro',12=>'dezembro'];
@@ -126,6 +127,12 @@ $rotuloPeriodo = $nomesMes[(int) $periodo['mes']] . '/' . $periodo['ano'];
         <?= Viz::statTilePct('Rentabilidade da filial', $rentabFilialRealizada, $metaRentabFilial) ?>
       </div>
     </div>
+
+    <?php if (Auth::papel() === Auth::PAPEL_GERENTE): ?>
+    <div class="secao">
+      <a href="/painel-filial" class="btn secundario" style="width:100%; text-align:center; box-sizing:border-box">Ver painel completo da filial →</a>
+    </div>
+    <?php endif; ?>
   </div>
 </div>
 

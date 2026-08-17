@@ -23,7 +23,7 @@ foreach ($filiaisPermitidas as $f) { if ((int) $f['id'] === $filialId) { $nomeFi
 <p class="subtitle">Período: <strong><?= htmlspecialchars($rotuloPeriodo, ENT_QUOTES) ?></strong></p>
 
 <?php if (count($filiaisPermitidas) > 1): ?>
-<form method="get" action="/dashboard" class="form-padrao" style="max-width:280px; margin-bottom:1rem;">
+<form method="get" action="/painel-filial" class="form-padrao" style="max-width:280px; margin-bottom:1rem;">
   <label for="filial_id">Filial</label>
   <select id="filial_id" name="filial_id" onchange="this.form.submit()">
     <?php foreach ($filiaisPermitidas as $f): ?>

@@ -18,6 +18,11 @@ use App\Services\RitmoDiarioCalculator;
 
 final class DashboardController extends Controller
 {
+    /**
+     * Landing de /dashboard: admin vê a rede, gerente e funcionário veem o mesmo painel pessoal
+     * ("minha performance"). O que o gerente tem de estratégico (visão agregada da filial,
+     * oportunidades da equipe, ranking) fica em /painel-filial — não é mais a tela de entrada dele.
+     */
     public function index(): void
     {
         Auth::require();
@@ -27,9 +32,16 @@ final class DashboardController extends Controller
 
         match ($papel) {
             Auth::PAPEL_ADMIN => $this->rede((int) $periodo['id'], $periodo),
-            Auth::PAPEL_GERENTE => $this->porFilial((int) $periodo['id'], $periodo),
             default => $this->pessoal((int) $periodo['id'], $periodo),
         };
+    }
+
+    /** Painel estratégico da filial — só gerente (o admin já tem a visão de rede em /dashboard). */
+    public function painelFilial(): void
+    {
+        Auth::require(Auth::PAPEL_GERENTE);
+        $periodo = Periodo::atual();
+        $this->porFilial((int) $periodo['id'], $periodo);
     }
 
     private function rede(int $periodoId, array $periodo): void

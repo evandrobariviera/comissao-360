@@ -252,6 +252,7 @@ $minhaConta = Funcionario::porUsuario((int) Auth::id());
 </nav>
 <?php elseif ($papel === 'gerente'): ?>
 <nav class="admin-nav">
+  <a href="/painel-filial" class="<?= str_starts_with($rota, '/painel-filial') ? 'active' : '' ?>">Painel da filial</a>
   <a href="/metas" class="<?= str_starts_with($rota, '/metas') ? 'active' : '' ?>">Metas</a>
   <a href="/vendas" class="<?= str_starts_with($rota, '/vendas') ? 'active' : '' ?>">Lançar vendas</a>
   <a href="/indicadores" class="<?= str_starts_with($rota, '/indicadores') ? 'active' : '' ?>">Indicadores</a>
@@ -263,7 +264,7 @@ $minhaConta = Funcionario::porUsuario((int) Auth::id());
   <a href="/minhas-metas" class="<?= str_starts_with($rota, '/minhas-metas') ? 'active' : '' ?>">Minhas metas</a>
 </nav>
 <?php endif; ?>
-<?php $mainWide = $papel === 'funcionario' && ($rota === '/dashboard' || $rota === '/'); ?>
+<?php $mainWide = in_array($papel, ['funcionario', 'gerente'], true) && ($rota === '/dashboard' || $rota === '/'); ?>
 <main class="<?= $mainWide ? 'main-wide' : '' ?>">
 <?php if ($flash): ?>
   <div class="flash <?= htmlspecialchars($flash['tipo'], ENT_QUOTES) ?>"><?= htmlspecialchars($flash['mensagem'], ENT_QUOTES) ?></div>

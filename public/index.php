@@ -23,6 +23,7 @@ $router = new Router();
 
 $router->get('/', [DashboardController::class, 'index']);
 $router->get('/dashboard', [DashboardController::class, 'index']);
+$router->get('/painel-filial', [DashboardController::class, 'painelFilial']);
 $router->get('/ajuda', [AjudaController::class, 'index']);
 $router->get('/login', [AuthController::class, 'loginForm']);
 $router->post('/login', [AuthController::class, 'login']);
