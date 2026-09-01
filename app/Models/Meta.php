@@ -318,6 +318,40 @@ final class Meta
     }
 
     /**
+     * Total por categoria no período, rede inteira. O recorte lançado junto da venda bruta diária
+     * é preenchido pelo gerente como ACUMULADO do mês até aquele dia (não o valor isolado daquele
+     * dia) — então o realizado de cada filial é o valor do lançamento mais recente dela no período,
+     * nunca a soma de todos os dias (ver [[meta-mix-categoria]]). Soma-se então entre as filiais.
+     *
+     * @return array<int, float> [categoria_id => valor somado no período]
+     */
+    public static function mixRealizadoRede(int $periodoId): array
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT vbl.filial_id, vbcl.categoria_id, vbcl.valor
+             FROM venda_bruta_categoria_lancamento vbcl
+             JOIN venda_bruta_lancamento vbl ON vbl.id = vbcl.venda_bruta_lancamento_id
+             WHERE vbl.periodo_id = :periodo_id
+             ORDER BY vbl.filial_id, vbcl.categoria_id, vbl.data ASC, vbl.id ASC'
+        );
+        $stmt->execute(['periodo_id' => $periodoId]);
+
+        $ultimoPorFilial = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $ultimoPorFilial[(int) $row['filial_id']][(int) $row['categoria_id']] = (float) $row['valor'];
+        }
+
+        $porCategoria = [];
+        foreach ($ultimoPorFilial as $categorias) {
+            foreach ($categorias as $categoriaId => $valor) {
+                $porCategoria[$categoriaId] = ($porCategoria[$categoriaId] ?? 0.0) + $valor;
+            }
+        }
+
+        return $porCategoria;
+    }
+
+    /**
      * Venda bruta somada por dia do mês (não acumulado) — base para o gráfico de ritmo diário.
      *
      * @return array<string, float> ['Y-m-d' => valor do dia]

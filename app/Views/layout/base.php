@@ -3,8 +3,10 @@
 declare(strict_types=1);
 
 use App\Core\Auth;
+use App\Core\Csrf;
 use App\Core\Flash;
 use App\Models\Funcionario;
+use App\Models\Periodo;
 
 /** @var string $content */
 $rotulosPapel = [
@@ -12,9 +14,14 @@ $rotulosPapel = [
     'gerente' => 'Gerente de filial',
     'funcionario' => 'Funcionário',
 ];
+$rotulosStatusPeriodo = ['aberto' => 'Aberto', 'fechado' => 'Fechado', 'aprovado' => 'Aprovado'];
+$nomesMesCurto = [1=>'jan',2=>'fev',3=>'mar',4=>'abr',5=>'mai',6=>'jun',7=>'jul',8=>'ago',9=>'set',10=>'out',11=>'nov',12=>'dez'];
 $papel = Auth::papel();
 $flash = Flash::pull();
 $minhaConta = Funcionario::porUsuario((int) Auth::id());
+$periodoAtivo = Periodo::ativo();
+$periodosDisponiveis = Periodo::listar();
+$urlAtual = $_SERVER['REQUEST_URI'] ?? '/dashboard';
 ?>
 <!doctype html>
 <html lang="pt-BR">
@@ -49,6 +56,10 @@ $minhaConta = Funcionario::porUsuario((int) Auth::id());
   header.app .avatar-link{display:flex; align-items:center; gap:.5rem;}
   header.app .avatar-mini{width:27px; height:27px; border-radius:999px; object-fit:cover; border:1px solid var(--line);}
   header.app .avatar-mini.placeholder{background:var(--primary-tint); color:var(--primary-ink); display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:700;}
+  .seletor-periodo{display:flex; align-items:center; gap:.5rem;}
+  .seletor-periodo select{padding:.4rem .6rem; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--surface); color:var(--ink); font-size:.85rem; font-weight:600; font-family:var(--font);}
+  .seletor-periodo select:focus{outline:none; border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-tint);}
+  .pill.status-fechado, .pill.status-aprovado{background:var(--warn-tint); color:var(--warn);}
   nav.admin-nav{background:var(--surface); border-bottom:1px solid var(--line); padding:0 1.75rem; display:flex; gap:.3rem; overflow-x:auto;}
   nav.admin-nav a{display:inline-block; padding:.75rem .65rem; color:var(--ink-soft); text-decoration:none; font-size:.87rem; font-weight:500; border-bottom:2px solid transparent; white-space:nowrap; transition:color .12s ease, border-color .12s ease;}
   nav.admin-nav a:hover{color:var(--ink)}
@@ -192,6 +203,17 @@ $minhaConta = Funcionario::porUsuario((int) Auth::id());
   .tier-fill{height:100%; border-radius:999px; background:var(--primary);}
   .tier-count{text-align:right; font-variant-numeric:tabular-nums; color:var(--ink-soft);}
 
+  /* ---- mix de categoria: realizado (barra) x meta (marcador), escala compartilhada entre linhas ---- */
+  .mix-row{padding:.6rem 0; border-bottom:1px solid var(--line);}
+  .mix-row:last-child{border-bottom:none;}
+  .mix-topo{display:flex; align-items:baseline; gap:.6rem; flex-wrap:wrap; margin-bottom:.4rem;}
+  .mix-nome{font-size:.88rem; font-weight:600; color:var(--ink); flex:1 1 auto;}
+  .mix-valores{font-size:.85rem; color:var(--ink); white-space:nowrap;}
+  .mix-meta-txt{color:var(--ink-faint); font-weight:400;}
+  .mix-track{position:relative; height:10px; border-radius:999px; overflow:visible;}
+  .mix-fill{height:100%; border-radius:999px;}
+  .mix-marcador{position:absolute; top:-3px; width:2px; height:16px; background:var(--ink); border-radius:1px; transform:translateX(-1px);}
+
   /* ---- gauge: faixa piso→teto de um indicador individual ---- */
   .gauge-track{height:8px; border-radius:999px; overflow:hidden; margin-top:.6rem;}
   .gauge-fill{height:100%; border-radius:999px;}
@@ -224,6 +246,22 @@ $minhaConta = Funcionario::porUsuario((int) Auth::id());
 <header class="app">
   <div class="brand"><img src="/assets/img/logo.jpg" alt="Farmácia Geremias · Comissão 360"></div>
   <div class="top-right">
+    <form method="post" action="/periodo/selecionar" class="seletor-periodo">
+      <?= Csrf::field() ?>
+      <input type="hidden" name="redirect" value="<?= htmlspecialchars($urlAtual, ENT_QUOTES) ?>">
+      <select name="periodo" onchange="var p=this.value.split('-'); this.form.ano.value=p[0]; this.form.mes.value=p[1]; this.form.submit()">
+        <?php foreach ($periodosDisponiveis as $p): ?>
+          <option value="<?= (int) $p['ano'] ?>-<?= (int) $p['mes'] ?>" <?= ((int) $p['ano'] === (int) $periodoAtivo['ano'] && (int) $p['mes'] === (int) $periodoAtivo['mes']) ? 'selected' : '' ?>>
+            <?= htmlspecialchars($nomesMesCurto[(int) $p['mes']], ENT_QUOTES) ?>/<?= (int) $p['ano'] ?><?= $p['status'] !== 'aberto' ? ' · ' . htmlspecialchars($rotulosStatusPeriodo[$p['status']], ENT_QUOTES) : '' ?>
+          </option>
+        <?php endforeach; ?>
+      </select>
+      <input type="hidden" name="ano" value="<?= (int) $periodoAtivo['ano'] ?>">
+      <input type="hidden" name="mes" value="<?= (int) $periodoAtivo['mes'] ?>">
+    </form>
+    <?php if ($periodoAtivo['status'] !== 'aberto'): ?>
+      <span class="pill status-<?= htmlspecialchars($periodoAtivo['status'], ENT_QUOTES) ?>"><?= htmlspecialchars($rotulosStatusPeriodo[$periodoAtivo['status']], ENT_QUOTES) ?></span>
+    <?php endif; ?>
     <span class="pill"><?= htmlspecialchars($rotulosPapel[$papel] ?? $papel, ENT_QUOTES) ?></span>
     <a href="/dashboard">Dashboard</a>
     <a href="/ajuda">Ajuda</a>

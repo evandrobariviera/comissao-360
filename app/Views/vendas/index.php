@@ -77,11 +77,11 @@ foreach ($categorias as $c) {
     </div>
   </div>
   <?php if (!empty($categoriasMix)): ?>
-  <p class="ajuda">Opcional — recorte do dia por categoria, só pra acompanhar o mix de vendas (não precisa somar o valor total acima).</p>
+  <p class="ajuda">Opcional — total acumulado do mês até hoje, por categoria, só pra acompanhar o mix de vendas (não é o valor do dia isolado, e não precisa somar o valor total acima).</p>
   <div style="display:grid; grid-template-columns:1fr 1fr; gap:0 1rem">
     <?php foreach ($categoriasMix as $c): ?>
       <div>
-        <label for="categoria_valor_<?= (int) $c['id'] ?>"><?= htmlspecialchars($c['nome'], ENT_QUOTES) ?> (R$) — meta <?= $fmt($c['meta_percentual_pct']) ?>%</label>
+        <label for="categoria_valor_<?= (int) $c['id'] ?>"><?= htmlspecialchars($c['nome'], ENT_QUOTES) ?> — acumulado do mês (R$) — meta <?= $fmt($c['meta_percentual_pct']) ?>%</label>
         <input type="text" id="categoria_valor_<?= (int) $c['id'] ?>" name="categoria_valor[<?= (int) $c['id'] ?>]" placeholder="0,00">
       </div>
     <?php endforeach; ?>
@@ -103,6 +103,7 @@ foreach ($categorias as $c) {
       <td><?= (new DateTime($l['data']))->format('d/m/Y') ?>
         <?php if (!empty($l['categorias'])): ?>
           <br><span class="ajuda" style="margin:0">
+            Acumulado do mês até aqui —
             <?= implode(' · ', array_map(
                 static fn ($c) => htmlspecialchars($c['nome'], ENT_QUOTES) . ': R$ ' . number_format((float) $c['valor'], 2, ',', '.'),
                 $l['categorias']

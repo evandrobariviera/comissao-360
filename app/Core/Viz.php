@@ -188,6 +188,39 @@ final class Viz
     }
 
     /**
+     * Realizado x meta de mix de uma categoria: barra do realizado numa escala compartilhada entre
+     * categorias (pra magnitude ser comparável de linha pra linha) + marcador na posição da meta.
+     * $maiorMelhor decide o lado bom (piso = quanto mais alto melhor, teto = quanto mais baixo).
+     */
+    public static function mixCategoriaRow(string $nome, float $realizadoPct, float $metaPct, bool $maiorMelhor, float $escalaMax): string
+    {
+        $atingimento = $maiorMelhor
+            ? ($metaPct > 0 ? ($realizadoPct / $metaPct) * 100 : ($realizadoPct > 0 ? 100.0 : 0.0))
+            : ($realizadoPct > 0 ? ($metaPct / $realizadoPct) * 100 : 100.0);
+        [$classe, $cor, $tinta, $rotulo] = self::statusAtingimento($atingimento);
+
+        $larguraReal = $escalaMax > 0 ? min(100.0, ($realizadoPct / $escalaMax) * 100) : 0.0;
+        $posMeta = $escalaMax > 0 ? min(100.0, ($metaPct / $escalaMax) * 100) : 0.0;
+        $simbolo = $maiorMelhor ? '≥' : '≤';
+
+        $titulo = 'Realizado ' . self::pct($realizadoPct) . ' · Meta: ' . $simbolo . ' ' . self::pct($metaPct);
+
+        $html = '<div class="mix-row" title="' . htmlspecialchars($titulo, ENT_QUOTES) . '">';
+        $html .= '<div class="mix-topo">';
+        $html .= '<span class="mix-nome">' . htmlspecialchars($nome, ENT_QUOTES) . '</span>';
+        $html .= '<span class="mix-valores"><strong>' . self::pct($realizadoPct) . '</strong>'
+            . ' <span class="mix-meta-txt">meta ' . $simbolo . ' ' . self::pct($metaPct) . '</span></span>';
+        $html .= '<span class="status-tag ' . $classe . '">' . htmlspecialchars($rotulo, ENT_QUOTES) . '</span>';
+        $html .= '</div>';
+        $html .= '<div class="mix-track" style="background:' . $tinta . '">';
+        $html .= '<div class="mix-fill" style="width:' . $larguraReal . '%; background:' . $cor . '"></div>';
+        $html .= '<div class="mix-marcador" style="left:' . $posMeta . '%"></div>';
+        $html .= '</div></div>';
+
+        return $html;
+    }
+
+    /**
      * Faixa piso→teto de um indicador individual (rentabilidade, desconto médio, ticket médio),
      * mostrando quantos pontos (%) da pontuação máxima do sub-pilar aquele valor já garante.
      * $maiorMelhor = false inverte a direção (ex.: desconto médio — valor baixo é bom).

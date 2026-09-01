@@ -28,7 +28,7 @@ final class DashboardController extends Controller
         Auth::require();
 
         $papel = Auth::papel();
-        $periodo = Periodo::atual();
+        $periodo = Periodo::ativo();
 
         match ($papel) {
             Auth::PAPEL_ADMIN => $this->rede((int) $periodo['id'], $periodo),
@@ -40,7 +40,7 @@ final class DashboardController extends Controller
     public function painelFilial(): void
     {
         Auth::require(Auth::PAPEL_GERENTE);
-        $periodo = Periodo::atual();
+        $periodo = Periodo::ativo();
         $this->porFilial((int) $periodo['id'], $periodo);
     }
 

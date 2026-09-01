@@ -28,7 +28,7 @@ final class IndicadorController extends Controller
         }
 
         $filialId = $this->resolverFilialId($filiaisPermitidas);
-        $periodo = Periodo::atual();
+        $periodo = Periodo::ativo();
 
         $this->render('indicadores/index', [
             'filiaisPermitidas' => $filiaisPermitidas,
@@ -47,7 +47,7 @@ final class IndicadorController extends Controller
 
         $filiaisPermitidas = $this->filiaisPermitidas();
         $filialId = $this->resolverFilialId($filiaisPermitidas, (int) $this->input('filial_id', 0));
-        $periodo = Periodo::atual();
+        $periodo = Periodo::ativo();
 
         if ($periodo['status'] !== 'aberto') {
             Flash::set('erro', 'Este período já foi fechado — não é mais possível alterar indicadores.');

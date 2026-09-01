@@ -29,7 +29,7 @@ final class MetaController extends Controller
         }
 
         $filialId = $this->resolverFilialId($filiaisPermitidas);
-        $periodo = Periodo::atual();
+        $periodo = Periodo::ativo();
         $funcionarios = Funcionario::porFilial($filialId);
         $categorias = Categoria::ativas();
 
@@ -51,7 +51,7 @@ final class MetaController extends Controller
 
         $filiaisPermitidas = $this->filiaisPermitidas();
         $filialId = $this->resolverFilialId($filiaisPermitidas, (int) $this->input('filial_id', 0));
-        $periodo = Periodo::atual();
+        $periodo = Periodo::ativo();
 
         if ($periodo['status'] !== 'aberto') {
             Flash::set('erro', 'Este período já foi fechado — não é mais possível alterar metas.');

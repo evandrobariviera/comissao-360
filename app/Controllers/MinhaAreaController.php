@@ -29,7 +29,7 @@ final class MinhaAreaController extends Controller
             return;
         }
 
-        $periodo = Periodo::atual();
+        $periodo = Periodo::ativo();
         $periodoId = (int) $periodo['id'];
         $categorias = Categoria::ativas();
 
@@ -58,7 +58,7 @@ final class MinhaAreaController extends Controller
             return;
         }
 
-        $periodo = Periodo::atual();
+        $periodo = Periodo::ativo();
         $periodoId = (int) $periodo['id'];
         $categorias = Categoria::ativas();
         $grid = Meta::grid([$funcionarioId], array_column($categorias, 'id'), $periodoId);

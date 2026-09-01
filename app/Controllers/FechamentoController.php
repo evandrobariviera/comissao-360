@@ -28,7 +28,7 @@ final class FechamentoController extends Controller
         }
 
         $filialId = $this->resolverFilialId($filiaisPermitidas);
-        $periodo = Periodo::atual();
+        $periodo = Periodo::ativo();
 
         $this->render('fechamento/index', [
             'filiaisPermitidas' => $filiaisPermitidas,
@@ -43,7 +43,7 @@ final class FechamentoController extends Controller
         Auth::require(Auth::PAPEL_ADMIN);
         $this->requireCsrf();
 
-        $periodo = Periodo::atual();
+        $periodo = Periodo::ativo();
         if ($periodo['status'] === 'aprovado') {
             Flash::set('erro', 'Este período já foi aprovado.');
             $this->redirect('/fechamento');

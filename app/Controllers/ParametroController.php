@@ -33,12 +33,14 @@ final class ParametroController extends Controller
 
         $filiais = Filial::ativas();
         $filialId = $this->resolverFilialId($filiais);
-        $periodo = Periodo::atual();
+        $periodo = Periodo::ativo();
 
         $parametros = [];
         foreach (Parametro::todosDetalhados() as $row) {
             $parametros[$row['chave']] = $row;
         }
+
+        $periodoId = (int) $periodo['id'];
 
         $this->render('admin/parametros/index', [
             'parametros' => $parametros,
@@ -46,8 +48,11 @@ final class ParametroController extends Controller
             'filiais' => $filiais,
             'filialId' => $filialId,
             'periodo' => $periodo,
-            'metaFilial' => $filialId > 0 ? Meta::filial($filialId, (int) $periodo['id']) : null,
+            'metaFilial' => $filialId > 0 ? Meta::filial($filialId, $periodoId) : null,
             'categorias' => Categoria::ativas(),
+            'mixCategorias' => Categoria::comMetaPercentual(),
+            'mixRealizado' => Meta::mixRealizadoRede($periodoId),
+            'mixTotalRede' => Meta::totalRedeVendaBrutaRealizada($periodoId),
         ]);
     }
 
@@ -106,7 +111,7 @@ final class ParametroController extends Controller
 
         $filiais = Filial::ativas();
         $filialId = $this->resolverFilialId($filiais, (int) $this->input('filial_id', 0));
-        $periodo = Periodo::atual();
+        $periodo = Periodo::ativo();
 
         if ($periodo['status'] !== 'aberto') {
             Flash::set('erro', 'Este período já foi fechado — não é mais possível alterar overrides.');
