@@ -188,36 +188,66 @@ final class Viz
     }
 
     /**
-     * Realizado x meta de mix de uma categoria: barra do realizado numa escala compartilhada entre
-     * categorias (pra magnitude ser comparável de linha pra linha) + marcador na posição da meta.
-     * $maiorMelhor decide o lado bom (piso = quanto mais alto melhor, teto = quanto mais baixo).
+     * Status de "realizado x meta" pra um percentual de mix, considerando a direção (piso = quanto
+     * mais alto melhor, teto = quanto mais baixo melhor). Compartilhado entre mixCategoriaRow() e
+     * mixGrade() pra manter as duas visões (por categoria e a grade por filial) sempre coerentes.
+     *
+     * @return array{0:string,1:string,2:string,3:string} [classe, cor, tinta, rótulo]
      */
-    public static function mixCategoriaRow(string $nome, float $realizadoPct, float $metaPct, bool $maiorMelhor, float $escalaMax): string
+    private static function statusMix(float $realizadoPct, float $metaPct, bool $maiorMelhor): array
     {
         $atingimento = $maiorMelhor
             ? ($metaPct > 0 ? ($realizadoPct / $metaPct) * 100 : ($realizadoPct > 0 ? 100.0 : 0.0))
             : ($realizadoPct > 0 ? ($metaPct / $realizadoPct) * 100 : 100.0);
-        [$classe, $cor, $tinta, $rotulo] = self::statusAtingimento($atingimento);
 
-        $larguraReal = $escalaMax > 0 ? min(100.0, ($realizadoPct / $escalaMax) * 100) : 0.0;
-        $posMeta = $escalaMax > 0 ? min(100.0, ($metaPct / $escalaMax) * 100) : 0.0;
-        $simbolo = $maiorMelhor ? '≥' : '≤';
+        return self::statusAtingimento($atingimento);
+    }
 
-        $titulo = 'Realizado ' . self::pct($realizadoPct) . ' · Meta: ' . $simbolo . ' ' . self::pct($metaPct);
+    /**
+     * Grade "realizado x meta" de mix por categoria — uma linha por categoria, uma coluna por
+     * filial + uma coluna "Rede" agregada, célula colorida pelo mesmo status de statusMix().
+     * Heatmap: a cor mostra rápido quem está fora do alvo, o número em cada célula mantém a leitura
+     * exata sem depender só da cor.
+     *
+     * @param array<int, string> $nomesFiliais [filial_id => nome], ordem de exibição das colunas
+     * @param array<int, array{
+     *   nome:string, meta_pct:float, maior_melhor:bool, rede_pct:float,
+     *   por_filial: array<int, float>
+     * }> $linhas uma por categoria; por_filial indexado pelos mesmos filial_id de $nomesFiliais
+     */
+    public static function mixGrade(array $nomesFiliais, array $linhas): string
+    {
+        $html = '<div class="legend">'
+            . '<span><span class="sw" style="background:var(--good)"></span>Bateu a meta</span>'
+            . '<span><span class="sw" style="background:var(--warn)"></span>Quase lá</span>'
+            . '<span><span class="sw" style="background:var(--bad)"></span>Abaixo da meta</span>'
+            . '</div>';
 
-        $html = '<div class="mix-row" title="' . htmlspecialchars($titulo, ENT_QUOTES) . '">';
-        $html .= '<div class="mix-topo">';
-        $html .= '<span class="mix-nome">' . htmlspecialchars($nome, ENT_QUOTES) . '</span>';
-        $html .= '<span class="mix-valores"><strong>' . self::pct($realizadoPct) . '</strong>'
-            . ' <span class="mix-meta-txt">meta ' . $simbolo . ' ' . self::pct($metaPct) . '</span></span>';
-        $html .= '<span class="status-tag ' . $classe . '">' . htmlspecialchars($rotulo, ENT_QUOTES) . '</span>';
-        $html .= '</div>';
-        $html .= '<div class="mix-track" style="background:' . $tinta . '">';
-        $html .= '<div class="mix-fill" style="width:' . $larguraReal . '%; background:' . $cor . '"></div>';
-        $html .= '<div class="mix-marcador" style="left:' . $posMeta . '%"></div>';
-        $html .= '</div></div>';
+        $html .= '<div class="scrollx"><table class="mix-grade">';
+        $html .= '<thead><tr><th>Categoria</th><th>Meta</th>';
+        foreach ($nomesFiliais as $nomeFilial) {
+            $html .= '<th>' . htmlspecialchars($nomeFilial, ENT_QUOTES) . '</th>';
+        }
+        $html .= '<th class="mix-rede-col">Rede</th></tr></thead><tbody>';
 
-        return $html;
+        foreach ($linhas as $l) {
+            $simbolo = $l['maior_melhor'] ? '≥' : '≤';
+            $html .= '<tr><td>' . htmlspecialchars($l['nome'], ENT_QUOTES) . '</td>';
+            $html .= '<td class="mix-meta-col">' . $simbolo . ' ' . self::pct($l['meta_pct']) . '</td>';
+
+            foreach (array_keys($nomesFiliais) as $filialId) {
+                $pctFilial = $l['por_filial'][$filialId] ?? 0.0;
+                [, $cor, $tinta] = self::statusMix($pctFilial, $l['meta_pct'], $l['maior_melhor']);
+                $html .= '<td class="mix-cell" style="background:' . $tinta . '; color:' . $cor . '">' . self::pct($pctFilial) . '</td>';
+            }
+
+            [, $corRede, $tintaRede] = self::statusMix($l['rede_pct'], $l['meta_pct'], $l['maior_melhor']);
+            $html .= '<td class="mix-cell mix-rede-col" style="background:' . $tintaRede . '; color:' . $corRede . '"><strong>'
+                . self::pct($l['rede_pct']) . '</strong></td>';
+            $html .= '</tr>';
+        }
+
+        return $html . '</tbody></table></div>';
     }
 
     /**

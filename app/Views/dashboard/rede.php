@@ -10,6 +10,8 @@
 /** @var array $ranking */
 /** @var array $distribuicao */
 /** @var array $oportunidades */
+/** @var array<int,string> $mixNomesFiliais */
+/** @var array $mixLinhas */
 use App\Core\Viz;
 
 $nomesMes = [1=>'janeiro',2=>'fevereiro',3=>'março',4=>'abril',5=>'maio',6=>'junho',7=>'julho',8=>'agosto',9=>'setembro',10=>'outubro',11=>'novembro',12=>'dezembro'];
@@ -35,6 +37,14 @@ $atingimentoRede = $metaRede > 0 ? ($vendaRealizada / $metaRede) * 100 : 0.0;
     <?php endforeach; ?>
   </div>
 </div>
+
+<?php if (!empty($mixLinhas) && $vendaRealizada > 0): ?>
+<div class="secao">
+  <h3>Mix de vendas por categoria</h3>
+  <p class="secao-sub">Realizado x meta de cada categoria, por filial e na rede — configurado em Parâmetros.</p>
+  <div class="card"><?= Viz::mixGrade($mixNomesFiliais, $mixLinhas) ?></div>
+</div>
+<?php endif; ?>
 
 <div class="secao">
   <h3>Ranking de funcionários</h3>

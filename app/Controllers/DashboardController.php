@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\Core\Auth;
 use App\Core\Controller;
 use App\Core\Database;
+use App\Models\Categoria;
 use App\Models\Filial;
 use App\Models\Funcionario;
 use App\Models\Indicador;
@@ -55,6 +56,7 @@ final class DashboardController extends Controller
 
         $filiaisComMeta = [];
         $filiaisBateram = 0;
+        $vendaBrutaPorFilial = [];
         foreach ($filiais as $f) {
             $filialId = (int) $f['id'];
             $meta = Meta::filial($filialId, $periodoId);
@@ -64,6 +66,37 @@ final class DashboardController extends Controller
                 $filiaisBateram++;
             }
             $filiaisComMeta[] = ['nome' => $f['nome'], 'realizado' => $realizado, 'meta' => $metaVenda];
+            $vendaBrutaPorFilial[$filialId] = $realizado;
+        }
+
+        $nomesFiliaisMix = [];
+        foreach ($filiais as $f) {
+            $nomesFiliaisMix[(int) $f['id']] = $f['nome'];
+        }
+        $mixPorFilial = Meta::mixRealizadoPorFilial($periodoId);
+        $mixTotaisRede = [];
+        foreach ($mixPorFilial as $porCategoria) {
+            foreach ($porCategoria as $catId => $valor) {
+                $mixTotaisRede[$catId] = ($mixTotaisRede[$catId] ?? 0.0) + $valor;
+            }
+        }
+
+        $mixLinhas = [];
+        foreach (Categoria::comMetaPercentual() as $c) {
+            $catId = (int) $c['id'];
+            $porFilial = [];
+            foreach ($nomesFiliaisMix as $filialId => $nomeFilial) {
+                $totalFilial = $vendaBrutaPorFilial[$filialId] ?? 0.0;
+                $valorFilial = $mixPorFilial[$filialId][$catId] ?? 0.0;
+                $porFilial[$filialId] = $totalFilial > 0 ? ($valorFilial / $totalFilial) * 100 : 0.0;
+            }
+            $mixLinhas[] = [
+                'nome' => $c['nome'],
+                'meta_pct' => (float) $c['meta_percentual_pct'],
+                'maior_melhor' => ($c['meta_percentual_tipo'] ?? 'piso') === 'piso',
+                'rede_pct' => $vendaRealizada > 0 ? (($mixTotaisRede[$catId] ?? 0.0) / $vendaRealizada) * 100 : 0.0,
+                'por_filial' => $porFilial,
+            ];
         }
 
         $ranking = array_map(
@@ -92,6 +125,8 @@ final class DashboardController extends Controller
             'ranking' => $ranking,
             'distribuicao' => $distribuicao,
             'oportunidades' => self::oportunidades($linhas, 5),
+            'mixNomesFiliais' => $nomesFiliaisMix,
+            'mixLinhas' => $mixLinhas,
         ]);
     }
 

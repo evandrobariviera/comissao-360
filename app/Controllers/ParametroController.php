@@ -40,19 +40,14 @@ final class ParametroController extends Controller
             $parametros[$row['chave']] = $row;
         }
 
-        $periodoId = (int) $periodo['id'];
-
         $this->render('admin/parametros/index', [
             'parametros' => $parametros,
             'parametrosGlobais' => Parametro::todos(),
             'filiais' => $filiais,
             'filialId' => $filialId,
             'periodo' => $periodo,
-            'metaFilial' => $filialId > 0 ? Meta::filial($filialId, $periodoId) : null,
+            'metaFilial' => $filialId > 0 ? Meta::filial($filialId, (int) $periodo['id']) : null,
             'categorias' => Categoria::ativas(),
-            'mixCategorias' => Categoria::comMetaPercentual(),
-            'mixRealizado' => Meta::mixRealizadoRede($periodoId),
-            'mixTotalRede' => Meta::totalRedeVendaBrutaRealizada($periodoId),
         ]);
     }
 

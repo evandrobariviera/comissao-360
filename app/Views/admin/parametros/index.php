@@ -6,32 +6,8 @@
 /** @var array $periodo */
 /** @var array|null $metaFilial */
 /** @var array $categorias */
-/** @var array $mixCategorias */
-/** @var array<int,float> $mixRealizado */
-/** @var float $mixTotalRede */
 use App\Core\Auth;
 use App\Core\Csrf;
-use App\Core\Viz;
-
-$nomesMes = [1=>'janeiro',2=>'fevereiro',3=>'março',4=>'abril',5=>'maio',6=>'junho',7=>'julho',8=>'agosto',9=>'setembro',10=>'outubro',11=>'novembro',12=>'dezembro'];
-$rotuloPeriodoMix = $nomesMes[(int) $periodo['mes']] . '/' . $periodo['ano'];
-
-$mixLinhas = [];
-foreach ($mixCategorias as $c) {
-    $catId = (int) $c['id'];
-    $realizadoValor = $mixRealizado[$catId] ?? 0.0;
-    $mixLinhas[] = [
-        'nome' => $c['nome'],
-        'realizado_pct' => $mixTotalRede > 0 ? ($realizadoValor / $mixTotalRede) * 100 : 0.0,
-        'meta_pct' => (float) $c['meta_percentual_pct'],
-        'maior_melhor' => ($c['meta_percentual_tipo'] ?? 'piso') === 'piso',
-    ];
-}
-$mixEscalaMax = 10.0;
-foreach ($mixLinhas as $l) {
-    $mixEscalaMax = max($mixEscalaMax, $l['realizado_pct'], $l['meta_pct']);
-}
-$mixEscalaMax = ceil($mixEscalaMax * 1.15 / 5) * 5;
 
 $fmt = static fn (string $chave, float $default = 0) => rtrim(rtrim(
     number_format((float) ($parametros[$chave]['valor'] ?? $default), 2, '.', ''), '0'), '.');
@@ -135,22 +111,8 @@ $campoOverride = static function (string $chave, string $rotulo) use ($metaFilia
 <div class="toolbar" style="margin-top:2.5rem">
   <div>
     <h2 style="font-size:1.25rem">Meta de mix de vendas por categoria</h2>
-    <p class="subtitle">Percentual ideal do total vendido pela rede em cada categoria (ex.: Similar 30%, RX 15%). Não afeta comissão nem a pontuação da Meta 360 — é só referência pra relatório de mix realizado x meta. Categoria com meta aqui passa a pedir o lançamento do dia também por categoria em Vendas → Venda bruta da filial; deixe vazio pra não rastrear. <strong>Tipo:</strong> piso = quanto mais alto melhor (meta mínima); teto = quanto mais baixo melhor (meta máxima, ex. RX).</p>
+    <p class="subtitle">Percentual ideal do total vendido pela rede em cada categoria (ex.: Similar 30%, RX 15%). Não afeta comissão nem a pontuação da Meta 360 — é só referência pra relatório de mix realizado x meta (ver Painel da rede). Categoria com meta aqui passa a pedir o lançamento do dia também por categoria em Vendas → Venda bruta da filial; deixe vazio pra não rastrear. <strong>Tipo:</strong> piso = quanto mais alto melhor (meta mínima); teto = quanto mais baixo melhor (meta máxima, ex. RX).</p>
   </div>
-</div>
-
-<div class="card" style="max-width:640px">
-  <h3 style="margin:0 0 .15rem; font-size:1rem">Realizado x meta — <?= htmlspecialchars($rotuloPeriodoMix, ENT_QUOTES) ?></h3>
-  <?php if ($mixTotalRede <= 0): ?>
-    <p class="subtitle" style="margin:.3rem 0 0">Ainda não há venda bruta lançada neste período — sem base pra calcular o realizado.</p>
-  <?php elseif (empty($mixLinhas)): ?>
-    <p class="subtitle" style="margin:.3rem 0 0">Nenhuma categoria com meta de mix configurada ainda.</p>
-  <?php else: ?>
-    <p class="subtitle" style="margin:.3rem 0 1rem">Barra: fatia real da categoria no total vendido pela rede. Traço: meta configurada abaixo.</p>
-    <?php foreach ($mixLinhas as $l): ?>
-      <?= Viz::mixCategoriaRow($l['nome'], $l['realizado_pct'], $l['meta_pct'], $l['maior_melhor'], $mixEscalaMax) ?>
-    <?php endforeach; ?>
-  <?php endif; ?>
 </div>
 
 <form class="form-padrao" method="post" action="/parametros/mix" style="max-width:640px">

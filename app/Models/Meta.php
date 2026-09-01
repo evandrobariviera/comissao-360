@@ -318,14 +318,14 @@ final class Meta
     }
 
     /**
-     * Total por categoria no período, rede inteira. O recorte lançado junto da venda bruta diária
-     * é preenchido pelo gerente como ACUMULADO do mês até aquele dia (não o valor isolado daquele
-     * dia) — então o realizado de cada filial é o valor do lançamento mais recente dela no período,
-     * nunca a soma de todos os dias (ver [[meta-mix-categoria]]). Soma-se então entre as filiais.
+     * Último valor lançado de cada categoria, por filial, no período. O recorte lançado junto da
+     * venda bruta diária é preenchido pelo gerente como ACUMULADO do mês até aquele dia (não o
+     * valor isolado daquele dia) — então o realizado de uma filial numa categoria é o valor do
+     * lançamento mais recente dela no período, nunca a soma de todos os dias (ver [[meta-mix-categoria]]).
      *
-     * @return array<int, float> [categoria_id => valor somado no período]
+     * @return array<int, array<int, float>> [filial_id => [categoria_id => valor]]
      */
-    public static function mixRealizadoRede(int $periodoId): array
+    public static function mixRealizadoPorFilial(int $periodoId): array
     {
         $stmt = Database::pdo()->prepare(
             'SELECT vbl.filial_id, vbcl.categoria_id, vbcl.valor
@@ -341,8 +341,14 @@ final class Meta
             $ultimoPorFilial[(int) $row['filial_id']][(int) $row['categoria_id']] = (float) $row['valor'];
         }
 
+        return $ultimoPorFilial;
+    }
+
+    /** Mesma base de mixRealizadoPorFilial(), somada entre as filiais — total por categoria da rede. */
+    public static function mixRealizadoRede(int $periodoId): array
+    {
         $porCategoria = [];
-        foreach ($ultimoPorFilial as $categorias) {
+        foreach (self::mixRealizadoPorFilial($periodoId) as $categorias) {
             foreach ($categorias as $categoriaId => $valor) {
                 $porCategoria[$categoriaId] = ($porCategoria[$categoriaId] ?? 0.0) + $valor;
             }

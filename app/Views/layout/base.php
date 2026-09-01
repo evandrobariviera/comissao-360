@@ -203,16 +203,15 @@ $urlAtual = $_SERVER['REQUEST_URI'] ?? '/dashboard';
   .tier-fill{height:100%; border-radius:999px; background:var(--primary);}
   .tier-count{text-align:right; font-variant-numeric:tabular-nums; color:var(--ink-soft);}
 
-  /* ---- mix de categoria: realizado (barra) x meta (marcador), escala compartilhada entre linhas ---- */
-  .mix-row{padding:.6rem 0; border-bottom:1px solid var(--line);}
-  .mix-row:last-child{border-bottom:none;}
-  .mix-topo{display:flex; align-items:baseline; gap:.6rem; flex-wrap:wrap; margin-bottom:.4rem;}
-  .mix-nome{font-size:.88rem; font-weight:600; color:var(--ink); flex:1 1 auto;}
-  .mix-valores{font-size:.85rem; color:var(--ink); white-space:nowrap;}
-  .mix-meta-txt{color:var(--ink-faint); font-weight:400;}
-  .mix-track{position:relative; height:10px; border-radius:999px; overflow:visible;}
-  .mix-fill{height:100%; border-radius:999px;}
-  .mix-marcador{position:absolute; top:-3px; width:2px; height:16px; background:var(--ink); border-radius:1px; transform:translateX(-1px);}
+  /* ---- mix de categoria: grade categoria x filial, heatmap de status ---- */
+  table.mix-grade{width:100%; border-collapse:collapse; font-size:.83rem; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md); overflow:hidden;}
+  table.mix-grade th, table.mix-grade td{padding:.55rem .7rem; text-align:center; border-bottom:1px solid var(--line); white-space:nowrap;}
+  table.mix-grade th{background:var(--bg); font-size:.68rem; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); font-weight:700;}
+  table.mix-grade td:first-child, table.mix-grade th:first-child{text-align:left; color:var(--ink); font-weight:600;}
+  table.mix-grade tbody tr:last-child td{border-bottom:none;}
+  table.mix-grade td.mix-meta-col{color:var(--ink-faint); font-variant-numeric:tabular-nums;}
+  table.mix-grade td.mix-cell{font-variant-numeric:tabular-nums; font-weight:600;}
+  table.mix-grade .mix-rede-col{border-left:2px solid var(--line);}
 
   /* ---- gauge: faixa piso→teto de um indicador individual ---- */
   .gauge-track{height:8px; border-radius:999px; overflow:hidden; margin-top:.6rem;}
