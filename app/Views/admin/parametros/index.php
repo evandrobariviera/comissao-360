@@ -5,6 +5,7 @@
 /** @var int $filialId */
 /** @var array $periodo */
 /** @var array|null $metaFilial */
+/** @var array|null $fechamento */
 /** @var array $categorias */
 use App\Core\Auth;
 use App\Core\Csrf;
@@ -21,7 +22,7 @@ $campo = static function (string $chave, string $rotulo) use ($parametros, $fmt)
         . '</div>';
 };
 
-$editavel = Auth::papel() === Auth::PAPEL_ADMIN && $periodo['status'] === 'aberto';
+$editavel = Auth::papel() === Auth::PAPEL_ADMIN && ($fechamento['status'] ?? 'aberto') === 'aberto';
 $fmtVal = static fn ($v) => rtrim(rtrim(number_format((float) $v, 2, '.', ''), '0'), '.');
 
 $filialNome = '';

@@ -10,6 +10,7 @@ use App\Core\Controller;
 use App\Core\EscopoFilialTrait;
 use App\Core\Flash;
 use App\Models\Categoria;
+use App\Models\FechamentoFilial;
 use App\Models\Funcionario;
 use App\Models\Meta;
 use App\Models\Periodo;
@@ -41,6 +42,7 @@ final class VendaController extends Controller
             'filiaisPermitidas' => $filiaisPermitidas,
             'filialId' => $filialId,
             'periodo' => $periodo,
+            'fechamento' => FechamentoFilial::status($periodoId, $filialId),
             'funcionarios' => $funcionarios,
             'categorias' => $categorias,
             'metaFilial' => Meta::filial($filialId, $periodoId),
@@ -61,8 +63,8 @@ final class VendaController extends Controller
         $filialId = $this->resolverFilialId($filiaisPermitidas, (int) $this->input('filial_id', 0));
         $periodo = Periodo::ativo();
 
-        if ($periodo['status'] !== 'aberto') {
-            Flash::set('erro', 'Este período já foi fechado — não é mais possível lançar venda bruta.');
+        if (!FechamentoFilial::estaAberto((int) $periodo['id'], $filialId)) {
+            Flash::set('erro', 'Esta filial já está fechada neste período — não é mais possível lançar venda bruta.');
             $this->redirect("/vendas?filial_id={$filialId}");
         }
 
@@ -125,9 +127,8 @@ final class VendaController extends Controller
             $this->redirect('/vendas');
         }
 
-        $periodo = Periodo::find((int) $lancamento['periodo_id']);
-        if ($periodo === null || $periodo['status'] !== 'aberto') {
-            Flash::set('erro', 'Este período já foi fechado — não é mais possível excluir lançamentos.');
+        if (!FechamentoFilial::estaAberto((int) $lancamento['periodo_id'], $filialId)) {
+            Flash::set('erro', 'Esta filial já está fechada neste período — não é mais possível excluir lançamentos.');
             $this->redirect("/vendas?filial_id={$filialId}");
         }
 
@@ -146,8 +147,8 @@ final class VendaController extends Controller
         $filialId = $this->resolverFilialId($filiaisPermitidas, (int) $this->input('filial_id', 0));
         $periodo = Periodo::ativo();
 
-        if ($periodo['status'] !== 'aberto') {
-            Flash::set('erro', 'Este período já foi fechado — não é mais possível alterar vendas.');
+        if (!FechamentoFilial::estaAberto((int) $periodo['id'], $filialId)) {
+            Flash::set('erro', 'Esta filial já está fechada neste período — não é mais possível alterar vendas.');
             $this->redirect("/vendas?filial_id={$filialId}");
         }
 
@@ -222,9 +223,8 @@ final class VendaController extends Controller
             $this->redirect('/vendas');
         }
 
-        $periodo = Periodo::find((int) $venda['periodo_id']);
-        if ($periodo === null || $periodo['status'] !== 'aberto') {
-            Flash::set('erro', 'Este período já foi fechado — não é mais possível excluir lançamentos.');
+        if (!FechamentoFilial::estaAberto((int) $venda['periodo_id'], $filialId)) {
+            Flash::set('erro', 'Esta filial já está fechada neste período — não é mais possível excluir lançamentos.');
             $this->redirect("/vendas?filial_id={$filialId}");
         }
 

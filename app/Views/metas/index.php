@@ -6,12 +6,14 @@
 /** @var array $categorias */
 /** @var array|null $metaFilial */
 /** @var array $grid */
+/** @var array $fechamento */
 use App\Core\Auth;
 use App\Core\Csrf;
 
 $nomesMes = [1=>'janeiro',2=>'fevereiro',3=>'março',4=>'abril',5=>'maio',6=>'junho',7=>'julho',8=>'agosto',9=>'setembro',10=>'outubro',11=>'novembro',12=>'dezembro'];
 $rotuloPeriodo = $nomesMes[(int) $periodo['mes']] . '/' . $periodo['ano'];
-$editavel = Auth::papel() === Auth::PAPEL_ADMIN && $periodo['status'] === 'aberto';
+$filialFechada = $fechamento['status'] !== 'aberto';
+$editavel = Auth::papel() === Auth::PAPEL_ADMIN && !$filialFechada;
 
 $fmt = static fn ($v) => rtrim(rtrim(number_format((float) $v, 2, '.', ''), '0'), '.');
 ?>
@@ -35,7 +37,9 @@ $fmt = static fn ($v) => rtrim(rtrim(number_format((float) $v, 2, '.', ''), '0')
 <p class="subtitle">Filial: <strong><?= htmlspecialchars($filiaisPermitidas[0]['nome'], ENT_QUOTES) ?></strong></p>
 <?php endif; ?>
 
-<?php if (!$editavel && Auth::papel() !== Auth::PAPEL_ADMIN): ?>
+<?php if ($filialFechada): ?>
+<div class="callout dica"><span class="callout-label">Somente leitura</span>O fechamento desta filial já foi aprovado neste período — esta tela é somente leitura.</div>
+<?php elseif (!$editavel && Auth::papel() !== Auth::PAPEL_ADMIN): ?>
 <div class="callout dica"><span class="callout-label">Somente leitura</span>Só o administrador edita metas. Esta tela é somente leitura para o seu papel.</div>
 <?php endif; ?>
 

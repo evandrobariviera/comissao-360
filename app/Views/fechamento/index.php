@@ -2,27 +2,53 @@
 /** @var array $filiaisPermitidas */
 /** @var int $filialId */
 /** @var array $periodo */
+/** @var array $fechamento */
+/** @var array<int, array> $statusPorFilial */
 /** @var array $linhas */
 use App\Core\Auth;
 use App\Core\Csrf;
+use App\Models\Usuario;
 
 $nomesMes = [1=>'janeiro',2=>'fevereiro',3=>'março',4=>'abril',5=>'maio',6=>'junho',7=>'julho',8=>'agosto',9=>'setembro',10=>'outubro',11=>'novembro',12=>'dezembro'];
 $rotuloPeriodo = $nomesMes[(int) $periodo['mes']] . '/' . $periodo['ano'];
-$statusRotulo = ['aberto' => 'Aberto', 'fechado' => 'Fechado', 'aprovado' => 'Aprovado'];
-$statusPill = ['aberto' => 'status-ativo', 'fechado' => 'status-inativo', 'aprovado' => 'status-ativo'];
+$estaAprovado = $fechamento['status'] === 'aprovado';
 
 $money = static fn ($v) => 'R$ ' . number_format((float) $v, 2, ',', '.');
 $pct = static fn ($v) => number_format((float) $v, 1, ',', '.') . '%';
+
+$nomeFilialAtual = '';
+foreach ($filiaisPermitidas as $f) {
+    if ((int) $f['id'] === $filialId) {
+        $nomeFilialAtual = $f['nome'];
+        break;
+    }
+}
 ?>
 <div class="toolbar">
   <div>
     <h2>Fechamento do mês</h2>
     <p class="subtitle">
-      Período: <strong><?= htmlspecialchars($rotuloPeriodo, ENT_QUOTES) ?></strong>
-      <span class="pill <?= $statusPill[$periodo['status']] ?? '' ?>"><?= $statusRotulo[$periodo['status']] ?? $periodo['status'] ?></span>
+      Período: <strong><?= htmlspecialchars($rotuloPeriodo, ENT_QUOTES) ?></strong>.
+      Cada filial fecha (e pode ser reaberta) de forma independente das outras.
     </p>
   </div>
 </div>
+
+<?php if (count($filiaisPermitidas) > 1): ?>
+<div class="scrollx" style="margin-bottom:1.2rem">
+  <table class="lista">
+    <thead><tr><th>Filial</th><th>Status</th></tr></thead>
+    <tbody>
+      <?php foreach ($filiaisPermitidas as $f): $fid = (int) $f['id']; $st = $statusPorFilial[$fid]['status'] ?? 'aberto'; ?>
+      <tr>
+        <td><a href="/fechamento?filial_id=<?= $fid ?>"><?= htmlspecialchars($f['nome'], ENT_QUOTES) ?></a></td>
+        <td><span class="pill <?= $st === 'aprovado' ? 'status-ativo' : '' ?>"><?= $st === 'aprovado' ? 'Aprovado' : 'Aberto' ?></span></td>
+      </tr>
+      <?php endforeach; ?>
+    </tbody>
+  </table>
+</div>
+<?php endif; ?>
 
 <?php if (count($filiaisPermitidas) > 1): ?>
 <form method="get" action="/fechamento" class="form-padrao" style="max-width:280px; margin-bottom:1rem;">
@@ -35,6 +61,18 @@ $pct = static fn ($v) => number_format((float) $v, 1, ',', '.') . '%';
 </form>
 <?php else: ?>
 <p class="subtitle">Filial: <strong><?= htmlspecialchars($filiaisPermitidas[0]['nome'], ENT_QUOTES) ?></strong></p>
+<?php endif; ?>
+
+<p class="subtitle">
+  <?= htmlspecialchars($nomeFilialAtual, ENT_QUOTES) ?> —
+  <span class="pill <?= $estaAprovado ? 'status-ativo' : '' ?>"><?= $estaAprovado ? 'Aprovado' : 'Aberto' ?></span>
+  <?php if ($estaAprovado && !empty($fechamento['aprovado_em'])): $aprovador = Usuario::find((int) $fechamento['aprovado_por']); ?>
+    <span class="subtitle" style="margin:0">em <?= (new DateTime($fechamento['aprovado_em']))->format('d/m/Y \à\s H:i') ?><?= $aprovador !== null ? ' por ' . htmlspecialchars($aprovador['email'], ENT_QUOTES) : '' ?></span>
+  <?php endif; ?>
+</p>
+
+<?php if ($estaAprovado): ?>
+<div class="callout dica"><span class="callout-label">Fechado</span>O fechamento desta filial já foi aprovado — os valores abaixo são o que foi gravado como oficial. Vendas, Metas e Indicadores desta filial ficaram travados até reabrir.</div>
 <?php endif; ?>
 
 <?php if (empty($linhas)): ?>
@@ -87,18 +125,26 @@ $pct = static fn ($v) => number_format((float) $v, 1, ',', '.') . '%';
 </div>
 
 <div class="note" style="margin-top:1rem">
-  Cálculo em tempo real a partir dos lançamentos e indicadores atuais — nada aqui está gravado ainda. Só a aprovação do fechamento grava o valor oficial do mês.
+  <?= $estaAprovado
+      ? 'Valores gravados na aprovação — não recalculam mais sozinhos. Reabra o fechamento pra corrigir algo e aprovar de novo depois.'
+      : 'Cálculo em tempo real a partir dos lançamentos e indicadores atuais — nada aqui está gravado ainda. Só a aprovação do fechamento grava o valor oficial do mês.' ?>
 </div>
 
 <?php if (Auth::papel() === Auth::PAPEL_ADMIN): ?>
-  <?php if ($periodo['status'] !== 'aprovado'): ?>
+  <?php if (!$estaAprovado): ?>
   <form method="post" action="/fechamento/aprovar" style="margin-top:1.4rem"
-        onsubmit="return confirm('Aprovar o fechamento de <?= htmlspecialchars($rotuloPeriodo, ENT_QUOTES) ?>? Isso grava o valor oficial de TODAS as filiais e trava novos lançamentos de venda/indicadores neste período.');">
+        onsubmit="return confirm('Aprovar o fechamento de <?= htmlspecialchars($nomeFilialAtual, ENT_QUOTES) ?> em <?= htmlspecialchars($rotuloPeriodo, ENT_QUOTES) ?>? Isso grava o valor oficial desta filial e trava novos lançamentos de venda/metas/indicadores dela neste período.');">
     <?= Csrf::field() ?>
-    <button type="submit" class="btn">Aprovar fechamento do mês (rede toda)</button>
+    <input type="hidden" name="filial_id" value="<?= $filialId ?>">
+    <button type="submit" class="btn">Aprovar fechamento de <?= htmlspecialchars($nomeFilialAtual, ENT_QUOTES) ?></button>
   </form>
   <?php else: ?>
-  <p class="subtitle" style="margin-top:1.4rem">Período aprovado — lançamentos travados.</p>
+  <form method="post" action="/fechamento/reabrir" style="margin-top:1.4rem"
+        onsubmit="return confirm('Reabrir o fechamento de <?= htmlspecialchars($nomeFilialAtual, ENT_QUOTES) ?> em <?= htmlspecialchars($rotuloPeriodo, ENT_QUOTES) ?>? Os lançamentos voltam a ficar editáveis pra essa filial até aprovar de novo.');">
+    <?= Csrf::field() ?>
+    <input type="hidden" name="filial_id" value="<?= $filialId ?>">
+    <button type="submit" class="btn secundario">Reabrir fechamento de <?= htmlspecialchars($nomeFilialAtual, ENT_QUOTES) ?></button>
+  </form>
   <?php endif; ?>
 <?php endif; ?>
 <?php endif; ?>

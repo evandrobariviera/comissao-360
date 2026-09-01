@@ -10,11 +10,12 @@
 /** @var array $ajustes */
 /** @var array $lancamentosBruta */
 /** @var array $categoriasMix */
+/** @var array $fechamento */
 use App\Core\Csrf;
 
 $nomesMes = [1=>'janeiro',2=>'fevereiro',3=>'março',4=>'abril',5=>'maio',6=>'junho',7=>'julho',8=>'agosto',9=>'setembro',10=>'outubro',11=>'novembro',12=>'dezembro'];
 $rotuloPeriodo = $nomesMes[(int) $periodo['mes']] . '/' . $periodo['ano'];
-$editavel = $periodo['status'] === 'aberto';
+$editavel = $fechamento['status'] === 'aberto';
 
 $fmt = static fn ($v) => rtrim(rtrim(number_format((float) $v, 2, '.', ''), '0'), '.');
 
@@ -46,7 +47,7 @@ foreach ($categorias as $c) {
 <?php endif; ?>
 
 <?php if (!$editavel): ?>
-<div class="callout dica"><span class="callout-label">Somente leitura</span>Este período já foi fechado — as telas abaixo são somente leitura.</div>
+<div class="callout dica"><span class="callout-label">Somente leitura</span>O fechamento desta filial já foi aprovado neste período — as telas abaixo são somente leitura. Peça pra um admin reabrir em <a href="/fechamento?filial_id=<?= $filialId ?>">Fechamento</a> se precisar corrigir algo.</div>
 <?php endif; ?>
 
 <h3 style="margin-bottom:.3rem">Venda bruta da filial</h3>

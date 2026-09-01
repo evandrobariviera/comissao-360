@@ -63,6 +63,7 @@ $router->post('/indicadores', [IndicadorController::class, 'salvar']);
 
 $router->get('/fechamento', [FechamentoController::class, 'index']);
 $router->post('/fechamento/aprovar', [FechamentoController::class, 'aprovar']);
+$router->post('/fechamento/reabrir', [FechamentoController::class, 'reabrir']);
 
 $router->get('/metas', [MetaController::class, 'index']);
 $router->post('/metas', [MetaController::class, 'salvar']);

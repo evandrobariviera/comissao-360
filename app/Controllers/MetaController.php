@@ -10,6 +10,7 @@ use App\Core\Controller;
 use App\Core\EscopoFilialTrait;
 use App\Core\Flash;
 use App\Models\Categoria;
+use App\Models\FechamentoFilial;
 use App\Models\Funcionario;
 use App\Models\Meta;
 use App\Models\Periodo;
@@ -37,6 +38,7 @@ final class MetaController extends Controller
             'filiaisPermitidas' => $filiaisPermitidas,
             'filialId' => $filialId,
             'periodo' => $periodo,
+            'fechamento' => FechamentoFilial::status((int) $periodo['id'], $filialId),
             'funcionarios' => $funcionarios,
             'categorias' => $categorias,
             'metaFilial' => Meta::filial($filialId, (int) $periodo['id']),
@@ -53,8 +55,8 @@ final class MetaController extends Controller
         $filialId = $this->resolverFilialId($filiaisPermitidas, (int) $this->input('filial_id', 0));
         $periodo = Periodo::ativo();
 
-        if ($periodo['status'] !== 'aberto') {
-            Flash::set('erro', 'Este período já foi fechado — não é mais possível alterar metas.');
+        if (!FechamentoFilial::estaAberto((int) $periodo['id'], $filialId)) {
+            Flash::set('erro', 'Esta filial já está fechada neste período — não é mais possível alterar metas.');
             $this->redirect("/metas?filial_id={$filialId}");
         }
 

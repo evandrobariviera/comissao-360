@@ -102,6 +102,9 @@ CREATE TABLE categoria_composicao (
 -- NÚCLEO — período, metas, lançamentos, indicadores (Blocos 1-3)
 -- ============================================================
 
+-- `status` aqui não trava mais lançamento nenhum (ver fechamento_filial abaixo) — o fechamento
+-- é aprovado/reaberto por filial, não pro período inteiro de uma vez. Essa coluna fica só como
+-- registro do mês em si (existe/foi criado), sem uso funcional hoje.
 CREATE TABLE periodo (
   id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   ano           SMALLINT UNSIGNED NOT NULL,
@@ -111,6 +114,22 @@ CREATE TABLE periodo (
   aprovado_em   DATETIME NULL,
   UNIQUE KEY uq_periodo_ano_mes (ano, mes),
   CONSTRAINT fk_periodo_aprovador FOREIGN KEY (aprovado_por) REFERENCES usuario(id)
+) ENGINE=InnoDB;
+
+-- Fechamento por filial: cada (período, filial) tem seu próprio status. Ausência de linha =
+-- 'aberto' (tratado assim no código, não precisa popular vazio pra todo mundo). Aprovar grava
+-- snapshot em comissao_calculada; reabrir só volta o status pra 'aberto' (admin apenas).
+CREATE TABLE fechamento_filial (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  periodo_id    INT UNSIGNED NOT NULL,
+  filial_id     INT UNSIGNED NOT NULL,
+  status        ENUM('aberto','aprovado') NOT NULL DEFAULT 'aberto',
+  aprovado_por  INT UNSIGNED NULL,
+  aprovado_em   DATETIME NULL,
+  UNIQUE KEY uq_fechamento_filial (periodo_id, filial_id),
+  CONSTRAINT fk_fechfilial_periodo FOREIGN KEY (periodo_id) REFERENCES periodo(id),
+  CONSTRAINT fk_fechfilial_filial FOREIGN KEY (filial_id) REFERENCES filial(id),
+  CONSTRAINT fk_fechfilial_aprovador FOREIGN KEY (aprovado_por) REFERENCES usuario(id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE meta_filial (

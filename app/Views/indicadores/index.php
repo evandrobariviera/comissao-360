@@ -5,16 +5,18 @@
 /** @var array $funcionarios */
 /** @var array|null $rentabFilial */
 /** @var array|null $checklist */
+/** @var array $fechamento */
 use App\Core\Csrf;
 $nomesMes = [1=>'janeiro',2=>'fevereiro',3=>'março',4=>'abril',5=>'maio',6=>'junho',7=>'julho',8=>'agosto',9=>'setembro',10=>'outubro',11=>'novembro',12=>'dezembro'];
 $rotuloPeriodo = $nomesMes[(int) $periodo['mes']] . '/' . $periodo['ano'];
+$editavel = $fechamento['status'] === 'aberto';
 
 $fmt = static function ($valor): string {
     return $valor === null ? '' : rtrim(rtrim(number_format((float) $valor, 2, '.', ''), '0'), '.');
 };
 
-$check = static function (?array $checklist, string $col): string {
-    return !empty($checklist[$col]) ? 'checked' : '';
+$check = static function (?array $checklist, string $col) use ($editavel): string {
+    return (!empty($checklist[$col]) ? 'checked ' : '') . ($editavel ? '' : 'disabled');
 };
 ?>
 <div class="toolbar">
@@ -37,6 +39,10 @@ $check = static function (?array $checklist, string $col): string {
 <p class="subtitle">Filial: <strong><?= htmlspecialchars($filiaisPermitidas[0]['nome'], ENT_QUOTES) ?></strong></p>
 <?php endif; ?>
 
+<?php if (!$editavel): ?>
+<div class="callout dica"><span class="callout-label">Somente leitura</span>O fechamento desta filial já foi aprovado neste período — os campos abaixo são somente leitura. Peça pra um admin reabrir em <a href="/fechamento?filial_id=<?= $filialId ?>">Fechamento</a> se precisar corrigir algo.</div>
+<?php endif; ?>
+
 <?php if (empty($funcionarios)): ?>
 <div class="card"><p>Nenhum funcionário ativo vinculado a esta filial ainda. Cadastre em <a href="/usuarios">Usuários</a>.</p></div>
 <?php else: ?>
@@ -53,9 +59,9 @@ $check = static function (?array $checklist, string $col): string {
         <?php foreach ($funcionarios as $f): ?>
         <tr>
           <td><?= htmlspecialchars($f['nome'], ENT_QUOTES) ?></td>
-          <td><input type="text" name="desconto[<?= (int) $f['id'] ?>]" value="<?= $fmt($f['desconto_medio']) ?>"></td>
-          <td><input type="text" name="rentab[<?= (int) $f['id'] ?>]" value="<?= $fmt($f['rentabilidade_pct']) ?>"></td>
-          <td><input type="text" name="ticket[<?= (int) $f['id'] ?>]" value="<?= $fmt($f['ticket_medio']) ?>"></td>
+          <td><input type="text" name="desconto[<?= (int) $f['id'] ?>]" value="<?= $fmt($f['desconto_medio']) ?>" <?= $editavel ? '' : 'disabled' ?>></td>
+          <td><input type="text" name="rentab[<?= (int) $f['id'] ?>]" value="<?= $fmt($f['rentabilidade_pct']) ?>" <?= $editavel ? '' : 'disabled' ?>></td>
+          <td><input type="text" name="ticket[<?= (int) $f['id'] ?>]" value="<?= $fmt($f['ticket_medio']) ?>" <?= $editavel ? '' : 'disabled' ?>></td>
         </tr>
         <?php endforeach; ?>
       </tbody>
@@ -65,7 +71,7 @@ $check = static function (?array $checklist, string $col): string {
   <fieldset>
     <legend>Rentabilidade da filial</legend>
     <label for="rentabilidade_filial">Rentabilidade realizada no mês (%)</label>
-    <input type="text" id="rentabilidade_filial" name="rentabilidade_filial" style="max-width:10rem" value="<?= $fmt($rentabFilial['rentabilidade_pct'] ?? null) ?>">
+    <input type="text" id="rentabilidade_filial" name="rentabilidade_filial" style="max-width:10rem" value="<?= $fmt($rentabFilial['rentabilidade_pct'] ?? null) ?>" <?= $editavel ? '' : 'disabled' ?>>
   </fieldset>
 
   <fieldset>
@@ -82,8 +88,10 @@ $check = static function (?array $checklist, string $col): string {
     </div>
   </fieldset>
 
+  <?php if ($editavel): ?>
   <div class="acoes-form">
     <button type="submit" class="btn">Salvar indicadores</button>
   </div>
+  <?php endif; ?>
 </form>
 <?php endif; ?>

@@ -9,6 +9,7 @@ use App\Core\Auth;
 use App\Core\Controller;
 use App\Core\Flash;
 use App\Models\Categoria;
+use App\Models\FechamentoFilial;
 use App\Models\Filial;
 use App\Models\Meta;
 use App\Models\Parametro;
@@ -46,6 +47,7 @@ final class ParametroController extends Controller
             'filiais' => $filiais,
             'filialId' => $filialId,
             'periodo' => $periodo,
+            'fechamento' => $filialId > 0 ? FechamentoFilial::status((int) $periodo['id'], $filialId) : null,
             'metaFilial' => $filialId > 0 ? Meta::filial($filialId, (int) $periodo['id']) : null,
             'categorias' => Categoria::ativas(),
         ]);
@@ -108,8 +110,8 @@ final class ParametroController extends Controller
         $filialId = $this->resolverFilialId($filiais, (int) $this->input('filial_id', 0));
         $periodo = Periodo::ativo();
 
-        if ($periodo['status'] !== 'aberto') {
-            Flash::set('erro', 'Este período já foi fechado — não é mais possível alterar overrides.');
+        if (!FechamentoFilial::estaAberto((int) $periodo['id'], $filialId)) {
+            Flash::set('erro', 'Esta filial já está fechada neste período — não é mais possível alterar overrides.');
             $this->redirect("/parametros?filial_id={$filialId}");
         }
 
