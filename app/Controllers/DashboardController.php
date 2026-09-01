@@ -69,35 +69,7 @@ final class DashboardController extends Controller
             $vendaBrutaPorFilial[$filialId] = $realizado;
         }
 
-        $nomesFiliaisMix = [];
-        foreach ($filiais as $f) {
-            $nomesFiliaisMix[(int) $f['id']] = $f['nome'];
-        }
-        $mixPorFilial = Meta::mixRealizadoPorFilial($periodoId);
-        $mixTotaisRede = [];
-        foreach ($mixPorFilial as $porCategoria) {
-            foreach ($porCategoria as $catId => $valor) {
-                $mixTotaisRede[$catId] = ($mixTotaisRede[$catId] ?? 0.0) + $valor;
-            }
-        }
-
-        $mixLinhas = [];
-        foreach (Categoria::comMetaPercentual() as $c) {
-            $catId = (int) $c['id'];
-            $porFilial = [];
-            foreach ($nomesFiliaisMix as $filialId => $nomeFilial) {
-                $totalFilial = $vendaBrutaPorFilial[$filialId] ?? 0.0;
-                $valorFilial = $mixPorFilial[$filialId][$catId] ?? 0.0;
-                $porFilial[$filialId] = $totalFilial > 0 ? ($valorFilial / $totalFilial) * 100 : 0.0;
-            }
-            $mixLinhas[] = [
-                'nome' => $c['nome'],
-                'meta_pct' => (float) $c['meta_percentual_pct'],
-                'maior_melhor' => ($c['meta_percentual_tipo'] ?? 'piso') === 'piso',
-                'rede_pct' => $vendaRealizada > 0 ? (($mixTotaisRede[$catId] ?? 0.0) / $vendaRealizada) * 100 : 0.0,
-                'por_filial' => $porFilial,
-            ];
-        }
+        [$nomesFiliaisMix, $mixLinhas] = self::montarMixGrade($filiais, $vendaBrutaPorFilial, $vendaRealizada, $periodoId);
 
         $ranking = array_map(
             static fn ($l) => ['nome' => $l['nome'], 'valor' => $l['total'], 'formatado' => \App\Core\Viz::money($l['total'])],
@@ -177,6 +149,52 @@ final class DashboardController extends Controller
     }
 
     /**
+     * Monta [nomesFiliais, linhas] pro Viz::mixGrade() — usado tanto no painel de rede (todas as
+     * filiais) quanto no painel pessoal (só a filial da pessoa, com a coluna Rede pra comparação).
+     * $vendaBrutaPorFilialRede precisa cobrir TODAS as filiais da rede (não só as de $filiais),
+     * senão o total de rede usado no denominador da coluna "Rede" fica incompleto.
+     *
+     * @param array<int, array{id:int|string, nome:string}> $filiais colunas a mostrar, em ordem
+     * @param array<int, float> $vendaBrutaPorFilialRede [filial_id => venda bruta do mês], rede toda
+     * @return array{0: array<int,string>, 1: array}
+     */
+    private static function montarMixGrade(array $filiais, array $vendaBrutaPorFilialRede, float $vendaRealizadaRede, int $periodoId): array
+    {
+        $nomesFiliais = [];
+        foreach ($filiais as $f) {
+            $nomesFiliais[(int) $f['id']] = $f['nome'];
+        }
+
+        $mixPorFilial = Meta::mixRealizadoPorFilial($periodoId);
+        $mixTotaisRede = [];
+        foreach ($mixPorFilial as $porCategoria) {
+            foreach ($porCategoria as $catId => $valor) {
+                $mixTotaisRede[$catId] = ($mixTotaisRede[$catId] ?? 0.0) + $valor;
+            }
+        }
+
+        $linhas = [];
+        foreach (Categoria::comMetaPercentual() as $c) {
+            $catId = (int) $c['id'];
+            $porFilial = [];
+            foreach ($nomesFiliais as $filialId => $nomeFilial) {
+                $totalFilial = $vendaBrutaPorFilialRede[$filialId] ?? 0.0;
+                $valorFilial = $mixPorFilial[$filialId][$catId] ?? 0.0;
+                $porFilial[$filialId] = $totalFilial > 0 ? ($valorFilial / $totalFilial) * 100 : 0.0;
+            }
+            $linhas[] = [
+                'nome' => $c['nome'],
+                'meta_pct' => (float) $c['meta_percentual_pct'],
+                'maior_melhor' => ($c['meta_percentual_tipo'] ?? 'piso') === 'piso',
+                'rede_pct' => $vendaRealizadaRede > 0 ? (($mixTotaisRede[$catId] ?? 0.0) / $vendaRealizadaRede) * 100 : 0.0,
+                'por_filial' => $porFilial,
+            ];
+        }
+
+        return [$nomesFiliais, $linhas];
+    }
+
+    /**
      * Achata o detalhe por categoria de várias pessoas numa lista única de
      * "faltam R$X para a próxima faixa", ordenada pela oportunidade mais perto de acontecer.
      *
@@ -239,6 +257,20 @@ final class DashboardController extends Controller
         $metaFilial = Meta::filial($filialPrincipal, $periodoId);
         $rentabFilialRow = Indicador::rentabilidadeFilial($filialPrincipal, $periodoId);
 
+        $filiaisRede = Filial::ativas();
+        $vendaBrutaPorFilialRede = [];
+        foreach ($filiaisRede as $f) {
+            $m = Meta::filial((int) $f['id'], $periodoId);
+            $vendaBrutaPorFilialRede[(int) $f['id']] = $m !== null ? (float) $m['venda_bruta_realizada'] : 0.0;
+        }
+        $minhaFilial = Filial::find($filialPrincipal);
+        [$mixNomesFiliais, $mixLinhas] = self::montarMixGrade(
+            $minhaFilial !== null ? [$minhaFilial] : [],
+            $vendaBrutaPorFilialRede,
+            Meta::totalRedeVendaBrutaRealizada($periodoId),
+            $periodoId
+        );
+
         $this->render('dashboard/pessoal', [
             'periodo' => $periodo,
             'nome' => $funcionario['nome'],
@@ -253,6 +285,8 @@ final class DashboardController extends Controller
             'rentabFilialRealizada' => $rentabFilialRow !== null ? (float) $rentabFilialRow['rentabilidade_pct'] : 0.0,
             'ritmo' => RitmoDiarioCalculator::calcular($filialPrincipal, $periodoId, $periodo),
             'checklist' => Indicador::checklist($filialPrincipal, $periodoId),
+            'mixNomesFiliais' => $mixNomesFiliais,
+            'mixLinhas' => $mixLinhas,
         ]);
     }
 

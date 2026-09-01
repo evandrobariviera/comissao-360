@@ -130,21 +130,21 @@ foreach ($filiaisPermitidas as $f) {
       : 'Cálculo em tempo real a partir dos lançamentos e indicadores atuais — nada aqui está gravado ainda. Só a aprovação do fechamento grava o valor oficial do mês.' ?>
 </div>
 
-<?php if (Auth::papel() === Auth::PAPEL_ADMIN): ?>
-  <?php if (!$estaAprovado): ?>
+<?php if (!$estaAprovado && in_array(Auth::papel(), [Auth::PAPEL_ADMIN, Auth::PAPEL_GERENTE], true)): ?>
   <form method="post" action="/fechamento/aprovar" style="margin-top:1.4rem"
-        onsubmit="return confirm('Aprovar o fechamento de <?= htmlspecialchars($nomeFilialAtual, ENT_QUOTES) ?> em <?= htmlspecialchars($rotuloPeriodo, ENT_QUOTES) ?>? Isso grava o valor oficial desta filial e trava novos lançamentos de venda/metas/indicadores dela neste período.');">
+        onsubmit="return confirm('Aprovar o fechamento de <?= htmlspecialchars($nomeFilialAtual, ENT_QUOTES) ?> em <?= htmlspecialchars($rotuloPeriodo, ENT_QUOTES) ?>? Isso grava o valor oficial desta filial e trava novos lançamentos de venda/metas/indicadores dela neste período. Só um admin consegue reabrir depois.');">
     <?= Csrf::field() ?>
     <input type="hidden" name="filial_id" value="<?= $filialId ?>">
     <button type="submit" class="btn">Aprovar fechamento de <?= htmlspecialchars($nomeFilialAtual, ENT_QUOTES) ?></button>
   </form>
-  <?php else: ?>
+<?php elseif ($estaAprovado && Auth::papel() === Auth::PAPEL_ADMIN): ?>
   <form method="post" action="/fechamento/reabrir" style="margin-top:1.4rem"
         onsubmit="return confirm('Reabrir o fechamento de <?= htmlspecialchars($nomeFilialAtual, ENT_QUOTES) ?> em <?= htmlspecialchars($rotuloPeriodo, ENT_QUOTES) ?>? Os lançamentos voltam a ficar editáveis pra essa filial até aprovar de novo.');">
     <?= Csrf::field() ?>
     <input type="hidden" name="filial_id" value="<?= $filialId ?>">
     <button type="submit" class="btn secundario">Reabrir fechamento de <?= htmlspecialchars($nomeFilialAtual, ENT_QUOTES) ?></button>
   </form>
-  <?php endif; ?>
+<?php elseif ($estaAprovado): ?>
+  <p class="subtitle" style="margin-top:1.4rem">Fechamento aprovado — só um administrador pode reabrir.</p>
 <?php endif; ?>
 <?php endif; ?>

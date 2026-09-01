@@ -12,6 +12,8 @@
 /** @var float $rentabFilialRealizada */
 /** @var array $ritmo */
 /** @var array|null $checklist */
+/** @var array<int,string> $mixNomesFiliais */
+/** @var array $mixLinhas */
 use App\Core\Auth;
 use App\Core\Viz;
 
@@ -127,6 +129,14 @@ $rotuloPeriodo = $nomesMes[(int) $periodo['mes']] . '/' . $periodo['ano'];
         <?= Viz::statTilePct('Rentabilidade da filial', $rentabFilialRealizada, $metaRentabFilial) ?>
       </div>
     </div>
+
+    <?php if (!empty($mixLinhas) && $realizadoFilial > 0): ?>
+    <div class="secao">
+      <h3>Mix de vendas por categoria</h3>
+      <p class="secao-sub">Realizado x meta da sua filial, comparado à rede.</p>
+      <div class="card"><?= Viz::mixGrade($mixNomesFiliais, $mixLinhas) ?></div>
+    </div>
+    <?php endif; ?>
 
     <?php if (Auth::papel() === Auth::PAPEL_GERENTE): ?>
     <div class="secao">

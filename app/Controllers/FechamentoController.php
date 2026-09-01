@@ -43,13 +43,16 @@ final class FechamentoController extends Controller
         ]);
     }
 
-    /** Aprova o fechamento de UMA filial no período ativo — as outras filiais não são afetadas. */
+    /**
+     * Aprova o fechamento de UMA filial no período ativo — as outras filiais não são afetadas.
+     * Gerente aprova as filiais dele; admin aprova qualquer uma (ver EscopoFilialTrait).
+     */
     public function aprovar(): void
     {
-        Auth::require(Auth::PAPEL_ADMIN);
+        Auth::require(Auth::PAPEL_ADMIN, Auth::PAPEL_GERENTE);
         $this->requireCsrf();
 
-        $filialId = $this->resolverFilialId(Filial::ativas(), (int) $this->input('filial_id', 0));
+        $filialId = $this->resolverFilialId($this->filiaisPermitidas(), (int) $this->input('filial_id', 0));
         $periodo = Periodo::ativo();
         $periodoId = (int) $periodo['id'];
         $nomeFilial = $this->nomeFilial($filialId);
