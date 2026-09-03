@@ -1,21 +1,27 @@
 <?php
-/** @var array $categorias */
+/**
+ * Camada 1 — Faixas por categoria. Lista de categorias; a edição de faixas e composição
+ * fica na tela dedicada (/categorias/{id}/editar).
+ *
+ * @var array $todasCategorias
+ */
 use App\Core\Csrf;
 ?>
-<div class="toolbar">
+<div class="toolbar" style="margin-top:1.4rem">
   <div>
-    <h2>Categorias</h2>
-    <p class="subtitle">Linhas de produto, faixas de comissão e composição especial (Nível 1–3 de parametrização).</p>
+    <h3 style="margin:0">Faixas de comissão por categoria</h3>
+    <p class="secao-sub" style="margin:.25rem 0 0">O percentual da faixa alcançada incide sobre o valor <strong>total</strong> vendido na categoria no mês — não é progressivo. Categoria ativa sem faixa gera 0% de comissão, sem aviso.</p>
   </div>
   <a href="/categorias/novo" class="btn">+ Nova categoria</a>
 </div>
 
+<div class="scrollx">
 <table class="lista">
   <thead>
     <tr><th>Ordem</th><th>Categoria</th><th>Status</th><th></th></tr>
   </thead>
   <tbody>
-    <?php foreach ($categorias as $c): ?>
+    <?php foreach ($todasCategorias as $c): ?>
     <tr>
       <td><?= (int) $c['ordem'] ?></td>
       <td><?= htmlspecialchars($c['nome'], ENT_QUOTES) ?></td>
@@ -29,8 +35,9 @@ use App\Core\Csrf;
       </td>
     </tr>
     <?php endforeach; ?>
-    <?php if (empty($categorias)): ?>
+    <?php if (empty($todasCategorias)): ?>
     <tr><td colspan="4" style="color:var(--ink-faint)">Nenhuma categoria cadastrada.</td></tr>
     <?php endif; ?>
   </tbody>
 </table>
+</div>

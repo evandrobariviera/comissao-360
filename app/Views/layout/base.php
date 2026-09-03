@@ -297,8 +297,7 @@ $navAtivo = static fn (string $prefixo): string => str_starts_with((string) $rot
   <span class="sep"></span>
   <a href="/filiais" class="secundario<?= $navAtivo('/filiais') ?>">Filiais</a>
   <a href="/usuarios" class="secundario<?= $navAtivo('/usuarios') ?>">Usuários</a>
-  <a href="/categorias" class="secundario<?= $navAtivo('/categorias') ?>">Categorias</a>
-  <a href="/parametros" class="secundario<?= $navAtivo('/parametros') ?>">Parâmetros</a>
+  <a href="/regras" class="secundario<?= (str_starts_with((string) $rota, '/regras') || str_starts_with((string) $rota, '/categorias') || str_starts_with((string) $rota, '/parametros')) ? ' active' : '' ?>">Regras de comissão</a>
 </nav>
 <?php elseif ($papel === 'gerente'): ?>
 <nav class="admin-nav">

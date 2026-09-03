@@ -28,29 +28,11 @@ final class ParametroController extends Controller
         'premio_filial_padrao',
     ];
 
+    /** A tela em si virou aba de /regras (ver RegrasController); esta rota antiga só redireciona. */
     public function index(): void
     {
         Auth::require(Auth::PAPEL_ADMIN);
-
-        $filiais = Filial::ativas();
-        $filialId = $this->resolverFilialId($filiais);
-        $periodo = Periodo::ativo();
-
-        $parametros = [];
-        foreach (Parametro::todosDetalhados() as $row) {
-            $parametros[$row['chave']] = $row;
-        }
-
-        $this->render('admin/parametros/index', [
-            'parametros' => $parametros,
-            'parametrosGlobais' => Parametro::todos(),
-            'filiais' => $filiais,
-            'filialId' => $filialId,
-            'periodo' => $periodo,
-            'fechamento' => $filialId > 0 ? FechamentoFilial::status((int) $periodo['id'], $filialId) : null,
-            'metaFilial' => $filialId > 0 ? Meta::filial($filialId, (int) $periodo['id']) : null,
-            'categorias' => Categoria::ativas(),
-        ]);
+        $this->redirect('/regras?aba=meta-360');
     }
 
     public function salvar(): void
@@ -69,7 +51,7 @@ final class ParametroController extends Controller
             $valorRaw = trim(str_replace(',', '.', (string) $post[$chave]));
             if (!is_numeric($valorRaw) || (float) $valorRaw < 0) {
                 Flash::set('erro', "Valor inválido para o parâmetro \"{$chave}\".");
-                $this->redirect('/parametros');
+                $this->redirect('/regras?aba=meta-360');
             }
             $pares[$chave] = $valorRaw;
         }
@@ -83,21 +65,21 @@ final class ParametroController extends Controller
 
         if ($descontoTeto <= $descontoPiso) {
             Flash::set('erro', 'Desconto médio: o teto precisa ser maior que o piso.');
-            $this->redirect('/parametros');
+            $this->redirect('/regras?aba=meta-360');
         }
         if ($rentabTeto <= $rentabPiso) {
             Flash::set('erro', 'Rentabilidade: o teto precisa ser maior que o piso.');
-            $this->redirect('/parametros');
+            $this->redirect('/regras?aba=meta-360');
         }
         if ($ticketTeto <= $ticketPiso) {
             Flash::set('erro', 'Ticket médio: o teto precisa ser maior que o piso.');
-            $this->redirect('/parametros');
+            $this->redirect('/regras?aba=meta-360');
         }
 
         Parametro::atualizar($pares);
         Audit::log('atualizar', 'parametro', 0, implode(',', array_keys($pares)));
-        Flash::set('sucesso', 'Parâmetros globais salvos.');
-        $this->redirect('/parametros');
+        Flash::set('sucesso', 'Régua da Meta 360 salva.');
+        $this->redirect('/regras?aba=meta-360');
     }
 
     /** Salva o override de Qualidade de UMA filial (aba selecionada) — não mexe no padrão global. */
@@ -112,7 +94,7 @@ final class ParametroController extends Controller
 
         if (!FechamentoFilial::estaAberto((int) $periodo['id'], $filialId)) {
             Flash::set('erro', 'Esta filial já está fechada neste período — não é mais possível alterar overrides.');
-            $this->redirect("/parametros?filial_id={$filialId}");
+            $this->redirect("/regras?aba=meta-360&filial_id={$filialId}");
         }
 
         [$ticketPiso, $ticketTeto, $erroTicket] = $this->parOverride('ticket_medio_piso', 'ticket_medio_teto');
@@ -122,7 +104,7 @@ final class ParametroController extends Controller
         $erro = $erroTicket ?? $erroDesconto ?? $erroRentab;
         if ($erro !== null) {
             Flash::set('erro', $erro);
-            $this->redirect("/parametros?filial_id={$filialId}");
+            $this->redirect("/regras?aba=meta-360&filial_id={$filialId}");
         }
 
         Meta::salvarOverridesQualidade((int) $periodo['id'], $filialId, [
@@ -136,7 +118,7 @@ final class ParametroController extends Controller
 
         Audit::log('salvar_override', 'meta_filial', $filialId, "periodo={$periodo['id']}");
         Flash::set('sucesso', 'Override da filial salvo.');
-        $this->redirect("/parametros?filial_id={$filialId}");
+        $this->redirect("/regras?aba=meta-360&filial_id={$filialId}");
     }
 
     /**
@@ -164,7 +146,7 @@ final class ParametroController extends Controller
             }
             if (!is_numeric($valorRaw) || (float) $valorRaw < 0 || (float) $valorRaw > 100) {
                 Flash::set('erro', 'Meta de mix precisa ser um percentual entre 0 e 100 (ou vazio pra não rastrear a categoria).');
-                $this->redirect('/parametros');
+                $this->redirect('/regras?aba=premio-mix');
             }
             $tipo = (string) ($tipoPost[$categoriaId] ?? 'piso');
             if (!in_array($tipo, ['piso', 'teto'], true)) {
@@ -176,7 +158,7 @@ final class ParametroController extends Controller
         Categoria::salvarMetasPercentuais($pares);
         Audit::log('atualizar', 'categoria_meta_percentual', 0);
         Flash::set('sucesso', 'Meta de mix por categoria salva.');
-        $this->redirect('/parametros');
+        $this->redirect('/regras?aba=premio-mix');
     }
 
     private function resolverFilialId(array $filiais, int $solicitada = 0): int

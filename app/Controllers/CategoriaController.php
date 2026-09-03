@@ -16,7 +16,7 @@ final class CategoriaController extends Controller
     public function index(): void
     {
         Auth::require(Auth::PAPEL_ADMIN);
-        $this->render('admin/categorias/index', ['categorias' => Categoria::all()]);
+        $this->redirect('/regras?aba=faixas');
     }
 
     public function novo(): void
@@ -56,7 +56,7 @@ final class CategoriaController extends Controller
         $categoria = Categoria::find((int) $id);
         if ($categoria === null) {
             Flash::set('erro', 'Categoria não encontrada.');
-            $this->redirect('/categorias');
+            $this->redirect('/regras?aba=faixas');
         }
 
         $this->render('admin/categorias/editar', [
@@ -101,7 +101,7 @@ final class CategoriaController extends Controller
 
         Audit::log('atualizar', 'categoria', $categoriaId);
         Flash::set('sucesso', 'Categoria atualizada.');
-        $this->redirect('/categorias');
+        $this->redirect('/regras?aba=faixas');
     }
 
     public function alternarStatus(string $id): void
@@ -111,7 +111,7 @@ final class CategoriaController extends Controller
         Categoria::alternarStatus((int) $id);
         Audit::log('alternar_status', 'categoria', (int) $id);
         Flash::set('sucesso', 'Status atualizado.');
-        $this->redirect('/categorias');
+        $this->redirect('/regras?aba=faixas');
     }
 
     /** @return array{0: array, 1: string|null} */

@@ -15,6 +15,7 @@ use App\Controllers\MinhaAreaController;
 use App\Controllers\MinhaContaController;
 use App\Controllers\ParametroController;
 use App\Controllers\PeriodoController;
+use App\Controllers\RegrasController;
 use App\Controllers\RelatorioController;
 use App\Controllers\UsuarioController;
 use App\Controllers\VendaController;
@@ -71,6 +72,8 @@ $router->get('/metas', [MetaController::class, 'index']);
 $router->post('/metas', [MetaController::class, 'salvar']);
 
 $router->get('/relatorios', [RelatorioController::class, 'index']);
+
+$router->get('/regras', [RegrasController::class, 'index']);
 
 $router->get('/parametros', [ParametroController::class, 'index']);
 $router->post('/parametros', [ParametroController::class, 'salvar']);

@@ -4,7 +4,7 @@
 use App\Core\Csrf;
 ?>
 <h2>Nova categoria</h2>
-<p class="subtitle"><a href="/categorias">&larr; Voltar para categorias</a></p>
+<p class="subtitle"><a href="/regras?aba=faixas">&larr; Voltar para Regras de comissão</a></p>
 
 <div class="card">
   <?php if ($erro): ?>
@@ -24,7 +24,7 @@ use App\Core\Csrf;
 
     <div class="acoes-form">
       <button type="submit" class="btn">Criar e configurar faixas</button>
-      <a href="/categorias" class="btn secundario">Cancelar</a>
+      <a href="/regras?aba=faixas" class="btn secundario">Cancelar</a>
     </div>
   </form>
 </div>

@@ -1,12 +1,15 @@
 <?php
-/** @var array<string, array{chave:string, valor:string, descricao:?string}> $parametros */
-/** @var array<string,string> $parametrosGlobais */
-/** @var array $filiais */
-/** @var int $filialId */
-/** @var array $periodo */
-/** @var array|null $metaFilial */
-/** @var array|null $fechamento */
-/** @var array $categorias */
+/**
+ * Camada 2 — Meta 360: pisos/tetos de Qualidade + pesos dos pilares (globais da rede),
+ * e override opcional por filial. Formulários postam para ParametroController.
+ *
+ * @var array      $parametros         chave => {chave, valor, descricao}
+ * @var array      $parametrosGlobais  chave => valor
+ * @var array      $filiais
+ * @var int        $filialId
+ * @var array|null $metaFilial
+ * @var array|null $fechamento
+ */
 use App\Core\Auth;
 use App\Core\Csrf;
 
@@ -33,7 +36,6 @@ foreach ($filiais as $f) {
     }
 }
 
-// Campo de override opcional (aba de filial): valor salvo (se houver) ou vazio; placeholder mostra o padrão global.
 $campoOverride = static function (string $chave, string $rotulo) use ($metaFilial, $parametrosGlobais, $editavel, $fmtVal): string {
     $valor = $metaFilial[$chave] ?? null;
     $global = $fmtVal($parametrosGlobais[$chave] ?? 0);
@@ -46,10 +48,10 @@ $campoOverride = static function (string $chave, string $rotulo) use ($metaFilia
         . '<input type="text" id="' . $chave . '" name="' . $chave . '" value="' . $val . '" placeholder="padrão: ' . $global . '"></div>';
 };
 ?>
-<div class="toolbar">
+<div class="toolbar" style="margin-top:1.4rem">
   <div>
-    <h2>Parâmetros globais</h2>
-    <p class="subtitle">"Parâmetros mãe" da Meta 360 — valem pra todas as filiais da rede. Selecione uma filial abaixo pra sobrescrever o piso/teto de Qualidade só nela; sem override, vale o padrão global.</p>
+    <h3 style="margin:0">Boletim da Meta 360</h3>
+    <p class="secao-sub" style="margin:.25rem 0 0">Régua da rede para o fator de desempenho (0 a 100 pts → multiplicador). Pisos/tetos de Qualidade valem pra todas as filiais; use o bloco de baixo pra sobrescrever numa filial específica.</p>
   </div>
 </div>
 
@@ -97,73 +99,28 @@ $campoOverride = static function (string $chave, string $rotulo) use ($metaFilia
     </div>
   </fieldset>
 
-  <fieldset>
-    <legend>Outros</legend>
-    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:0 1rem">
-      <?= $campo('premio_filial_padrao', 'Prêmio de filial — valor de referência (R$)') ?>
-    </div>
-  </fieldset>
-
   <div class="acoes-form">
-    <button type="submit" class="btn">Salvar parâmetros globais</button>
+    <button type="submit" class="btn">Salvar régua da rede</button>
   </div>
 </form>
 
 <div class="toolbar" style="margin-top:2.5rem">
   <div>
-    <h2 style="font-size:1.25rem">Meta de mix de vendas por categoria</h2>
-    <p class="subtitle">Percentual ideal do total vendido pela rede em cada categoria (ex.: Similar 30%, RX 15%). Não afeta comissão nem a pontuação da Meta 360 — é só referência pra relatório de mix realizado x meta (ver Painel da rede). Categoria com meta aqui passa a pedir o lançamento do dia também por categoria em Vendas → Venda bruta da filial; deixe vazio pra não rastrear. <strong>Tipo:</strong> piso = quanto mais alto melhor (meta mínima); teto = quanto mais baixo melhor (meta máxima, ex. RX).</p>
+    <h3 style="margin:0">Override por filial</h3>
+    <p class="secao-sub" style="margin:.25rem 0 0">Só preencha se esta filial precisar de uma régua diferente da rede. Campo vazio = segue o padrão global acima.</p>
   </div>
 </div>
 
-<form class="form-padrao" method="post" action="/parametros/mix" style="max-width:640px">
-  <?= Csrf::field() ?>
-  <fieldset>
-    <legend>Meta de mix (%)</legend>
-    <table class="lista">
-      <thead>
-        <tr><th>Categoria</th><th>Meta (%)</th><th>Tipo</th></tr>
-      </thead>
-      <tbody>
-        <?php foreach ($categorias as $c): $catId = (int) $c['id']; ?>
-        <tr>
-          <td><?= htmlspecialchars($c['nome'], ENT_QUOTES) ?></td>
-          <td>
-            <input type="text" id="mix_<?= $catId ?>" name="mix[<?= $catId ?>]" style="width:6.5rem"
-                   value="<?= $c['meta_percentual_pct'] !== null ? $fmtVal($c['meta_percentual_pct']) : '' ?>"
-                   placeholder="não rastreada">
-          </td>
-          <td>
-            <select name="mix_tipo[<?= $catId ?>]" style="width:auto">
-              <option value="piso" <?= ($c['meta_percentual_tipo'] ?? 'piso') === 'piso' ? 'selected' : '' ?>>Piso (mínimo desejado)</option>
-              <option value="teto" <?= ($c['meta_percentual_tipo'] ?? 'piso') === 'teto' ? 'selected' : '' ?>>Teto (máximo desejado)</option>
-            </select>
-          </td>
-        </tr>
-        <?php endforeach; ?>
-      </tbody>
-    </table>
-  </fieldset>
-  <div class="acoes-form">
-    <button type="submit" class="btn">Salvar meta de mix</button>
-  </div>
+<?php if (count($filiais) > 1): ?>
+<form method="get" action="/regras" class="form-padrao" style="max-width:280px; margin-bottom:1rem;">
+  <input type="hidden" name="aba" value="meta-360">
+  <label for="filial_id">Filial</label>
+  <select id="filial_id" name="filial_id" onchange="this.form.submit()">
+    <?php foreach ($filiais as $f): ?>
+      <option value="<?= (int) $f['id'] ?>" <?= (int) $f['id'] === $filialId ? 'selected' : '' ?>><?= htmlspecialchars($f['nome'], ENT_QUOTES) ?></option>
+    <?php endforeach; ?>
+  </select>
 </form>
-
-<div class="toolbar" style="margin-top:2.5rem">
-  <div>
-    <h2 style="font-size:1.25rem">Override por filial</h2>
-    <p class="subtitle">Só preencha aqui se esta filial precisar de uma régua diferente da rede. Campo vazio = segue o padrão global acima.</p>
-  </div>
-</div>
-
-<nav class="tabs-filial">
-  <?php foreach ($filiais as $f): ?>
-    <a href="/parametros?filial_id=<?= (int) $f['id'] ?>" class="<?= (int) $f['id'] === $filialId ? 'active' : '' ?>"><?= htmlspecialchars($f['nome'], ENT_QUOTES) ?></a>
-  <?php endforeach; ?>
-</nav>
-
-<?php if (!$editavel && Auth::papel() !== Auth::PAPEL_ADMIN): ?>
-<div class="callout dica"><span class="callout-label">Somente leitura</span>Só o administrador edita overrides.</div>
 <?php endif; ?>
 
 <form class="form-padrao" method="post" action="/parametros/filial" style="max-width:900px">
@@ -198,5 +155,7 @@ $campoOverride = static function (string $chave, string $rotulo) use ($metaFilia
   <div class="acoes-form">
     <button type="submit" class="btn">Salvar override desta filial</button>
   </div>
+  <?php else: ?>
+  <div class="callout dica"><span class="callout-label">Somente leitura</span>Esta filial já está fechada neste período — não é possível alterar overrides.</div>
   <?php endif; ?>
 </form>

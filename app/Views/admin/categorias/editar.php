@@ -21,7 +21,7 @@ $composicoesLinhas = array_pad(array_map(static fn ($c) => [
 ], $composicoes), $totalComposicoes, ['fonte_tipo' => '', 'fonte_categoria_id' => null, 'fonte_flag' => null]);
 ?>
 <h2>Editar categoria — <?= htmlspecialchars($categoria['nome'], ENT_QUOTES) ?></h2>
-<p class="subtitle"><a href="/categorias">&larr; Voltar para categorias</a></p>
+<p class="subtitle"><a href="/regras?aba=faixas">&larr; Voltar para Regras de comissão</a></p>
 
 <form class="form-padrao" method="post" action="/categorias/<?= (int) $categoria['id'] ?>" style="max-width:680px">
   <?= Csrf::field() ?>
@@ -92,6 +92,6 @@ $composicoesLinhas = array_pad(array_map(static fn ($c) => [
 
   <div class="acoes-form">
     <button type="submit" class="btn">Salvar categoria</button>
-    <a href="/categorias" class="btn secundario">Cancelar</a>
+    <a href="/regras?aba=faixas" class="btn secundario">Cancelar</a>
   </div>
 </form>
