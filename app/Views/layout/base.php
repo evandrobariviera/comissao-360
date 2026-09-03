@@ -22,6 +22,18 @@ $minhaConta = Funcionario::porUsuario((int) Auth::id());
 $periodoAtivo = Periodo::ativo();
 $periodosDisponiveis = Periodo::listar();
 $urlAtual = $_SERVER['REQUEST_URI'] ?? '/dashboard';
+$rota = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+
+// O seletor global de período só aparece nas telas que de fato trabalham "por mês".
+// Configuração (Regras, Filiais, Usuários), Corrida (tem seu próprio seletor de edição),
+// Relatórios (tem intervalo de/até próprio), Ajuda e Minha conta não usam o período ativo.
+$mostrarSeletorPeriodo = $rota === '/';
+foreach (['/dashboard', '/painel-filial', '/metas', '/vendas', '/indicadores', '/fechamento', '/minhas-vendas', '/minhas-metas'] as $prefixoComPeriodo) {
+    if (str_starts_with($rota, $prefixoComPeriodo)) {
+        $mostrarSeletorPeriodo = true;
+        break;
+    }
+}
 ?>
 <!doctype html>
 <html lang="pt-BR">
@@ -249,6 +261,7 @@ $urlAtual = $_SERVER['REQUEST_URI'] ?? '/dashboard';
 <header class="app">
   <div class="brand"><img src="/assets/img/logo.jpg" alt="Farmácia Geremias · Comissão 360"></div>
   <div class="top-right">
+    <?php if ($mostrarSeletorPeriodo): ?>
     <form method="post" action="/periodo/selecionar" class="seletor-periodo">
       <?= Csrf::field() ?>
       <input type="hidden" name="redirect" value="<?= htmlspecialchars($urlAtual, ENT_QUOTES) ?>">
@@ -265,6 +278,7 @@ $urlAtual = $_SERVER['REQUEST_URI'] ?? '/dashboard';
     <?php if ($periodoAtivo['status'] !== 'aberto'): ?>
       <span class="pill status-<?= htmlspecialchars($periodoAtivo['status'], ENT_QUOTES) ?>"><?= htmlspecialchars($rotulosStatusPeriodo[$periodoAtivo['status']], ENT_QUOTES) ?></span>
     <?php endif; ?>
+    <?php endif; ?>
     <span class="pill"><?= htmlspecialchars($rotulosPapel[$papel] ?? $papel, ENT_QUOTES) ?></span>
     <a href="/ajuda">Ajuda</a>
     <a href="/minha-conta" class="avatar-link">
@@ -278,9 +292,8 @@ $urlAtual = $_SERVER['REQUEST_URI'] ?? '/dashboard';
     <a href="/logout">Sair</a>
   </div>
 </header>
-<?php $rota = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH); ?>
 <?php
-/** Marca o link ativo comparando o começo da rota. */
+/** Marca o link ativo comparando o começo da rota (definida no topo do layout). */
 $navAtivo = static fn (string $prefixo): string => str_starts_with((string) $rota, $prefixo) ? ' active' : '';
 ?>
 <?php if ($papel === 'admin'): ?>
