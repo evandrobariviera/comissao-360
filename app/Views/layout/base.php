@@ -286,6 +286,7 @@ $urlAtual = $_SERVER['REQUEST_URI'] ?? '/dashboard';
   <a href="/vendas" class="<?= str_starts_with($rota, '/vendas') ? 'active' : '' ?>">Vendas</a>
   <a href="/indicadores" class="<?= str_starts_with($rota, '/indicadores') ? 'active' : '' ?>">Indicadores</a>
   <a href="/fechamento" class="<?= str_starts_with($rota, '/fechamento') ? 'active' : '' ?>">Fechamento</a>
+  <a href="/relatorios" class="<?= str_starts_with($rota, '/relatorios') ? 'active' : '' ?>">Relatórios</a>
   <a href="/corrida" class="<?= str_starts_with($rota, '/corrida') ? 'active' : '' ?>">Corrida dos Campeões</a>
 </nav>
 <?php elseif ($papel === 'gerente'): ?>
@@ -295,6 +296,7 @@ $urlAtual = $_SERVER['REQUEST_URI'] ?? '/dashboard';
   <a href="/vendas" class="<?= str_starts_with($rota, '/vendas') ? 'active' : '' ?>">Lançar vendas</a>
   <a href="/indicadores" class="<?= str_starts_with($rota, '/indicadores') ? 'active' : '' ?>">Indicadores</a>
   <a href="/fechamento" class="<?= str_starts_with($rota, '/fechamento') ? 'active' : '' ?>">Fechamento</a>
+  <a href="/relatorios" class="<?= str_starts_with($rota, '/relatorios') ? 'active' : '' ?>">Relatórios</a>
   <a href="/corrida" class="<?= str_starts_with($rota, '/corrida') ? 'active' : '' ?>">Corrida dos Campeões</a>
 </nav>
 <?php elseif ($papel === 'funcionario'): ?>
