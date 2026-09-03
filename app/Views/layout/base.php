@@ -60,10 +60,14 @@ $urlAtual = $_SERVER['REQUEST_URI'] ?? '/dashboard';
   .seletor-periodo select{padding:.4rem .6rem; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--surface); color:var(--ink); font-size:.85rem; font-weight:600; font-family:var(--font);}
   .seletor-periodo select:focus{outline:none; border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-tint);}
   .pill.status-fechado, .pill.status-aprovado{background:var(--warn-tint); color:var(--warn);}
-  nav.admin-nav{background:var(--surface); border-bottom:1px solid var(--line); padding:0 1.75rem; display:flex; gap:.3rem; overflow-x:auto;}
-  nav.admin-nav a{display:inline-block; padding:.75rem .65rem; color:var(--ink-soft); text-decoration:none; font-size:.87rem; font-weight:500; border-bottom:2px solid transparent; white-space:nowrap; transition:color .12s ease, border-color .12s ease;}
+  nav.admin-nav{background:var(--surface); border-bottom:1px solid var(--line); padding:0 1.75rem; display:flex; align-items:stretch; gap:.1rem; overflow-x:auto;}
+  nav.admin-nav a{display:inline-flex; align-items:center; padding:.75rem .65rem; color:var(--ink-soft); text-decoration:none; font-size:.87rem; font-weight:500; border-bottom:2px solid transparent; white-space:nowrap; transition:color .12s ease, border-color .12s ease;}
   nav.admin-nav a:hover{color:var(--ink)}
   nav.admin-nav a.active{color:var(--primary-ink); border-bottom-color:var(--primary); font-weight:700;}
+  nav.admin-nav .sep{flex:none; align-self:center; width:1px; height:1.15rem; background:var(--line); margin:0 .6rem;}
+  nav.admin-nav a.secundario{color:var(--ink-faint);}
+  nav.admin-nav a.secundario:hover{color:var(--ink-soft);}
+  nav.admin-nav a.secundario.active{color:var(--primary-ink);}
   nav.tabs-filial{display:flex; gap:.4rem; overflow-x:auto; margin-bottom:1.4rem; border-bottom:1px solid var(--line); padding-bottom:0;}
   nav.tabs-filial a{display:inline-block; padding:.55rem 1rem; color:var(--ink-soft); text-decoration:none; font-size:.86rem; font-weight:600; white-space:nowrap; border-radius:var(--radius-sm) var(--radius-sm) 0 0; border:1px solid transparent; border-bottom:none; transition:color .12s ease, background .12s ease;}
   nav.tabs-filial a:hover{color:var(--ink); background:var(--bg);}
@@ -262,7 +266,6 @@ $urlAtual = $_SERVER['REQUEST_URI'] ?? '/dashboard';
       <span class="pill status-<?= htmlspecialchars($periodoAtivo['status'], ENT_QUOTES) ?>"><?= htmlspecialchars($rotulosStatusPeriodo[$periodoAtivo['status']], ENT_QUOTES) ?></span>
     <?php endif; ?>
     <span class="pill"><?= htmlspecialchars($rotulosPapel[$papel] ?? $papel, ENT_QUOTES) ?></span>
-    <a href="/dashboard">Dashboard</a>
     <a href="/ajuda">Ajuda</a>
     <a href="/minha-conta" class="avatar-link">
       <?php if (!empty($minhaConta['avatar_path'])): ?>
@@ -276,34 +279,48 @@ $urlAtual = $_SERVER['REQUEST_URI'] ?? '/dashboard';
   </div>
 </header>
 <?php $rota = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH); ?>
+<?php
+/** Marca o link ativo comparando o começo da rota. */
+$navAtivo = static fn (string $prefixo): string => str_starts_with((string) $rota, $prefixo) ? ' active' : '';
+?>
 <?php if ($papel === 'admin'): ?>
 <nav class="admin-nav">
-  <a href="/filiais" class="<?= str_starts_with($rota, '/filiais') ? 'active' : '' ?>">Filiais</a>
-  <a href="/usuarios" class="<?= str_starts_with($rota, '/usuarios') ? 'active' : '' ?>">Usuários</a>
-  <a href="/categorias" class="<?= str_starts_with($rota, '/categorias') ? 'active' : '' ?>">Categorias</a>
-  <a href="/parametros" class="<?= str_starts_with($rota, '/parametros') ? 'active' : '' ?>">Parâmetros</a>
-  <a href="/metas" class="<?= str_starts_with($rota, '/metas') ? 'active' : '' ?>">Metas</a>
-  <a href="/vendas" class="<?= str_starts_with($rota, '/vendas') ? 'active' : '' ?>">Vendas</a>
-  <a href="/indicadores" class="<?= str_starts_with($rota, '/indicadores') ? 'active' : '' ?>">Indicadores</a>
-  <a href="/fechamento" class="<?= str_starts_with($rota, '/fechamento') ? 'active' : '' ?>">Fechamento</a>
-  <a href="/relatorios" class="<?= str_starts_with($rota, '/relatorios') ? 'active' : '' ?>">Relatórios</a>
-  <a href="/corrida" class="<?= str_starts_with($rota, '/corrida') ? 'active' : '' ?>">Corrida dos Campeões</a>
+  <a href="/dashboard" class="<?= $rota === '/' || str_starts_with((string) $rota, '/dashboard') ? 'active' : '' ?>">Painel</a>
+  <span class="sep"></span>
+  <a href="/metas" class="<?= trim($navAtivo('/metas')) ?>">Metas</a>
+  <a href="/vendas" class="<?= trim($navAtivo('/vendas')) ?>">Vendas</a>
+  <a href="/indicadores" class="<?= trim($navAtivo('/indicadores')) ?>">Qualidade</a>
+  <a href="/fechamento" class="<?= trim($navAtivo('/fechamento')) ?>">Fechamento</a>
+  <span class="sep"></span>
+  <a href="/relatorios" class="<?= trim($navAtivo('/relatorios')) ?>">Relatórios</a>
+  <a href="/corrida" class="<?= trim($navAtivo('/corrida')) ?>">Corrida dos Campeões</a>
+  <span class="sep"></span>
+  <a href="/filiais" class="secundario<?= $navAtivo('/filiais') ?>">Filiais</a>
+  <a href="/usuarios" class="secundario<?= $navAtivo('/usuarios') ?>">Usuários</a>
+  <a href="/categorias" class="secundario<?= $navAtivo('/categorias') ?>">Categorias</a>
+  <a href="/parametros" class="secundario<?= $navAtivo('/parametros') ?>">Parâmetros</a>
 </nav>
 <?php elseif ($papel === 'gerente'): ?>
 <nav class="admin-nav">
-  <a href="/painel-filial" class="<?= str_starts_with($rota, '/painel-filial') ? 'active' : '' ?>">Painel da filial</a>
-  <a href="/metas" class="<?= str_starts_with($rota, '/metas') ? 'active' : '' ?>">Metas</a>
-  <a href="/vendas" class="<?= str_starts_with($rota, '/vendas') ? 'active' : '' ?>">Lançar vendas</a>
-  <a href="/indicadores" class="<?= str_starts_with($rota, '/indicadores') ? 'active' : '' ?>">Indicadores</a>
-  <a href="/fechamento" class="<?= str_starts_with($rota, '/fechamento') ? 'active' : '' ?>">Fechamento</a>
-  <a href="/relatorios" class="<?= str_starts_with($rota, '/relatorios') ? 'active' : '' ?>">Relatórios</a>
-  <a href="/corrida" class="<?= str_starts_with($rota, '/corrida') ? 'active' : '' ?>">Corrida dos Campeões</a>
+  <a href="/painel-filial" class="<?= trim($navAtivo('/painel-filial')) ?>">Painel da filial</a>
+  <a href="/dashboard" class="secundario<?= ($rota === '/' || str_starts_with((string) $rota, '/dashboard')) ? ' active' : '' ?>">Meu desempenho</a>
+  <span class="sep"></span>
+  <a href="/metas" class="<?= trim($navAtivo('/metas')) ?>">Metas</a>
+  <a href="/vendas" class="<?= trim($navAtivo('/vendas')) ?>">Lançar vendas</a>
+  <a href="/indicadores" class="<?= trim($navAtivo('/indicadores')) ?>">Qualidade</a>
+  <a href="/fechamento" class="<?= trim($navAtivo('/fechamento')) ?>">Fechamento</a>
+  <span class="sep"></span>
+  <a href="/relatorios" class="<?= trim($navAtivo('/relatorios')) ?>">Relatórios</a>
+  <a href="/corrida" class="<?= trim($navAtivo('/corrida')) ?>">Corrida dos Campeões</a>
 </nav>
 <?php elseif ($papel === 'funcionario'): ?>
 <nav class="admin-nav">
-  <a href="/minhas-vendas" class="<?= str_starts_with($rota, '/minhas-vendas') ? 'active' : '' ?>">Minhas vendas</a>
-  <a href="/minhas-metas" class="<?= str_starts_with($rota, '/minhas-metas') ? 'active' : '' ?>">Minhas metas</a>
-  <a href="/corrida" class="<?= str_starts_with($rota, '/corrida') ? 'active' : '' ?>">Corrida dos Campeões</a>
+  <a href="/dashboard" class="<?= ($rota === '/' || str_starts_with((string) $rota, '/dashboard')) ? 'active' : '' ?>">Meu painel</a>
+  <span class="sep"></span>
+  <a href="/minhas-vendas" class="<?= trim($navAtivo('/minhas-vendas')) ?>">Minhas vendas</a>
+  <a href="/minhas-metas" class="<?= trim($navAtivo('/minhas-metas')) ?>">Minhas metas</a>
+  <span class="sep"></span>
+  <a href="/corrida" class="<?= trim($navAtivo('/corrida')) ?>">Corrida dos Campeões</a>
 </nav>
 <?php endif; ?>
 <?php $mainWide = in_array($papel, ['funcionario', 'gerente'], true) && ($rota === '/dashboard' || $rota === '/'); ?>

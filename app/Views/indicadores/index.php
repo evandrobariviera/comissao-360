@@ -21,8 +21,8 @@ $check = static function (?array $checklist, string $col) use ($editavel): strin
 ?>
 <div class="toolbar">
   <div>
-    <h2>Indicadores do fechamento</h2>
-    <p class="subtitle">Período: <strong><?= htmlspecialchars($rotuloPeriodo, ENT_QUOTES) ?></strong>. Lançamento único por funcionário/filial — pode reeditar quantas vezes precisar até o período fechar.</p>
+    <h2>Qualidade do mês</h2>
+    <p class="subtitle">Período: <strong><?= htmlspecialchars($rotuloPeriodo, ENT_QUOTES) ?></strong>. Desconto, rentabilidade, ticket médio e checklist de equipe — alimentam o pilar de Qualidade da Meta 360. Pode reeditar quantas vezes precisar até o período fechar.</p>
   </div>
 </div>
 
