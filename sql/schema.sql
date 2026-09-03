@@ -309,41 +309,70 @@ CREATE TABLE comissao_calculada (
 -- ============================================================
 -- MÓDULO — Corrida dos Campeões (trimestral, separado do núcleo)
 -- ============================================================
+-- Bonificação trimestral onde TODOS os funcionários competem juntos (sem separar
+-- por filial), em "grupos" de produtos (ex.: Similar/Genérico, Linha Própria) que
+-- variam a cada edição. O admin lança periodicamente o valor acumulado vendido por
+-- funcionário em cada grupo; no fim do trimestre, o top 5 de cada grupo é premiado.
+-- Rateio do prêmio bruto do grupo: pesos lineares 5-4-3-2-1 com denominador FIXO 15
+-- (1º = 5/15, 2º = 4/15, ... 5º = 1/15) — posição sem ninguém não é paga.
+-- Módulo desacoplado de `periodo` (mensal) e do seletor global de período.
 
 CREATE TABLE corrida_edicao (
   id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  trimestre     TINYINT UNSIGNED NOT NULL,
+  trimestre     TINYINT UNSIGNED NOT NULL,       -- 1 a 4, rótulo/sequência no ano (não precisa bater com o trimestre-calendário)
   ano           SMALLINT UNSIGNED NOT NULL,
+  nome          VARCHAR(120) NULL,               -- rótulo livre opcional ("Corrida dos Campeões — 3º tri")
   data_inicio   DATE NOT NULL,
   data_fim      DATE NOT NULL,
   status        ENUM('planejamento','aberta','fechada') NOT NULL DEFAULT 'planejamento',
-  UNIQUE KEY uq_corrida_trimestre_ano (trimestre, ano)
+  criado_por    INT UNSIGNED NULL,
+  fechada_em    DATETIME NULL,
+  fechada_por   INT UNSIGNED NULL,               -- fechar grava snapshot em corrida_resultado; reabrir apaga o snapshot (admin)
+  UNIQUE KEY uq_corrida_trimestre_ano (trimestre, ano),
+  CONSTRAINT fk_ce_criador  FOREIGN KEY (criado_por)  REFERENCES usuario(id),
+  CONSTRAINT fk_ce_fechador FOREIGN KEY (fechada_por) REFERENCES usuario(id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE corrida_grupo (
-  id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  edicao_id   INT UNSIGNED NOT NULL,
-  nome        VARCHAR(120) NOT NULL,
-  CONSTRAINT fk_cg_edicao FOREIGN KEY (edicao_id) REFERENCES corrida_edicao(id)
+  id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  edicao_id    INT UNSIGNED NOT NULL,
+  nome         VARCHAR(120) NOT NULL,
+  premio_bruto DECIMAL(10,2) NOT NULL DEFAULT 0, -- "pool" do grupo, rateado entre o top 5 pelos pesos lineares
+  ordem        INT NOT NULL DEFAULT 0,
+  CONSTRAINT fk_cg_edicao FOREIGN KEY (edicao_id) REFERENCES corrida_edicao(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
-CREATE TABLE corrida_premio_faixa (
-  id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  grupo_id    INT UNSIGNED NOT NULL,
-  colocacao   TINYINT UNSIGNED NOT NULL,  -- 1 a 5
-  valor       DECIMAL(10,2) NOT NULL,
-  UNIQUE KEY uq_premio_grupo_colocacao (grupo_id, colocacao),
-  CONSTRAINT fk_cpf_grupo FOREIGN KEY (grupo_id) REFERENCES corrida_grupo(id)
-) ENGINE=InnoDB;
-
+-- Grade funcionário x grupo: valor ACUMULADO vendido (sobrescrito a cada atualização
+-- pelo admin, mesma mecânica da grade por funcionário em /vendas — não é lançamento diário).
 CREATE TABLE corrida_lancamento (
   id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   grupo_id        INT UNSIGNED NOT NULL,
   funcionario_id  INT UNSIGNED NOT NULL,
   valor_vendido   DECIMAL(12,2) NOT NULL DEFAULT 0,
+  atualizado_em   DATETIME NULL,
+  atualizado_por  INT UNSIGNED NULL,
   UNIQUE KEY uq_corrida_lanc (grupo_id, funcionario_id),
-  CONSTRAINT fk_cl_grupo FOREIGN KEY (grupo_id) REFERENCES corrida_grupo(id),
-  CONSTRAINT fk_cl_funcionario FOREIGN KEY (funcionario_id) REFERENCES funcionario(id)
+  CONSTRAINT fk_cl_grupo FOREIGN KEY (grupo_id) REFERENCES corrida_grupo(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cl_funcionario FOREIGN KEY (funcionario_id) REFERENCES funcionario(id),
+  CONSTRAINT fk_cl_atualizador FOREIGN KEY (atualizado_por) REFERENCES usuario(id)
+) ENGINE=InnoDB;
+
+-- Snapshot do fechamento da edição (espelha a filosofia de comissao_calculada):
+-- congela colocação/valor/prêmio de cada premiado por grupo. Reabrir a edição apaga
+-- as linhas dela; o ranking volta a ser calculado ao vivo a partir de corrida_lancamento.
+CREATE TABLE corrida_resultado (
+  id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  edicao_id      INT UNSIGNED NOT NULL,
+  grupo_id       INT UNSIGNED NOT NULL,
+  funcionario_id INT UNSIGNED NOT NULL,
+  colocacao      TINYINT UNSIGNED NOT NULL,
+  valor_vendido  DECIMAL(12,2) NOT NULL,
+  premio         DECIMAL(10,2) NOT NULL,
+  UNIQUE KEY uq_corrida_resultado (grupo_id, funcionario_id),
+  KEY ix_corrida_resultado_edicao (edicao_id),
+  CONSTRAINT fk_cr_edicao FOREIGN KEY (edicao_id) REFERENCES corrida_edicao(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cr_grupo  FOREIGN KEY (grupo_id)  REFERENCES corrida_grupo(id)  ON DELETE CASCADE,
+  CONSTRAINT fk_cr_funcionario FOREIGN KEY (funcionario_id) REFERENCES funcionario(id)
 ) ENGINE=InnoDB;
 
 -- ============================================================

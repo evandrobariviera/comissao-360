@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Controllers\AjudaController;
 use App\Controllers\AuthController;
 use App\Controllers\CategoriaController;
+use App\Controllers\CorridaController;
 use App\Controllers\DashboardController;
 use App\Controllers\FechamentoController;
 use App\Controllers\FilialController;
@@ -72,6 +73,17 @@ $router->get('/parametros', [ParametroController::class, 'index']);
 $router->post('/parametros', [ParametroController::class, 'salvar']);
 $router->post('/parametros/filial', [ParametroController::class, 'salvarFilial']);
 $router->post('/parametros/mix', [ParametroController::class, 'salvarMix']);
+
+$router->get('/corrida', [CorridaController::class, 'index']);
+$router->post('/corrida/edicao', [CorridaController::class, 'criarEdicao']);
+$router->post('/corrida/edicao/{id}', [CorridaController::class, 'atualizarEdicao']);
+$router->post('/corrida/edicao/{id}/excluir', [CorridaController::class, 'excluirEdicao']);
+$router->post('/corrida/edicao/{id}/fechar', [CorridaController::class, 'fecharEdicao']);
+$router->post('/corrida/edicao/{id}/reabrir', [CorridaController::class, 'reabrirEdicao']);
+$router->post('/corrida/grupo', [CorridaController::class, 'criarGrupo']);
+$router->post('/corrida/grupo/{id}', [CorridaController::class, 'atualizarGrupo']);
+$router->post('/corrida/grupo/{id}/excluir', [CorridaController::class, 'excluirGrupo']);
+$router->post('/corrida/grade', [CorridaController::class, 'salvarGrade']);
 
 $router->get('/minhas-vendas', [MinhaAreaController::class, 'vendas']);
 $router->get('/minhas-metas', [MinhaAreaController::class, 'metas']);
