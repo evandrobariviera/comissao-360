@@ -65,6 +65,7 @@ foreach (['/dashboard', '/painel-filial', '/metas', '/vendas', '/indicadores', '
   header.app .top-right{display:flex; align-items:center; gap:1.5rem;}
   header.app .top-right a{color:var(--ink-soft); text-decoration:none; font-size:.89rem; font-weight:500;}
   header.app .top-right a:hover{color:var(--primary-ink)}
+  header.app .top-right a.active{color:var(--primary-ink); font-weight:700;}
   header.app .avatar-link{display:flex; align-items:center; gap:.5rem;}
   header.app .avatar-mini{width:27px; height:27px; border-radius:999px; object-fit:cover; border:1px solid var(--line);}
   header.app .avatar-mini.placeholder{background:var(--primary-tint); color:var(--primary-ink); display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:700;}
@@ -280,7 +281,15 @@ foreach (['/dashboard', '/painel-filial', '/metas', '/vendas', '/indicadores', '
     <?php endif; ?>
     <?php endif; ?>
     <span class="pill"><?= htmlspecialchars($rotulosPapel[$papel] ?? $papel, ENT_QUOTES) ?></span>
-    <a href="/ajuda">Ajuda</a>
+    <?php if ($papel === 'admin'):
+      $configAtiva = false;
+      foreach (['/config', '/filiais', '/usuarios', '/regras', '/categorias', '/parametros'] as $pc) {
+          if (str_starts_with($rota, $pc)) { $configAtiva = true; break; }
+      }
+    ?>
+    <a href="/config" class="<?= $configAtiva ? 'active' : '' ?>">Configuração</a>
+    <?php endif; ?>
+    <a href="/ajuda" class="<?= str_starts_with($rota, '/ajuda') ? 'active' : '' ?>">Ajuda</a>
     <a href="/minha-conta" class="avatar-link">
       <?php if (!empty($minhaConta['avatar_path'])): ?>
         <img src="<?= htmlspecialchars($minhaConta['avatar_path'], ENT_QUOTES) ?>" alt="" class="avatar-mini">
@@ -307,10 +316,6 @@ $navAtivo = static fn (string $prefixo): string => str_starts_with((string) $rot
   <span class="sep"></span>
   <a href="/relatorios" class="<?= trim($navAtivo('/relatorios')) ?>">Relatórios</a>
   <a href="/corrida" class="<?= trim($navAtivo('/corrida')) ?>">Corrida dos Campeões</a>
-  <span class="sep"></span>
-  <a href="/filiais" class="secundario<?= $navAtivo('/filiais') ?>">Filiais</a>
-  <a href="/usuarios" class="secundario<?= $navAtivo('/usuarios') ?>">Usuários</a>
-  <a href="/regras" class="secundario<?= (str_starts_with((string) $rota, '/regras') || str_starts_with((string) $rota, '/categorias') || str_starts_with((string) $rota, '/parametros')) ? ' active' : '' ?>">Regras de comissão</a>
 </nav>
 <?php elseif ($papel === 'gerente'): ?>
 <nav class="admin-nav">

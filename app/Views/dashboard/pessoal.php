@@ -46,7 +46,7 @@ $rotuloPeriodo = $nomesMes[(int) $periodo['mes']] . '/' . $periodo['ano'];
     </div>
 
     <div class="secao">
-      <h3>Meus indicadores</h3>
+      <h3>Minha qualidade</h3>
       <p class="secao-sub">Piso e teto vigentes (parâmetro global, ou override desta filial) — é a régua que define quantos pontos cada indicador vale no pilar Qualidade.</p>
       <div class="kpi-row">
         <?= Viz::faixaGauge('Desconto médio', $dq['desconto']['valor'], $dq['desconto']['piso'], $dq['desconto']['teto'], $dq['desconto']['maior_melhor']) ?>

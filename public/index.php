@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Controllers\AjudaController;
 use App\Controllers\AuthController;
 use App\Controllers\CategoriaController;
+use App\Controllers\ConfigController;
 use App\Controllers\CorridaController;
 use App\Controllers\DashboardController;
 use App\Controllers\FechamentoController;
@@ -73,6 +74,7 @@ $router->post('/metas', [MetaController::class, 'salvar']);
 
 $router->get('/relatorios', [RelatorioController::class, 'index']);
 
+$router->get('/config', [ConfigController::class, 'index']);
 $router->get('/regras', [RegrasController::class, 'index']);
 
 $router->get('/parametros', [ParametroController::class, 'index']);

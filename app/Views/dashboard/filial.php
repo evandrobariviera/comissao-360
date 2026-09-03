@@ -57,7 +57,7 @@ foreach ($filiaisPermitidas as $f) { if ((int) $f['id'] === $filialId) { $nomeFi
 </div>
 
 <div class="secao">
-  <h3>Indicadores da equipe</h3>
+  <h3>Qualidade da equipe</h3>
   <p class="secao-sub">Média entre quem já tem indicador lançado no período.</p>
   <div class="kpi-row" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
     <?= Viz::statTile('Desconto médio (equipe)', $mediasFilial['desconto_medio'] !== null ? Viz::pct($mediasFilial['desconto_medio']) : '—') ?>
