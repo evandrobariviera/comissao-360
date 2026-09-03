@@ -7,6 +7,8 @@
  * @var array       $rankingGeral ranking geral já calculado da aba selecionada
  * @var string      $abaGeral     'trimestre' | 'semestre' | 'ano'
  * @var array       $nomesFiliais [filial_id => nome]
+ * @var array       $produtosEdicao produtos que participam da edição
+ * @var array       $bonus         bônus por unidade por funcionário (ao vivo ou snapshot)
  */
 use App\Core\Viz;
 
@@ -86,6 +88,45 @@ $ordinal = static fn (int $c): string => $c . 'º';
           <td><?= htmlspecialchars($l['nome'], ENT_QUOTES) ?><?= $eu ? ' <span class="badge-papel">você</span>' : '' ?></td>
           <td><?= htmlspecialchars($nomesFiliais[$l['filial_id']] ?? '—', ENT_QUOTES) ?></td>
           <td style="text-align:right; font-variant-numeric:tabular-nums"><?= Viz::money((float) $l['total']) ?></td>
+        </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+  </div>
+  <?php endif; ?>
+</div>
+
+<div class="secao">
+  <h3>Bônus por unidade</h3>
+  <p class="secao-sub">
+    Pago a <strong>todo funcionário que vendeu</strong>, sem depender de posição no ranking. Some ao valor final da corrida.
+    <?php if (!empty($produtosEdicao)): ?>
+      <br>Produtos:
+      <?php foreach ($produtosEdicao as $i => $p): ?>
+        <?= htmlspecialchars($p['nome'], ENT_QUOTES) ?> (<?= Viz::money((float) $p['bonus_unidade']) ?>/<?= htmlspecialchars($p['unidade_rotulo'], ENT_QUOTES) ?><?= $p['grupo_id'] !== null ? ' · conta pro grupo ' . htmlspecialchars((string) $p['grupo_nome'], ENT_QUOTES) : ' · solto' ?>)<?= $i < count($produtosEdicao) - 1 ? ' · ' : '' ?>
+      <?php endforeach; ?>
+    <?php endif; ?>
+  </p>
+
+  <?php if (empty($produtosEdicao)): ?>
+    <div class="card"><p class="subtitle" style="margin:0">Nenhum produto com bônus por unidade nesta edição.</p></div>
+  <?php elseif (empty($bonus)): ?>
+    <div class="card"><p class="subtitle" style="margin:0">Nenhuma unidade lançada ainda.</p></div>
+  <?php else: ?>
+  <div class="scrollx">
+    <table class="lista">
+      <thead>
+        <tr><th>Funcionário</th><th>Filial</th><th style="text-align:right">Unidades</th><th style="text-align:right">Bônus</th></tr>
+      </thead>
+      <tbody>
+        <?php foreach ($bonus as $l):
+          $eu = $destaqueFuncionarioId !== null && $l['funcionario_id'] === $destaqueFuncionarioId;
+        ?>
+        <tr<?= $eu ? ' style="background:var(--primary-tint)"' : '' ?>>
+          <td><?= htmlspecialchars($l['nome'], ENT_QUOTES) ?><?= $eu ? ' <span class="badge-papel">você</span>' : '' ?></td>
+          <td><?= htmlspecialchars($nomesFiliais[$l['filial_id']] ?? '—', ENT_QUOTES) ?></td>
+          <td style="text-align:right; font-variant-numeric:tabular-nums"><?= rtrim(rtrim(number_format((float) $l['quantidade_total'], 2, ',', '.'), '0'), ',') ?></td>
+          <td style="text-align:right; font-variant-numeric:tabular-nums"><strong><?= Viz::money((float) $l['valor_bonus']) ?></strong></td>
         </tr>
         <?php endforeach; ?>
       </tbody>

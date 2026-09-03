@@ -84,6 +84,10 @@ $router->post('/corrida/grupo', [CorridaController::class, 'criarGrupo']);
 $router->post('/corrida/grupo/{id}', [CorridaController::class, 'atualizarGrupo']);
 $router->post('/corrida/grupo/{id}/excluir', [CorridaController::class, 'excluirGrupo']);
 $router->post('/corrida/grade', [CorridaController::class, 'salvarGrade']);
+$router->post('/corrida/produto', [CorridaController::class, 'adicionarProduto']);
+$router->post('/corrida/produto/{id}', [CorridaController::class, 'atualizarProduto']);
+$router->post('/corrida/produto/{id}/excluir', [CorridaController::class, 'removerProduto']);
+$router->post('/corrida/grade-produtos', [CorridaController::class, 'salvarGradeProdutos']);
 
 $router->get('/minhas-vendas', [MinhaAreaController::class, 'vendas']);
 $router->get('/minhas-metas', [MinhaAreaController::class, 'metas']);

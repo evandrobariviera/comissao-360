@@ -12,6 +12,11 @@
  * @var string     $abaGeral
  * @var array      $nomesFiliais
  * @var float      $totalPremiado
+ * @var float      $totalBonus
+ * @var array      $produtosEdicao  produtos que participam da edição (id = corrida_edicao_produto.id)
+ * @var array      $gradeProdutos   [funcionario_id][edicao_produto_id] => ['quantidade','valor']
+ * @var array      $catalogo        catálogo global de produtos
+ * @var array      $bonus           bônus por unidade por funcionário
  */
 use App\Core\Csrf;
 use App\Core\Viz;
@@ -197,6 +202,146 @@ $fechada = $edicao !== null && $edicao['status'] === 'fechada';
     </div>
     <?php if ($aberta): ?>
     <div class="acoes-form" style="margin-top:1.2rem"><button type="submit" class="btn">Salvar grade</button></div>
+    <?php endif; ?>
+  </form>
+</div>
+<?php endif; ?>
+
+<div class="secao">
+  <h3>Produtos com bônus por unidade</h3>
+  <p class="secao-sub">
+    Bônus por unidade vendida (ex.: "cada caixa = R$ 5,00"), pago a todo funcionário que vendeu.
+    Vinculado a um grupo → o valor em R$ também <strong>soma no ranking</strong> daquele grupo. Solto → só o bônus.
+  </p>
+
+  <?php foreach ($produtosEdicao as $p): ?>
+    <div class="card">
+      <div style="display:flex; gap:.6rem; align-items:flex-end; flex-wrap:wrap;">
+        <div style="min-width:14rem">
+          <span style="font-size:.75rem; font-weight:700; color:var(--ink-soft)">Produto</span><br>
+          <strong><?= htmlspecialchars($p['nome'], ENT_QUOTES) ?></strong>
+          <span style="color:var(--ink-faint)">/ <?= htmlspecialchars($p['unidade_rotulo'], ENT_QUOTES) ?></span>
+        </div>
+        <form method="post" action="/corrida/produto/<?= (int) $p['id'] ?>" style="display:flex; gap:.6rem; align-items:flex-end; flex-wrap:wrap;">
+          <?= Csrf::field() ?>
+          <div>
+            <label style="font-size:.75rem; font-weight:700; color:var(--ink-soft)">Grupo vinculado</label><br>
+            <select name="grupo_id" <?= $aberta ? '' : 'disabled' ?> style="padding:.5rem .7rem; border:1px solid var(--line); border-radius:var(--radius-sm);">
+              <option value="0">— solto (só bônus) —</option>
+              <?php foreach ($grupos as $g): ?>
+                <option value="<?= (int) $g['id'] ?>" <?= (int) $p['grupo_id'] === (int) $g['id'] ? 'selected' : '' ?>><?= htmlspecialchars($g['nome'], ENT_QUOTES) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:.75rem; font-weight:700; color:var(--ink-soft)">R$ por <?= htmlspecialchars($p['unidade_rotulo'], ENT_QUOTES) ?></label><br>
+            <input type="text" name="bonus_unidade" value="<?= $fmt($p['bonus_unidade']) ?>" <?= $aberta ? '' : 'disabled' ?> style="padding:.5rem .7rem; border:1px solid var(--line); border-radius:var(--radius-sm); width:7rem;">
+          </div>
+          <?php if ($aberta): ?><button type="submit" class="btn pequeno">Salvar</button><?php endif; ?>
+        </form>
+        <?php if ($aberta): ?>
+        <form method="post" action="/corrida/produto/<?= (int) $p['id'] ?>/excluir" onsubmit="return confirm('Tirar este produto da edição e apagar os lançamentos dele?');">
+          <?= Csrf::field() ?><button type="submit" class="btn perigo pequeno">Remover</button>
+        </form>
+        <?php endif; ?>
+      </div>
+    </div>
+  <?php endforeach; ?>
+
+  <?php if ($aberta): ?>
+  <div class="card">
+    <form method="post" action="/corrida/produto" style="display:flex; gap:.6rem; align-items:flex-end; flex-wrap:wrap;">
+      <?= Csrf::field() ?>
+      <input type="hidden" name="edicao_id" value="<?= (int) $edicao['id'] ?>">
+      <div>
+        <label style="font-size:.75rem; font-weight:700; color:var(--ink-soft)">Do catálogo</label><br>
+        <select name="produto_id" style="padding:.5rem .7rem; border:1px solid var(--line); border-radius:var(--radius-sm); min-width:12rem;">
+          <option value="0">— novo produto —</option>
+          <?php foreach ($catalogo as $c): ?>
+            <option value="<?= (int) $c['id'] ?>"><?= htmlspecialchars($c['nome'], ENT_QUOTES) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:.75rem; font-weight:700; color:var(--ink-soft)">Novo produto — nome</label><br>
+        <input type="text" name="produto_nome" placeholder="ex.: Zodak" style="padding:.5rem .7rem; border:1px solid var(--line); border-radius:var(--radius-sm);">
+      </div>
+      <div>
+        <label style="font-size:.75rem; font-weight:700; color:var(--ink-soft)">Unidade</label><br>
+        <input type="text" name="unidade_rotulo" value="unidade" style="padding:.5rem .7rem; border:1px solid var(--line); border-radius:var(--radius-sm); width:6rem;">
+      </div>
+      <div>
+        <label style="font-size:.75rem; font-weight:700; color:var(--ink-soft)">Grupo vinculado</label><br>
+        <select name="grupo_id" style="padding:.5rem .7rem; border:1px solid var(--line); border-radius:var(--radius-sm);">
+          <option value="0">— solto —</option>
+          <?php foreach ($grupos as $g): ?>
+            <option value="<?= (int) $g['id'] ?>"><?= htmlspecialchars($g['nome'], ENT_QUOTES) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:.75rem; font-weight:700; color:var(--ink-soft)">R$ por unidade</label><br>
+        <input type="text" name="bonus_unidade" placeholder="5,00" style="padding:.5rem .7rem; border:1px solid var(--line); border-radius:var(--radius-sm); width:7rem;">
+      </div>
+      <button type="submit" class="btn pequeno">Adicionar produto</button>
+    </form>
+    <p class="ajuda" style="margin:.6rem 0 0">Escolha um produto do catálogo <em>ou</em> preencha o nome de um novo (o novo entra no catálogo e fica disponível para as próximas edições).</p>
+  </div>
+  <?php endif; ?>
+</div>
+
+<?php if (!empty($produtosEdicao)): ?>
+<div class="secao">
+  <h3>Grade de produtos</h3>
+  <p class="secao-sub">Quantidade vendida (para o bônus) e valor em R$ (para o ranking, quando o produto é de um grupo). Acumulado, sobrescrito a cada salvamento.</p>
+
+  <?php if (!$aberta): ?>
+    <div class="callout dica"><span class="callout-label">Somente leitura</span>A edição está fechada. Reabra para lançar.</div>
+  <?php endif; ?>
+
+  <form method="post" action="/corrida/grade-produtos">
+    <?= Csrf::field() ?>
+    <input type="hidden" name="edicao_id" value="<?= (int) $edicao['id'] ?>">
+    <div class="scrollx">
+      <table class="faixas">
+        <thead>
+          <tr>
+            <th rowspan="2">Funcionário</th>
+            <th rowspan="2">Filial</th>
+            <?php foreach ($produtosEdicao as $p): ?>
+              <th colspan="2" style="text-align:center; border-bottom:1px solid var(--line)">
+                <?= htmlspecialchars($p['nome'], ENT_QUOTES) ?>
+                <?= $p['grupo_id'] !== null ? '<span class="pill" style="font-size:.6rem">' . htmlspecialchars((string) $p['grupo_nome'], ENT_QUOTES) . '</span>' : '' ?>
+              </th>
+            <?php endforeach; ?>
+          </tr>
+          <tr>
+            <?php foreach ($produtosEdicao as $p): ?>
+              <th>Qtd</th><th>R$<?= $p['grupo_id'] !== null ? ' *' : '' ?></th>
+            <?php endforeach; ?>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach ($funcionarios as $f): $fid = (int) $f['id']; ?>
+          <tr>
+            <td style="white-space:nowrap"><?= htmlspecialchars($f['nome'], ENT_QUOTES) ?></td>
+            <td style="white-space:nowrap; color:var(--ink-faint)"><?= htmlspecialchars($nomesFiliais[$f['filial_id']] ?? '—', ENT_QUOTES) ?></td>
+            <?php foreach ($produtosEdicao as $p): $epid = (int) $p['id']; $cel = $gradeProdutos[$fid][$epid] ?? ['quantidade' => 0, 'valor' => 0]; ?>
+              <td>
+                <?php if ($aberta): ?><input type="text" name="qtd[<?= $fid ?>][<?= $epid ?>]" value="<?= $fmt($cel['quantidade']) ?>" style="width:4.5rem"><?php else: ?><?= $fmt($cel['quantidade']) ?><?php endif; ?>
+              </td>
+              <td>
+                <?php if ($aberta): ?><input type="text" name="valor[<?= $fid ?>][<?= $epid ?>]" value="<?= $fmt($cel['valor']) ?>" style="width:6rem"><?php else: ?><?= $fmt($cel['valor']) ?><?php endif; ?>
+              </td>
+            <?php endforeach; ?>
+          </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+    <p class="ajuda" style="margin:.5rem 0 0">* R$ obrigatório quando há quantidade lançada e o produto está vinculado a um grupo.</p>
+    <?php if ($aberta): ?>
+    <div class="acoes-form" style="margin-top:1.2rem"><button type="submit" class="btn">Salvar grade de produtos</button></div>
     <?php endif; ?>
   </form>
 </div>

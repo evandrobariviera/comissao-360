@@ -10,6 +10,9 @@
  * @var array      $nomesFiliais
  * @var int|null   $destaqueFuncionarioId
  * @var float      $totalPremiado
+ * @var float      $totalBonus
+ * @var array      $produtosEdicao
+ * @var array      $bonus
  */
 use App\Core\Viz;
 
@@ -43,7 +46,7 @@ $fechada = $edicao !== null && $edicao['status'] === 'fechada';
   <p class="secao-sub" style="margin:.25rem 0 0">
     <?= $dataBr((string) $edicao['data_inicio']) ?> a <?= $dataBr((string) $edicao['data_fim']) ?> ·
     <span class="pill <?= $fechada ? 'status-aprovado' : 'status-ativo' ?>"><?= $fechada ? 'Encerrada' : 'Em andamento' ?></span>
-    <?php if ($fechada): ?> · total pago: <strong><?= Viz::money($totalPremiado) ?></strong><?php endif; ?>
+    <?php if ($fechada): ?> · total pago: <strong><?= Viz::money($totalPremiado + $totalBonus) ?></strong> (rateio <?= Viz::money($totalPremiado) ?> + bônus <?= Viz::money($totalBonus) ?>)<?php endif; ?>
   </p>
 </div>
 

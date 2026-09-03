@@ -27,25 +27,35 @@ final class CorridaController extends Controller
         $edicoes = Corrida::edicoes();
         $edicao = $this->resolverEdicao($edicoes);
 
+        $dados = $this->dadosComuns($edicao, $edicoes);
+
         if (Auth::papel() === Auth::PAPEL_ADMIN) {
             $funcionarios = $this->funcionariosComFilial();
             $grade = [];
+            $gradeProdutos = [];
             if ($edicao !== null) {
+                $funcionarioIds = array_column($funcionarios, 'id');
                 $grade = Corrida::grade(
-                    array_column($funcionarios, 'id'),
-                    array_column(Corrida::grupos((int) $edicao['id']), 'id'),
+                    $funcionarioIds,
+                    array_column($dados['grupos'], 'id'),
                     (int) $edicao['id']
                 );
+                $gradeProdutos = Corrida::gradeProdutos(
+                    $funcionarioIds,
+                    array_column($dados['produtosEdicao'], 'id')
+                );
             }
-            $this->render('corrida/painel', $this->dadosComuns($edicao, $edicoes) + [
+            $this->render('corrida/painel', $dados + [
                 'funcionarios' => $funcionarios,
                 'grade' => $grade,
+                'gradeProdutos' => $gradeProdutos,
+                'catalogo' => Corrida::produtosCatalogo(),
             ]);
             return;
         }
 
         $funcionarioId = Funcionario::idPorUsuario((int) Auth::id());
-        $this->render('corrida/vitrine', $this->dadosComuns($edicao, $edicoes) + [
+        $this->render('corrida/vitrine', $dados + [
             'destaqueFuncionarioId' => $funcionarioId ?: null,
         ]);
     }
@@ -283,6 +293,152 @@ final class CorridaController extends Controller
     }
 
     // ----------------------------------------------------------------
+    // Produtos com bônus por unidade (admin)
+    // ----------------------------------------------------------------
+
+    public function adicionarProduto(): void
+    {
+        Auth::require(Auth::PAPEL_ADMIN);
+        $this->requireCsrf();
+
+        $edicaoId = (int) $this->input('edicao_id', 0);
+        if (!Corrida::estaAberta($edicaoId)) {
+            Flash::set('erro', 'A edição precisa estar aberta para cadastrar produtos.');
+            $this->redirect("/corrida?edicao={$edicaoId}");
+        }
+
+        $produtoId = (int) $this->input('produto_id', 0);
+        $nomeNovo = trim((string) $this->input('produto_nome', ''));
+        $unidade = trim((string) $this->input('unidade_rotulo', 'unidade')) ?: 'unidade';
+
+        if ($produtoId <= 0 && $nomeNovo === '') {
+            Flash::set('erro', 'Escolha um produto do catálogo ou informe o nome de um novo.');
+            $this->redirect("/corrida?edicao={$edicaoId}");
+        }
+        if ($produtoId <= 0) {
+            $produtoId = Corrida::criarOuAcharProduto($nomeNovo, $unidade);
+        }
+
+        [$grupoId, $bonus, $erro] = $this->lerFormularioProduto($edicaoId);
+        if ($erro !== null) {
+            Flash::set('erro', $erro);
+            $this->redirect("/corrida?edicao={$edicaoId}");
+        }
+
+        try {
+            $id = Corrida::adicionarProdutoEdicao($edicaoId, $produtoId, $grupoId, $bonus);
+        } catch (\PDOException $e) {
+            Flash::set('erro', 'Esse produto já participa desta edição.');
+            $this->redirect("/corrida?edicao={$edicaoId}");
+        }
+
+        Audit::log('adicionar_produto', 'corrida_edicao', $edicaoId, "produto={$produtoId}");
+        Flash::set('sucesso', 'Produto adicionado à edição.');
+        $this->redirect("/corrida?edicao={$edicaoId}");
+    }
+
+    public function atualizarProduto(string $id): void
+    {
+        Auth::require(Auth::PAPEL_ADMIN);
+        $this->requireCsrf();
+
+        $ep = Corrida::edicaoProduto((int) $id);
+        if ($ep === null) {
+            $this->redirect('/corrida');
+        }
+        $edicaoId = (int) $ep['edicao_id'];
+        if (!Corrida::estaAberta($edicaoId)) {
+            Flash::set('erro', 'A edição está fechada — reabra para editar produtos.');
+            $this->redirect("/corrida?edicao={$edicaoId}");
+        }
+
+        [$grupoId, $bonus, $erro] = $this->lerFormularioProduto($edicaoId);
+        if ($erro !== null) {
+            Flash::set('erro', $erro);
+            $this->redirect("/corrida?edicao={$edicaoId}");
+        }
+
+        Corrida::atualizarProdutoEdicao((int) $id, $grupoId, $bonus);
+        Audit::log('atualizar_produto', 'corrida_edicao', $edicaoId, "ep={$id}");
+        Flash::set('sucesso', 'Produto atualizado.');
+        $this->redirect("/corrida?edicao={$edicaoId}");
+    }
+
+    public function removerProduto(string $id): void
+    {
+        Auth::require(Auth::PAPEL_ADMIN);
+        $this->requireCsrf();
+
+        $ep = Corrida::edicaoProduto((int) $id);
+        if ($ep === null) {
+            $this->redirect('/corrida');
+        }
+        $edicaoId = (int) $ep['edicao_id'];
+        if (!Corrida::estaAberta($edicaoId)) {
+            Flash::set('erro', 'A edição está fechada — reabra para remover produtos.');
+            $this->redirect("/corrida?edicao={$edicaoId}");
+        }
+
+        Corrida::removerProdutoEdicao((int) $id);
+        Audit::log('remover_produto', 'corrida_edicao', $edicaoId, "ep={$id}");
+        Flash::set('sucesso', 'Produto removido da edição.');
+        $this->redirect("/corrida?edicao={$edicaoId}");
+    }
+
+    public function salvarGradeProdutos(): void
+    {
+        Auth::require(Auth::PAPEL_ADMIN);
+        $this->requireCsrf();
+
+        $edicaoId = (int) $this->input('edicao_id', 0);
+        if (!Corrida::estaAberta($edicaoId)) {
+            Flash::set('erro', 'A edição precisa estar aberta para lançar produtos.');
+            $this->redirect("/corrida?edicao={$edicaoId}");
+        }
+
+        $produtos = Corrida::produtosDaEdicao($edicaoId);
+        $funcionarioIds = array_column($this->funcionariosComFilial(), 'id');
+        $qtdPost = $this->input('qtd', []);
+        $valPost = $this->input('valor', []);
+        $qtdPost = is_array($qtdPost) ? $qtdPost : [];
+        $valPost = is_array($valPost) ? $valPost : [];
+
+        $numero = static function ($bruto): ?float {
+            $raw = trim(str_replace(',', '.', (string) $bruto));
+            if ($raw === '') {
+                return 0.0;
+            }
+            if (!is_numeric($raw) || (float) $raw < 0) {
+                return null;
+            }
+            return (float) $raw;
+        };
+
+        $valores = [];
+        foreach ($funcionarioIds as $fid) {
+            foreach ($produtos as $p) {
+                $epId = (int) $p['id'];
+                $qtd = $numero($qtdPost[$fid][$epId] ?? '');
+                $val = $numero($valPost[$fid][$epId] ?? '');
+                if ($qtd === null || $val === null) {
+                    Flash::set('erro', 'Há um valor inválido na grade de produtos.');
+                    $this->redirect("/corrida?edicao={$edicaoId}");
+                }
+                if ($p['grupo_id'] !== null && $qtd > 0 && $val <= 0) {
+                    Flash::set('erro', "O produto \"{$p['nome']}\" está vinculado a um grupo — informe o valor em R$ vendido para quem tem quantidade lançada.");
+                    $this->redirect("/corrida?edicao={$edicaoId}");
+                }
+                $valores[(int) $fid][$epId] = ['quantidade' => $qtd, 'valor' => $val];
+            }
+        }
+
+        Corrida::salvarGradeProdutos($valores, (int) Auth::id());
+        Audit::log('salvar_grade_produtos', 'corrida_edicao', $edicaoId);
+        Flash::set('sucesso', 'Grade de produtos atualizada.');
+        $this->redirect("/corrida?edicao={$edicaoId}");
+    }
+
+    // ----------------------------------------------------------------
     // Helpers
     // ----------------------------------------------------------------
 
@@ -322,6 +478,9 @@ final class CorridaController extends Controller
                 'abaGeral' => 'trimestre',
                 'nomesFiliais' => $nomesFiliais,
                 'totalPremiado' => 0.0,
+                'produtosEdicao' => [],
+                'bonus' => [],
+                'totalBonus' => 0.0,
             ];
         }
 
@@ -351,6 +510,8 @@ final class CorridaController extends Controller
         };
         $rankingGeral = CorridaCalculator::rankingGeral(Corrida::lancamentosDasEdicoes($escopo));
 
+        $fechada = $edicao['status'] === 'fechada';
+
         return [
             'edicao' => $edicao,
             'edicoes' => $edicoes,
@@ -359,7 +520,10 @@ final class CorridaController extends Controller
             'rankingGeral' => $rankingGeral,
             'abaGeral' => $abaGeral,
             'nomesFiliais' => $nomesFiliais,
-            'totalPremiado' => $edicao['status'] === 'fechada' ? Corrida::totalPremiado($edicaoId) : 0.0,
+            'totalPremiado' => $fechada ? Corrida::totalPremiado($edicaoId) : 0.0,
+            'produtosEdicao' => Corrida::produtosDaEdicao($edicaoId),
+            'bonus' => $fechada ? Corrida::resultadoBonus($edicaoId) : Corrida::bonusPorFuncionario($edicaoId),
+            'totalBonus' => $fechada ? Corrida::totalBonus($edicaoId) : 0.0,
         ];
     }
 
@@ -410,6 +574,31 @@ final class CorridaController extends Controller
         }
 
         return [$nome, (float) $premioRaw, $erro];
+    }
+
+    /**
+     * Lê grupo vinculado (0/vazio = solto; precisa ser um grupo da própria edição) e o R$/unidade.
+     * @return array{0:?int,1:float,2:?string} grupo_id, bonus_unidade, erro
+     */
+    private function lerFormularioProduto(int $edicaoId): array
+    {
+        $grupoRaw = (int) $this->input('grupo_id', 0);
+        $bonusRaw = trim(str_replace(',', '.', (string) $this->input('bonus_unidade', '')));
+
+        $grupoId = null;
+        if ($grupoRaw > 0) {
+            $idsValidos = array_map('intval', array_column(Corrida::grupos($edicaoId), 'id'));
+            if (!in_array($grupoRaw, $idsValidos, true)) {
+                return [null, 0.0, 'Grupo vinculado inválido para esta edição.'];
+            }
+            $grupoId = $grupoRaw;
+        }
+
+        if ($bonusRaw === '' || !is_numeric($bonusRaw) || (float) $bonusRaw < 0) {
+            return [null, 0.0, 'Informe o valor de bônus por unidade (0 ou mais).'];
+        }
+
+        return [$grupoId, (float) $bonusRaw, null];
     }
 
     private function dataValida(string $data): bool
