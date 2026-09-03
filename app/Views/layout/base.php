@@ -256,9 +256,235 @@ foreach (['/dashboard', '/painel-filial', '/metas', '/vendas', '/indicadores', '
     .dash-cols{grid-template-columns:1fr;}
     .dash-col-filial{position:static; margin-top:2.2rem;}
   }
+
+  /* ============================================================
+     MOBILE / APP  (≤ 768px) — barra inferior estilo aplicativo,
+     top-bar fina, folha "Mais", e ajustes de layout das telas.
+     ============================================================ */
+  .mobile-topbar, .mobile-bottomnav, .mais-sheet, .mais-backdrop{ display:none; }
+
+  @media (max-width: 768px){
+    /* chrome de desktop fora */
+    header.app, nav.admin-nav{ display:none; }
+
+    /* top-bar fina */
+    .mobile-topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:.6rem;
+      position:sticky; top:0; z-index:30;
+      background:var(--surface); border-bottom:1px solid var(--line);
+      padding:.55rem 1rem; padding-top:calc(.55rem + env(safe-area-inset-top));
+    }
+    .mobile-topbar .brand img{ height:24px; width:auto; display:block; }
+    .mobile-topbar .tb-chip{
+      display:inline-flex; align-items:center; gap:.3rem;
+      font-family:var(--font); font-size:.78rem; font-weight:700; cursor:pointer;
+      color:var(--primary-ink); background:var(--primary-tint);
+      border:none; border-radius:999px; padding:.32rem .8rem;
+    }
+    .mobile-topbar .tb-chip.status-aprovado, .mobile-topbar .tb-chip.status-fechado{ background:var(--warn-tint); color:var(--warn); }
+    .mobile-topbar .tb-chip svg{ width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2.2; }
+
+    main{ max-width:100%; margin:0; padding:1.3rem 1rem calc(5.6rem + env(safe-area-inset-bottom)); }
+    main.main-wide{ max-width:100%; }
+    /* rede de segurança: nada empurra a página na horizontal (overflow-x:clip
+       não cria container de rolagem, então não quebra position:sticky da top-bar;
+       as tabelas de dados ainda rolam dentro do próprio container) */
+    html, body{ overflow-x:clip; }
+    main{ overflow-x:clip; }
+
+    h2{ font-size:1.28rem; }
+    .subtitle{ font-size:.9rem; margin-bottom:1rem; }
+    .card{ padding:1.1rem 1.05rem; }
+
+    /* toolbars empilham e viram largura cheia */
+    .toolbar{ flex-direction:column; align-items:stretch; gap:.7rem; }
+    .toolbar > *{ width:100%; min-width:0; }
+    .toolbar .btn{ text-align:center; }
+
+    /* formulários */
+    form.form-padrao{ max-width:100%; }
+    form.form-padrao fieldset{ min-width:0; padding:.9rem 1rem; }
+    form.form-padrao .acoes-form{ flex-direction:column; }
+    form.form-padrao .acoes-form .btn{ width:100%; text-align:center; }
+    /* inputs: >=16px evita o zoom automático do iOS; min-width:0 evita estourar a grade */
+    input, select, textarea{ font-size:16px; min-width:0; max-width:100%; }
+    /* qualquer grade inline (repeat(N,1fr), "1fr 1fr", etc.) vira 1 coluna no celular */
+    form.form-padrao div[style*="grid-template-columns"],
+    [style*="grid-template-columns:repeat"], [style*="grid-template-columns: repeat"]{ grid-template-columns:1fr !important; }
+    form.form-padrao div[style*="display:grid"] > div,
+    form.form-padrao div[style*="display: grid"] > div{ min-width:0; }
+    input[style*="min-width"], select[style*="min-width"]{ min-width:0 !important; width:100% !important; }
+
+    /* tabelas de dados rolam na horizontal (dentro do próprio container) em vez de espremer */
+    table.lista, table.faixas, table.mix-grade{ display:block; overflow-x:auto; white-space:nowrap; -webkit-overflow-scrolling:touch; }
+    .scrollx{ -webkit-overflow-scrolling:touch; max-width:100%; }
+    ul.checklist-status li{ padding-left:1.35rem; }
+
+    /* KPIs em 2 colunas — sem estourar */
+    .kpi-row{ grid-template-columns:1fr 1fr; gap:.7rem; margin:.9rem 0 1.2rem; }
+    .kpi-row > *{ min-width:0; }
+    .stat-tile{ padding:.9rem .95rem; }
+    .stat-tile .stat-label{ white-space:normal; }
+    .stat-tile .stat-value{ font-size:1.1rem; white-space:normal; overflow:visible; overflow-wrap:anywhere; }
+    .secao{ margin-top:1.8rem; }
+
+    /* medidores / rankings: o nome trunca em vez de empurrar a linha */
+    .meter-row{ grid-template-columns:1fr auto; }
+    .meter-row > *{ min-width:0; }
+    .meter-row .meter-nome > span:first-child{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .meter-row .meter-nome .status-tag{ flex:none; }
+    .rank-row{ grid-template-columns:5.4rem 1fr 4.4rem; gap:.5rem; font-size:.82rem; }
+    .rank-row > *{ min-width:0; }
+    .tier-row{ grid-template-columns:6.2rem 1fr 2rem; font-size:.82rem; }
+    .tier-row > *{ min-width:0; }
+    .pilares-bar, .oport-track, .gauge-track, .stat-bar-track, .meter-track, .rank-track{ max-width:100%; }
+
+    /* abas rentes à borda */
+    nav.tabs-filial{ margin:0 -1rem 1.2rem; padding:0 1rem; }
+
+    /* ---- barra inferior estilo app ---- */
+    .mobile-bottomnav{
+      display:flex; position:fixed; left:0; right:0; bottom:0; z-index:40;
+      background:var(--surface); border-top:1px solid var(--line);
+      padding-bottom:env(safe-area-inset-bottom);
+      box-shadow:0 -2px 14px rgba(16,27,30,.07);
+    }
+    .mobile-bottomnav a, .mobile-bottomnav label{
+      flex:1 1 0; min-width:0; display:flex; flex-direction:column; align-items:center; gap:.16rem;
+      padding:.48rem .15rem .5rem; text-decoration:none; cursor:pointer;
+      color:var(--ink-faint); font-size:.64rem; font-weight:600; line-height:1.15; text-align:center;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .mobile-bottomnav svg{ width:23px; height:23px; stroke:currentColor; fill:none; stroke-width:1.85; }
+    .mobile-bottomnav a.active, .mobile-bottomnav label.active{ color:var(--primary); }
+    .mobile-bottomnav .bn-label{ display:block; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
+
+    /* ---- folha "Mais" ---- */
+    .mais-backdrop{
+      display:block; position:fixed; inset:0; z-index:50; background:rgba(16,27,30,.42);
+      opacity:0; pointer-events:none; transition:opacity .2s ease;
+    }
+    .mais-sheet{
+      display:block; position:fixed; left:0; right:0; bottom:0; z-index:60;
+      background:var(--surface); border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+      padding:.4rem 1.1rem calc(1.1rem + env(safe-area-inset-bottom));
+      transform:translateY(115%); transition:transform .26s cubic-bezier(.22,1,.36,1);
+      max-height:82vh; overflow-y:auto; box-shadow:0 -10px 34px rgba(16,27,30,.2);
+    }
+    .mais-toggle:checked ~ .mais-backdrop{ opacity:1; pointer-events:auto; }
+    .mais-toggle:checked ~ .mais-sheet{ transform:translateY(0); }
+    .mais-sheet .sheet-grip{ width:38px; height:4px; border-radius:999px; background:var(--line); margin:.45rem auto .7rem; }
+    .mais-sheet .sheet-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:.5rem; }
+    .mais-sheet .sheet-head strong{ font-size:1.02rem; }
+    .mais-sheet .sheet-head label{ color:var(--ink-faint); font-size:.85rem; cursor:pointer; padding:.3rem; }
+    .mais-sheet .sheet-pills{ display:flex; gap:.4rem; flex-wrap:wrap; margin:0 0 .8rem; }
+    .mais-sheet .seletor-periodo{ display:block; margin:0 0 1rem; }
+    .mais-sheet .seletor-periodo select{ width:100%; font-size:16px; padding:.6rem .7rem; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--surface); color:var(--ink); font-weight:600; font-family:var(--font); }
+    .mais-sheet .sheet-links{ display:flex; flex-direction:column; }
+    .mais-sheet .sheet-links a{
+      display:flex; align-items:center; gap:.8rem; padding:.9rem .2rem;
+      color:var(--ink); text-decoration:none; font-size:.96rem; font-weight:500;
+      border-top:1px solid var(--line);
+    }
+    .mais-sheet .sheet-links a:first-child{ border-top:none; }
+    .mais-sheet .sheet-links a.active{ color:var(--primary-ink); font-weight:700; }
+    .mais-sheet .sheet-links a.sair{ color:var(--bad); }
+    .mais-sheet .sheet-links svg{ width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:1.85; flex:none; }
+
+    :focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .mais-sheet, .mais-backdrop{ transition:none; }
+  }
 </style>
 </head>
 <body>
+<?php
+/** Rota ativa? (aceita vários prefixos; '/' casa só com a raiz exata). */
+$ehAtivo = static function (array $prefixos) use ($rota): bool {
+    foreach ($prefixos as $p) {
+        if ($p === '/' ? ($rota === '/') : str_starts_with($rota, $p)) {
+            return true;
+        }
+    }
+    return false;
+};
+/** Ícone do sprite SVG (definido logo abaixo). */
+$ic = static fn (string $nome): string => '<svg aria-hidden="true"><use href="#ic-' . $nome . '"></use></svg>';
+
+// Navegação mobile por papel: [href, rótulo, ícone, [prefixos que marcam ativo]]
+if ($papel === 'admin') {
+    $navBottom = [
+        ['/dashboard', 'Painel', 'home', ['/', '/dashboard']],
+        ['/vendas', 'Vendas', 'cart', ['/vendas']],
+        ['/indicadores', 'Qualidade', 'check', ['/indicadores']],
+        ['/fechamento', 'Fechamento', 'lock', ['/fechamento']],
+    ];
+    $navMais = [
+        ['/metas', 'Metas', 'target', ['/metas']],
+        ['/relatorios', 'Relatórios', 'chart', ['/relatorios']],
+        ['/corrida', 'Corrida dos Campeões', 'trophy', ['/corrida']],
+        ['/config', 'Configuração', 'sliders', ['/config', '/filiais', '/usuarios', '/regras', '/categorias', '/parametros']],
+        ['/ajuda', 'Ajuda', 'help', ['/ajuda']],
+        ['/minha-conta', 'Minha conta', 'user', ['/minha-conta']],
+    ];
+} elseif ($papel === 'gerente') {
+    $navBottom = [
+        ['/painel-filial', 'Painel', 'home', ['/painel-filial']],
+        ['/vendas', 'Vendas', 'cart', ['/vendas']],
+        ['/indicadores', 'Qualidade', 'check', ['/indicadores']],
+        ['/fechamento', 'Fechamento', 'lock', ['/fechamento']],
+    ];
+    $navMais = [
+        ['/dashboard', 'Meu desempenho', 'user', ['/', '/dashboard']],
+        ['/metas', 'Metas', 'target', ['/metas']],
+        ['/relatorios', 'Relatórios', 'chart', ['/relatorios']],
+        ['/corrida', 'Corrida dos Campeões', 'trophy', ['/corrida']],
+        ['/ajuda', 'Ajuda', 'help', ['/ajuda']],
+        ['/minha-conta', 'Minha conta', 'user', ['/minha-conta']],
+    ];
+} else {
+    $navBottom = [
+        ['/dashboard', 'Painel', 'home', ['/', '/dashboard']],
+        ['/minhas-vendas', 'Vendas', 'cart', ['/minhas-vendas']],
+        ['/minhas-metas', 'Metas', 'target', ['/minhas-metas']],
+        ['/corrida', 'Corrida', 'trophy', ['/corrida']],
+    ];
+    $navMais = [
+        ['/ajuda', 'Ajuda', 'help', ['/ajuda']],
+        ['/minha-conta', 'Minha conta', 'user', ['/minha-conta']],
+    ];
+}
+$maisAtivo = false;
+foreach ($navMais as $m) {
+    if ($ehAtivo($m[3])) { $maisAtivo = true; break; }
+}
+?>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="ic-home" viewBox="0 0 24 24"><path d="M3 10.7 12 3l9 7.7"/><path d="M5.5 9.3V20a1 1 0 0 0 1 1H10v-6h4v6h3.5a1 1 0 0 0 1-1V9.3"/></symbol>
+  <symbol id="ic-cart" viewBox="0 0 24 24"><path d="M2.5 3.5h2.2l2.3 11.2a1.6 1.6 0 0 0 1.6 1.3h8.8a1.6 1.6 0 0 0 1.6-1.3L21.5 7H6"/><circle cx="9.5" cy="20" r="1.3"/><circle cx="17.5" cy="20" r="1.3"/></symbol>
+  <symbol id="ic-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.2 2.8 2.8L16.2 9"/></symbol>
+  <symbol id="ic-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/><circle cx="12" cy="15.2" r="1.3"/></symbol>
+  <symbol id="ic-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4"/></symbol>
+  <symbol id="ic-chart" viewBox="0 0 24 24"><path d="M4 20h16"/><rect x="5.5" y="11" width="3.2" height="7" rx=".6"/><rect x="10.4" y="6" width="3.2" height="12" rx=".6"/><rect x="15.3" y="13.5" width="3.2" height="4.5" rx=".6"/></symbol>
+  <symbol id="ic-trophy" viewBox="0 0 24 24"><path d="M8 4h8v4a4 4 0 0 1-8 0z"/><path d="M8 5H5.5a2.5 2.5 0 0 0 2.5 3M16 5h2.5a2.5 2.5 0 0 1-2.5 3"/><path d="M12 12v4M9.5 20h5M10.5 16h3"/></symbol>
+  <symbol id="ic-sliders" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
+  <symbol id="ic-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.2a2.5 2.5 0 1 1 3.6 2.4c-.9.5-1.2 1-1.2 2"/><circle cx="12" cy="16.6" r="1.1" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="ic-user" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.8"/><path d="M5 20a7 7 0 0 1 14 0"/></symbol>
+  <symbol id="ic-logout" viewBox="0 0 24 24"><path d="M9.5 20.5H6a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2h3.5"/><path d="m15.5 16.5 4.5-4.5-4.5-4.5"/><path d="M20 12H9.5"/></symbol>
+  <symbol id="ic-dots" viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="18.5" cy="12" r="1.7" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="ic-calendar" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="15" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></symbol>
+</defs></svg>
+
+<header class="mobile-topbar">
+  <a href="<?= htmlspecialchars($navBottom[0][0], ENT_QUOTES) ?>" class="brand"><img src="/assets/img/logo.jpg" alt="Comissão 360"></a>
+  <?php if ($mostrarSeletorPeriodo): ?>
+    <label for="maismenu" class="tb-chip <?= $periodoAtivo['status'] !== 'aberto' ? 'status-' . htmlspecialchars($periodoAtivo['status'], ENT_QUOTES) : '' ?>">
+      <?= $ic('calendar') ?><?= htmlspecialchars($nomesMesCurto[(int) $periodoAtivo['mes']], ENT_QUOTES) ?>/<?= (int) $periodoAtivo['ano'] ?>
+    </label>
+  <?php endif; ?>
+</header>
+
 <header class="app">
   <div class="brand"><img src="/assets/img/logo.jpg" alt="Farmácia Geremias · Comissão 360"></div>
   <div class="top-right">
@@ -347,5 +573,55 @@ $navAtivo = static fn (string $prefixo): string => str_starts_with((string) $rot
 <?php endif; ?>
 <?= $content ?>
 </main>
+
+<input type="checkbox" id="maismenu" class="mais-toggle" hidden>
+
+<nav class="mobile-bottomnav">
+  <?php foreach ($navBottom as [$bHref, $bLabel, $bIcone, $bPrefixos]): ?>
+    <a href="<?= htmlspecialchars($bHref, ENT_QUOTES) ?>" class="<?= $ehAtivo($bPrefixos) ? 'active' : '' ?>">
+      <?= $ic($bIcone) ?><span class="bn-label"><?= htmlspecialchars($bLabel, ENT_QUOTES) ?></span>
+    </a>
+  <?php endforeach; ?>
+  <label for="maismenu" class="<?= $maisAtivo ? 'active' : '' ?>">
+    <?= $ic('dots') ?><span class="bn-label">Mais</span>
+  </label>
+</nav>
+
+<label class="mais-backdrop" for="maismenu" aria-hidden="true"></label>
+<div class="mais-sheet" role="dialog" aria-label="Mais opções">
+  <span class="sheet-grip"></span>
+  <div class="sheet-head">
+    <strong>Mais</strong>
+    <label for="maismenu">Fechar ✕</label>
+  </div>
+  <div class="sheet-pills">
+    <span class="pill"><?= htmlspecialchars($rotulosPapel[$papel] ?? $papel, ENT_QUOTES) ?></span>
+    <?php if ($periodoAtivo['status'] !== 'aberto'): ?>
+      <span class="pill status-<?= htmlspecialchars($periodoAtivo['status'], ENT_QUOTES) ?>">Período <?= htmlspecialchars($rotulosStatusPeriodo[$periodoAtivo['status']], ENT_QUOTES) ?></span>
+    <?php endif; ?>
+  </div>
+  <?php if ($mostrarSeletorPeriodo): ?>
+  <form method="post" action="/periodo/selecionar" class="seletor-periodo">
+    <?= Csrf::field() ?>
+    <input type="hidden" name="redirect" value="<?= htmlspecialchars($urlAtual, ENT_QUOTES) ?>">
+    <select name="periodo" onchange="var p=this.value.split('-'); this.form.ano.value=p[0]; this.form.mes.value=p[1]; this.form.submit()">
+      <?php foreach ($periodosDisponiveis as $p): ?>
+        <option value="<?= (int) $p['ano'] ?>-<?= (int) $p['mes'] ?>" <?= ((int) $p['ano'] === (int) $periodoAtivo['ano'] && (int) $p['mes'] === (int) $periodoAtivo['mes']) ? 'selected' : '' ?>>
+          <?= htmlspecialchars($nomesMesCurto[(int) $p['mes']], ENT_QUOTES) ?>/<?= (int) $p['ano'] ?><?= $p['status'] !== 'aberto' ? ' · ' . htmlspecialchars($rotulosStatusPeriodo[$p['status']], ENT_QUOTES) : '' ?>
+        </option>
+      <?php endforeach; ?>
+    </select>
+    <input type="hidden" name="ano" value="<?= (int) $periodoAtivo['ano'] ?>">
+    <input type="hidden" name="mes" value="<?= (int) $periodoAtivo['mes'] ?>">
+  </form>
+  <?php endif; ?>
+  <nav class="sheet-links">
+    <?php foreach ($navMais as [$mHref, $mLabel, $mIcone, $mPrefixos]): ?>
+      <a href="<?= htmlspecialchars($mHref, ENT_QUOTES) ?>" class="<?= $ehAtivo($mPrefixos) ? 'active' : '' ?>"><?= $ic($mIcone) ?><?= htmlspecialchars($mLabel, ENT_QUOTES) ?></a>
+    <?php endforeach; ?>
+    <a href="/logout" class="sair"><?= $ic('logout') ?>Sair</a>
+  </nav>
+</div>
+
 </body>
 </html>
