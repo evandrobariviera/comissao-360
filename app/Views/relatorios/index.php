@@ -96,8 +96,8 @@ $qs = http_build_query(array_filter([
 
 <form method="get" action="/relatorios" class="card" style="display:flex; flex-wrap:wrap; gap:1rem; align-items:flex-end;">
   <div>
-    <label style="font-size:.75rem; font-weight:700; color:var(--ink-soft)">Relatório</label><br>
-    <select name="rel" onchange="this.form.submit()" style="padding:.5rem .7rem; border:1px solid var(--line); border-radius:var(--radius-sm); min-width:18rem;">
+    <label class="campo-rotulo">Relatório</label><br>
+    <select name="rel" onchange="this.form.submit()" class="campo-inline" style="min-width:18rem">
       <?php foreach ($porFamilia as $familia => $itens): ?>
         <optgroup label="<?= htmlspecialchars($familia, ENT_QUOTES) ?>">
           <?php foreach ($itens as $chave => $titulo): ?>
@@ -109,16 +109,16 @@ $qs = http_build_query(array_filter([
   </div>
 
   <div>
-    <label style="font-size:.75rem; font-weight:700; color:var(--ink-soft)">De</label><br>
-    <select name="de" onchange="this.form.submit()" style="padding:.5rem .7rem; border:1px solid var(--line); border-radius:var(--radius-sm);">
+    <label class="campo-rotulo">De</label><br>
+    <select name="de" onchange="this.form.submit()" class="campo-inline">
       <?php foreach ($periodos as $p): ?>
         <option value="<?= (int) $p['id'] ?>" <?= (int) $p['id'] === (int) $de ? 'selected' : '' ?>><?= $rotuloPeriodo($p) ?></option>
       <?php endforeach; ?>
     </select>
   </div>
   <div>
-    <label style="font-size:.75rem; font-weight:700; color:var(--ink-soft)">Até</label><br>
-    <select name="ate" onchange="this.form.submit()" style="padding:.5rem .7rem; border:1px solid var(--line); border-radius:var(--radius-sm);">
+    <label class="campo-rotulo">Até</label><br>
+    <select name="ate" onchange="this.form.submit()" class="campo-inline">
       <?php foreach ($periodos as $p): ?>
         <option value="<?= (int) $p['id'] ?>" <?= (int) $p['id'] === (int) $ate ? 'selected' : '' ?>><?= $rotuloPeriodo($p) ?></option>
       <?php endforeach; ?>
@@ -127,8 +127,8 @@ $qs = http_build_query(array_filter([
 
   <?php if ($temFiltroFilial): ?>
   <div>
-    <label style="font-size:.75rem; font-weight:700; color:var(--ink-soft)">Filial</label><br>
-    <select name="filial" onchange="this.form.submit()" style="padding:.5rem .7rem; border:1px solid var(--line); border-radius:var(--radius-sm);">
+    <label class="campo-rotulo">Filial</label><br>
+    <select name="filial" onchange="this.form.submit()" class="campo-inline">
       <?php if ($permiteRede): ?><option value="0" <?= $filialId === 0 ? 'selected' : '' ?>>Rede (todas)</option><?php endif; ?>
       <?php foreach ($filiais as $f): ?>
         <option value="<?= (int) $f['id'] ?>" <?= (int) $f['id'] === $filialId ? 'selected' : '' ?>><?= htmlspecialchars($f['nome'], ENT_QUOTES) ?></option>
@@ -139,8 +139,8 @@ $qs = http_build_query(array_filter([
 
   <?php if (in_array('metrica_comissao', $filtros, true)): ?>
   <div>
-    <label style="font-size:.75rem; font-weight:700; color:var(--ink-soft)">Métrica</label><br>
-    <select name="metrica" onchange="this.form.submit()" style="padding:.5rem .7rem; border:1px solid var(--line); border-radius:var(--radius-sm);">
+    <label class="campo-rotulo">Métrica</label><br>
+    <select name="metrica" onchange="this.form.submit()" class="campo-inline">
       <?php foreach ($metricasComissao as $chave => $rotulo): ?>
         <option value="<?= htmlspecialchars($chave, ENT_QUOTES) ?>" <?= $chave === $metrica ? 'selected' : '' ?>><?= htmlspecialchars($rotulo, ENT_QUOTES) ?></option>
       <?php endforeach; ?>
@@ -150,8 +150,8 @@ $qs = http_build_query(array_filter([
 
   <?php if (in_array('metrica_indicador', $filtros, true)): ?>
   <div>
-    <label style="font-size:.75rem; font-weight:700; color:var(--ink-soft)">Métrica</label><br>
-    <select name="metrica" onchange="this.form.submit()" style="padding:.5rem .7rem; border:1px solid var(--line); border-radius:var(--radius-sm);">
+    <label class="campo-rotulo">Métrica</label><br>
+    <select name="metrica" onchange="this.form.submit()" class="campo-inline">
       <?php foreach ($metricasIndicador as $chave => $rotulo): ?>
         <option value="<?= htmlspecialchars($chave, ENT_QUOTES) ?>" <?= $chave === $metrica ? 'selected' : '' ?>><?= htmlspecialchars($rotulo, ENT_QUOTES) ?></option>
       <?php endforeach; ?>
@@ -180,11 +180,11 @@ $qs = http_build_query(array_filter([
         <tr>
           <th><?= htmlspecialchars($dados['colDimensao'], ENT_QUOTES) ?></th>
           <?php foreach ($dados['periodos'] as $p): ?>
-            <th style="text-align:right"><?= htmlspecialchars($p['rotulo'], ENT_QUOTES) ?></th>
+            <th class="num"><?= htmlspecialchars($p['rotulo'], ENT_QUOTES) ?></th>
           <?php endforeach; ?>
           <?php if ($multi): ?>
-            <th style="text-align:right">Δ mês</th>
-            <th style="text-align:right">Δ período</th>
+            <th class="num">Δ mês</th>
+            <th class="num">Δ período</th>
           <?php endif; ?>
         </tr>
       </thead>
@@ -193,11 +193,11 @@ $qs = http_build_query(array_filter([
         <tr>
           <td style="white-space:nowrap"><?= htmlspecialchars($l['rotulo'], ENT_QUOTES) ?></td>
           <?php foreach ($dados['periodos'] as $p): ?>
-            <td style="text-align:right; font-variant-numeric:tabular-nums"><?= $fmtValor($l['valores'][$p['id']] ?? null, $dados['formato']) ?></td>
+            <td class="num"><?= $fmtValor($l['valores'][$p['id']] ?? null, $dados['formato']) ?></td>
           <?php endforeach; ?>
           <?php if ($multi): ?>
-            <td style="text-align:right; font-variant-numeric:tabular-nums"><?= $fmtDelta($dMes, $dados['formato'], $dados['direcao']) ?></td>
-            <td style="text-align:right; font-variant-numeric:tabular-nums"><?= $fmtDelta($dPer, $dados['formato'], $dados['direcao']) ?></td>
+            <td class="num"><?= $fmtDelta($dMes, $dados['formato'], $dados['direcao']) ?></td>
+            <td class="num"><?= $fmtDelta($dPer, $dados['formato'], $dados['direcao']) ?></td>
           <?php endif; ?>
         </tr>
         <?php endforeach; ?>
@@ -207,11 +207,11 @@ $qs = http_build_query(array_filter([
         <tr style="border-top:2px solid var(--line); font-weight:700;">
           <td style="white-space:nowrap"><?= htmlspecialchars($dados['total']['rotulo'], ENT_QUOTES) ?></td>
           <?php foreach ($dados['periodos'] as $p): ?>
-            <td style="text-align:right; font-variant-numeric:tabular-nums"><?= $fmtValor($dados['total']['valores'][$p['id']] ?? null, $dados['formato']) ?></td>
+            <td class="num"><?= $fmtValor($dados['total']['valores'][$p['id']] ?? null, $dados['formato']) ?></td>
           <?php endforeach; ?>
           <?php if ($multi): ?>
-            <td style="text-align:right; font-variant-numeric:tabular-nums"><?= $fmtDelta($dMes, $dados['formato'], $dados['direcao']) ?></td>
-            <td style="text-align:right; font-variant-numeric:tabular-nums"><?= $fmtDelta($dPer, $dados['formato'], $dados['direcao']) ?></td>
+            <td class="num"><?= $fmtDelta($dMes, $dados['formato'], $dados['direcao']) ?></td>
+            <td class="num"><?= $fmtDelta($dPer, $dados['formato'], $dados['direcao']) ?></td>
           <?php endif; ?>
         </tr>
       </tfoot>

@@ -7,10 +7,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Entrar · Comissão 360</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#EEF2F1; --surface:#fff; --ink:#16232A; --ink-soft:#4C5E62; --line:#D3DCD9; --primary:#1F6F63; --primary-ink:#0E4139; --bad:#AA4638;}
+  :root{--bg:#F2F5F2; --surface:#fff; --ink:#141A14; --ink-soft:#4E5E52; --line:#DDE4DE; --primary:#1A7A4A; --primary-ink:#124F31; --bad:#B83232;}
   *{box-sizing:border-box}
-  body{margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; background:var(--bg); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; color:var(--ink);}
+  body{margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; background:var(--bg); font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; color:var(--ink);}
   form{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:2.2rem 2rem; width:100%; max-width:340px; box-shadow:0 6px 20px rgba(16,27,30,.08);}
   .login-logo{display:block; width:100%; max-width:220px; height:auto; margin:0 auto 1.2rem;}
   h1{font-family:Georgia,serif; font-size:1.3rem; margin:0 0 .2rem; text-align:center;}

@@ -61,41 +61,136 @@ final class Viz
         return ['status-bad', 'var(--bad)', 'var(--bad-tint)', 'Abaixo da meta'];
     }
 
-    /** Meter: uma razão (realizado/meta) contra o limite de 100%. */
+    /** Nome curto do nível 360 → slug de classe da pílula (nivel-ouro/diamante/platina/base). */
+    public static function nivelSlug(string $nivel): string
+    {
+        $n = mb_strtolower(trim($nivel));
+        return match (true) {
+            str_contains($n, 'ouro') => 'ouro',
+            str_contains($n, 'diamante') => 'diamante',
+            str_contains($n, 'platina') => 'platina',
+            default => 'base',
+        };
+    }
+
+    /**
+     * Atingimento de meta de uma filial — nome / trilha de progresso / % / badge.
+     * Layout .filial-row: bad→low (vermelho), warn→mid (âmbar), good→great (verde).
+     */
     public static function meterRow(string $nome, float $realizado, float $meta): string
     {
         $atingimento = $meta > 0 ? ($realizado / $meta) * 100 : 0.0;
-        [$classe, $cor, $tinta, $rotulo] = self::statusAtingimento($atingimento);
+        [$classe] = self::statusAtingimento($atingimento);
         $larguraVisual = min(100.0, max(0.0, $atingimento));
 
-        $html = '<div class="meter-row" title="' . htmlspecialchars(self::money($realizado) . ' de ' . self::money($meta), ENT_QUOTES) . '">';
-        $html .= '<div class="meter-nome"><span>' . htmlspecialchars($nome, ENT_QUOTES) . '</span>';
-        $html .= '<span class="status-tag ' . $classe . '">' . htmlspecialchars($rotulo, ENT_QUOTES) . '</span></div>';
-        $html .= '<div class="meter-track" style="background:' . $tinta . '"><div class="meter-fill" style="width:' . $larguraVisual . '%; background:' . $cor . '"></div></div>';
-        $html .= '<div class="meter-pct">' . self::pct($atingimento) . '</div>';
+        $cls = match ($classe) {
+            'status-good' => 'great',
+            'status-warn' => 'mid',
+            default => 'low',
+        };
+        $badge = match ($cls) {
+            'great' => 'Na meta',
+            'mid' => 'Quase',
+            default => 'Abaixo',
+        };
+        if ($meta <= 0.0) {
+            $cls = 'low';
+            $badge = 'Sem dados';
+        }
+
+        $html = '<div class="filial-row" title="' . htmlspecialchars(self::money($realizado) . ' de ' . self::money($meta), ENT_QUOTES) . '">';
+        $html .= '<div class="filial-name">' . htmlspecialchars($nome, ENT_QUOTES) . '</div>';
+        $html .= '<div class="progress-track"><div class="progress-fill ' . $cls . '" style="width:' . $larguraVisual . '%"></div></div>';
+        $html .= '<div class="pct-val ' . $cls . '">' . self::pct($atingimento) . '</div>';
+        $html .= '<div class="status-badge ' . $cls . '">' . $badge . '</div>';
 
         return $html . '</div>';
     }
 
-    /** @param array<int, array{nome:string, valor:float, formatado:string}> $linhas já ordenadas (maior primeiro) */
+    /**
+     * Ranking: posição + nome (com sublinha opcional) + valor + pílula de nível opcional.
+     * @param array<int, array{nome:string, valor?:float, formatado?:string, sub?:string, nivel?:string}> $linhas já ordenadas (maior primeiro)
+     */
     public static function ranking(array $linhas): string
     {
         if (empty($linhas)) {
             return '<p class="subtitle">Sem dados ainda.</p>';
         }
-        $max = max(array_column($linhas, 'valor')) ?: 1.0;
 
-        $html = '<div class="rank-list">';
+        $html = '<div class="rank-tabela">';
+        $pos = 0;
         foreach ($linhas as $l) {
-            $largura = $max > 0 ? min(100.0, ($l['valor'] / $max) * 100) : 0.0;
-            $html .= '<div class="rank-row">';
-            $html .= '<span class="rank-name">' . htmlspecialchars($l['nome'], ENT_QUOTES) . '</span>';
-            $html .= '<div class="rank-track"><div class="rank-fill" style="width:' . $largura . '%"></div></div>';
-            $html .= '<span class="rank-value">' . htmlspecialchars($l['formatado'], ENT_QUOTES) . '</span>';
+            $pos++;
+            $valorFmt = $l['formatado'] ?? self::money((float) ($l['valor'] ?? 0));
+            $html .= '<div class="rank-linha">';
+            $html .= '<div class="rank-pos' . ($pos <= 3 ? ' top' : '') . '">' . $pos . '</div>';
+            $html .= '<div class="rank-quem"><div class="rank-nome">' . htmlspecialchars($l['nome'], ENT_QUOTES) . '</div>';
+            if (!empty($l['sub'])) {
+                $html .= '<div class="rank-sub">' . htmlspecialchars((string) $l['sub'], ENT_QUOTES) . '</div>';
+            }
+            $html .= '</div>';
+            $html .= '<div class="rank-fim"><div class="rank-val">' . htmlspecialchars($valorFmt, ENT_QUOTES) . '</div>';
+            if (!empty($l['nivel'])) {
+                $html .= '<span class="nivel-pill nivel-' . self::nivelSlug((string) $l['nivel'])
+                    . '">' . htmlspecialchars((string) $l['nivel'], ENT_QUOTES) . '</span>';
+            }
+            $html .= '</div></div>';
+        }
+
+        return $html . '</div>';
+    }
+
+    /**
+     * Grade 2×2 "Distribuição Meta 360" — contagem grande + rótulo de multiplicador por faixa.
+     * @param array<int, array{nome:string, count:int, sub?:string, cor?:string}> $linhas
+     */
+    public static function distribuicao360Grid(array $linhas): string
+    {
+        $html = '<div class="dist360">';
+        foreach ($linhas as $l) {
+            $html .= '<div class="d360">';
+            $html .= '<div class="d360-label">' . htmlspecialchars($l['nome'], ENT_QUOTES) . '</div>';
+            $html .= '<div class="d360-val ' . htmlspecialchars($l['cor'] ?? '', ENT_QUOTES) . '">' . (int) $l['count'] . '</div>';
+            if (!empty($l['sub'])) {
+                $html .= '<div class="d360-sub">' . htmlspecialchars((string) $l['sub'], ENT_QUOTES) . '</div>';
+            }
             $html .= '</div>';
         }
 
         return $html . '</div>';
+    }
+
+    /**
+     * Faixa escura da Corrida dos Campeões no Painel da rede.
+     * @param array{nome:string, rotulo:string} $edicao  rótulo já formatado (ex.: "3º tri · encerra 30/10")
+     * @param array<int, array{grupo:string, premio:string, linhas:array<int,array{nome:string, premio:string}>}> $grupos top N por grupo
+     */
+    public static function corridaStrip(array $edicao, array $grupos, int $diasRestantes): string
+    {
+        $html = '<div class="corrida-strip"><div class="cs-head">';
+        $html .= '<div><div class="cs-title">🏆 ' . htmlspecialchars($edicao['nome'], ENT_QUOTES) . '</div>';
+        $html .= '<div class="cs-meta">' . htmlspecialchars($edicao['rotulo'], ENT_QUOTES) . '</div></div>';
+        $html .= '<div class="cs-dias"><div class="cs-dias-val">' . max(0, $diasRestantes) . '</div>';
+        $html .= '<div class="cs-dias-label">dias restantes</div></div></div>';
+
+        $html .= '<div class="cs-grupos">';
+        foreach ($grupos as $g) {
+            $html .= '<div><div class="cs-grupo-label">' . htmlspecialchars($g['grupo'], ENT_QUOTES)
+                . ' — prêmio ' . htmlspecialchars($g['premio'], ENT_QUOTES) . '</div>';
+            if (empty($g['linhas'])) {
+                $html .= '<div class="cs-linha"><span class="cs-nome">Sem lançamentos ainda</span></div>';
+            }
+            $i = 0;
+            foreach ($g['linhas'] as $l) {
+                $i++;
+                $html .= '<div class="cs-linha' . ($i === 1 ? ' top' : '') . '">'
+                    . '<span class="cs-nome">' . $i . '. ' . htmlspecialchars($l['nome'], ENT_QUOTES) . '</span>'
+                    . '<span class="cs-premio">' . htmlspecialchars($l['premio'], ENT_QUOTES) . '</span></div>';
+            }
+            $html .= '</div>';
+        }
+
+        return $html . '</div></div>';
     }
 
     /** @param array<int, array{nome:string, count:int}> $linhas em ordem fixa (pior → melhor nível) */

@@ -7,13 +7,16 @@ namespace App\Controllers;
 use App\Core\Auth;
 use App\Core\Controller;
 use App\Core\Database;
+use App\Core\Viz;
 use App\Models\Categoria;
+use App\Models\Corrida;
 use App\Models\Filial;
 use App\Models\Funcionario;
 use App\Models\Indicador;
 use App\Models\Meta;
 use App\Models\Periodo;
 use App\Models\Venda;
+use App\Services\CorridaCalculator;
 use App\Services\ResumoCalculator;
 use App\Services\RitmoDiarioCalculator;
 
@@ -71,18 +74,38 @@ final class DashboardController extends Controller
 
         [$nomesFiliaisMix, $mixLinhas] = self::montarMixGrade($filiais, $vendaBrutaPorFilial, $vendaRealizada, $periodoId);
 
+        $nomeFilialPorId = [];
+        foreach ($filiais as $f) {
+            $nomeFilialPorId[(int) $f['id']] = $f['nome'];
+        }
+
         $ranking = array_map(
-            static fn ($l) => ['nome' => $l['nome'], 'valor' => $l['total'], 'formatado' => \App\Core\Viz::money($l['total'])],
+            static fn ($l) => [
+                'nome' => $l['nome'],
+                'valor' => $l['total'],
+                'formatado' => Viz::money($l['total']),
+                'sub' => $nomeFilialPorId[(int) $l['filial_id']] ?? null,
+                'nivel' => $l['pontuacao']['nivel'] ?? null,
+            ],
             $linhas
         );
         usort($ranking, static fn ($a, $b) => $b['valor'] <=> $a['valor']);
         $ranking = array_slice($ranking, 0, 10);
 
-        $ordemNiveis = Database::pdo()->query('SELECT nivel FROM multiplicador_faixa ORDER BY pontos_de')->fetchAll(\PDO::FETCH_COLUMN);
+        // Distribuição por faixa da Meta 360 (grade 2×2), da melhor para a pior.
+        $faixas = Database::pdo()->query(
+            'SELECT nivel, multiplicador, pontos_de, pontos_ate FROM multiplicador_faixa ORDER BY pontos_de DESC'
+        )->fetchAll(\PDO::FETCH_ASSOC);
         $contagem = array_count_values(array_column(array_column($linhas, 'pontuacao'), 'nivel'));
         $distribuicao = [];
-        foreach ($ordemNiveis as $nivel) {
-            $distribuicao[] = ['nome' => $nivel, 'count' => $contagem[$nivel] ?? 0];
+        foreach ($faixas as $fx) {
+            $mult = (float) $fx['multiplicador'];
+            $distribuicao[] = [
+                'nome' => $fx['nivel'] . ' (' . (int) $fx['pontos_de'] . '–' . (int) $fx['pontos_ate'] . ')',
+                'count' => $contagem[$fx['nivel']] ?? 0,
+                'sub' => 'multiplicador ' . number_format($mult, 2, ',', '.') . '×',
+                'cor' => $mult >= 1.5 ? 'green' : ($mult >= 1.2 ? 'blue' : ($mult < 1.0 ? 'red' : '')),
+            ];
         }
 
         $this->render('dashboard/rede', [
@@ -99,7 +122,56 @@ final class DashboardController extends Controller
             'oportunidades' => self::oportunidades($linhas, 5),
             'mixNomesFiliais' => $nomesFiliaisMix,
             'mixLinhas' => $mixLinhas,
+            'corrida' => self::corridaParaPainel(),
         ]);
+    }
+
+    /**
+     * Resumo compacto da Corrida dos Campeões para a faixa do Painel da rede:
+     * edição padrão (aberta mais recente) + top 3 por grupo, ao vivo. Null se
+     * não houver edição. Reusa o mesmo cálculo de CorridaController::dadosComuns().
+     *
+     * @return array{edicao: array{nome:string, rotulo:string}, grupos: array<int, array{grupo:string, premio:string, linhas: array<int, array{nome:string, premio:string}>}>, diasRestantes:int}|null
+     */
+    private static function corridaParaPainel(): ?array
+    {
+        $edicao = Corrida::edicaoPadrao();
+        if ($edicao === null) {
+            return null;
+        }
+
+        $grupos = [];
+        foreach (Corrida::grupos((int) $edicao['id']) as $grupo) {
+            $linhas = CorridaCalculator::rankingGrupo(
+                Corrida::lancamentosDoGrupo((int) $grupo['id']),
+                (float) $grupo['premio_bruto']
+            );
+            $top = [];
+            foreach (array_slice($linhas, 0, 3) as $l) {
+                $top[] = ['nome' => $l['nome'], 'premio' => Viz::money($l['premio'])];
+            }
+            $grupos[] = [
+                'grupo' => $grupo['nome'],
+                'premio' => Viz::money((float) $grupo['premio_bruto']),
+                'linhas' => $top,
+            ];
+        }
+
+        $fim = new \DateTimeImmutable((string) $edicao['data_fim']);
+        $hoje = new \DateTimeImmutable('today');
+        $diasRestantes = (int) $hoje->diff($fim)->format('%r%a');
+
+        $nome = trim((string) ($edicao['nome'] ?? '')) !== ''
+            ? (string) $edicao['nome']
+            : 'Corrida dos Campeões — ' . (int) $edicao['trimestre'] . 'º tri';
+        $rotulo = (int) $edicao['trimestre'] . 'º tri/' . (int) $edicao['ano']
+            . ' · encerra ' . $fim->format('d/m');
+
+        return [
+            'edicao' => ['nome' => $nome, 'rotulo' => $rotulo],
+            'grupos' => $grupos,
+            'diasRestantes' => $diasRestantes,
+        ];
     }
 
     private function porFilial(int $periodoId, array $periodo): void
@@ -271,10 +343,33 @@ final class DashboardController extends Controller
             $periodoId
         );
 
+        // Simulador "se eu vender mais X": faixas (degrau) + valor já vendido por categoria.
+        $simulador = [];
+        foreach (Categoria::ativas() as $cat) {
+            $valorAtual = 0.0;
+            if ($minhaLinha !== null) {
+                foreach ($minhaLinha['detalhe_categorias'] as $d) {
+                    if ($d['categoria'] === $cat['nome']) {
+                        $valorAtual = (float) $d['valor'];
+                        break;
+                    }
+                }
+            }
+            $simulador[] = [
+                'nome' => $cat['nome'],
+                'valor_atual' => $valorAtual,
+                'faixas' => array_map(static fn ($fx) => [
+                    'ate' => $fx['limite_ate'] !== null ? (float) $fx['limite_ate'] : null,
+                    'pct' => (float) $fx['percentual'],
+                ], Categoria::faixas((int) $cat['id'])),
+            ];
+        }
+
         $this->render('dashboard/pessoal', [
             'periodo' => $periodo,
             'nome' => $funcionario['nome'],
             'linha' => $minhaLinha,
+            'simulador' => $simulador,
             'posicao' => $posicao,
             'totalNaFilial' => count($linhas),
             'metaIndividual' => $metaIndividual,

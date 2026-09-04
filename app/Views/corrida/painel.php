@@ -52,7 +52,7 @@ $fechada = $edicao !== null && $edicao['status'] === 'fechada';
   <summary style="cursor:pointer; font-weight:600; color:var(--primary-ink);">+ Nova edição</summary>
   <form class="form-padrao" method="post" action="/corrida/edicao" style="margin-top:1rem;">
     <?= Csrf::field() ?>
-    <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:0 1rem;">
+    <div class="grade-2">
       <div><label>Trimestre (1 a 4)</label><input type="number" name="trimestre" min="1" max="4" value="3"></div>
       <div><label>Ano</label><input type="number" name="ano" value="<?= $anoPadrao ?>"></div>
       <div><label>Data de início</label><input type="date" name="data_inicio"></div>
@@ -96,7 +96,7 @@ $fechada = $edicao !== null && $edicao['status'] === 'fechada';
     <summary style="cursor:pointer; font-weight:600; color:var(--primary-ink);">Editar datas / rótulo / excluir</summary>
     <form class="form-padrao" method="post" action="/corrida/edicao/<?= (int) $edicao['id'] ?>" style="margin-top:1rem;">
       <?= Csrf::field() ?>
-      <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:0 1rem;">
+      <div class="grade-2">
         <div><label>Trimestre</label><input type="number" name="trimestre" min="1" max="4" value="<?= (int) $edicao['trimestre'] ?>"></div>
         <div><label>Ano</label><input type="number" name="ano" value="<?= (int) $edicao['ano'] ?>"></div>
         <div><label>Data de início</label><input type="date" name="data_inicio" value="<?= htmlspecialchars((string) $edicao['data_inicio'], ENT_QUOTES) ?>"></div>
@@ -124,10 +124,10 @@ $fechada = $edicao !== null && $edicao['status'] === 'fechada';
       <div style="display:flex; gap:.6rem; align-items:flex-end; flex-wrap:wrap;">
         <form method="post" action="/corrida/grupo/<?= (int) $g['id'] ?>" style="display:flex; gap:.6rem; align-items:flex-end; flex-wrap:wrap;">
           <?= Csrf::field() ?>
-          <div><label style="font-size:.75rem; font-weight:700; color:var(--ink-soft)">Nome do grupo</label><br>
-            <input type="text" name="nome" value="<?= htmlspecialchars($g['nome'], ENT_QUOTES) ?>" <?= $aberta ? '' : 'disabled' ?> style="padding:.5rem .7rem; border:1px solid var(--line); border-radius:var(--radius-sm); min-width:16rem;"></div>
-          <div><label style="font-size:.75rem; font-weight:700; color:var(--ink-soft)">Prêmio bruto (R$)</label><br>
-            <input type="text" name="premio_bruto" value="<?= $fmt($g['premio_bruto']) ?>" <?= $aberta ? '' : 'disabled' ?> style="padding:.5rem .7rem; border:1px solid var(--line); border-radius:var(--radius-sm); width:8rem;"></div>
+          <div><label class="campo-rotulo">Nome do grupo</label><br>
+            <input type="text" name="nome" value="<?= htmlspecialchars($g['nome'], ENT_QUOTES) ?>" <?= $aberta ? '' : 'disabled' ?> class="campo-inline" style="min-width:16rem;"></div>
+          <div><label class="campo-rotulo">Prêmio bruto (R$)</label><br>
+            <input type="text" name="premio_bruto" value="<?= $fmt($g['premio_bruto']) ?>" <?= $aberta ? '' : 'disabled' ?> class="campo-inline" style="width:8rem;"></div>
           <?php if ($aberta): ?><button type="submit" class="btn pequeno">Salvar</button><?php endif; ?>
         </form>
         <?php if ($aberta): ?>
@@ -150,10 +150,10 @@ $fechada = $edicao !== null && $edicao['status'] === 'fechada';
     <form method="post" action="/corrida/grupo" style="display:flex; gap:.6rem; align-items:flex-end; flex-wrap:wrap;">
       <?= Csrf::field() ?>
       <input type="hidden" name="edicao_id" value="<?= (int) $edicao['id'] ?>">
-      <div><label style="font-size:.75rem; font-weight:700; color:var(--ink-soft)">Novo grupo</label><br>
-        <input type="text" name="nome" placeholder="ex.: Similar/Genérico" style="padding:.5rem .7rem; border:1px solid var(--line); border-radius:var(--radius-sm); min-width:16rem;"></div>
-      <div><label style="font-size:.75rem; font-weight:700; color:var(--ink-soft)">Prêmio bruto (R$)</label><br>
-        <input type="text" name="premio_bruto" placeholder="2000" style="padding:.5rem .7rem; border:1px solid var(--line); border-radius:var(--radius-sm); width:8rem;"></div>
+      <div><label class="campo-rotulo">Novo grupo</label><br>
+        <input type="text" name="nome" placeholder="ex.: Similar/Genérico" class="campo-inline" style="min-width:16rem;"></div>
+      <div><label class="campo-rotulo">Prêmio bruto (R$)</label><br>
+        <input type="text" name="premio_bruto" placeholder="2000" class="campo-inline" style="width:8rem;"></div>
       <button type="submit" class="btn pequeno">Adicionar grupo</button>
     </form>
   </div>
@@ -218,15 +218,15 @@ $fechada = $edicao !== null && $edicao['status'] === 'fechada';
     <div class="card">
       <div style="display:flex; gap:.6rem; align-items:flex-end; flex-wrap:wrap;">
         <div style="min-width:14rem">
-          <span style="font-size:.75rem; font-weight:700; color:var(--ink-soft)">Produto</span><br>
+          <span class="campo-rotulo">Produto</span><br>
           <strong><?= htmlspecialchars($p['nome'], ENT_QUOTES) ?></strong>
           <span style="color:var(--ink-faint)">/ <?= htmlspecialchars($p['unidade_rotulo'], ENT_QUOTES) ?></span>
         </div>
         <form method="post" action="/corrida/produto/<?= (int) $p['id'] ?>" style="display:flex; gap:.6rem; align-items:flex-end; flex-wrap:wrap;">
           <?= Csrf::field() ?>
           <div>
-            <label style="font-size:.75rem; font-weight:700; color:var(--ink-soft)">Grupo vinculado</label><br>
-            <select name="grupo_id" <?= $aberta ? '' : 'disabled' ?> style="padding:.5rem .7rem; border:1px solid var(--line); border-radius:var(--radius-sm);">
+            <label class="campo-rotulo">Grupo vinculado</label><br>
+            <select name="grupo_id" <?= $aberta ? '' : 'disabled' ?> class="campo-inline">
               <option value="0">— solto (só bônus) —</option>
               <?php foreach ($grupos as $g): ?>
                 <option value="<?= (int) $g['id'] ?>" <?= (int) $p['grupo_id'] === (int) $g['id'] ? 'selected' : '' ?>><?= htmlspecialchars($g['nome'], ENT_QUOTES) ?></option>
@@ -234,8 +234,8 @@ $fechada = $edicao !== null && $edicao['status'] === 'fechada';
             </select>
           </div>
           <div>
-            <label style="font-size:.75rem; font-weight:700; color:var(--ink-soft)">R$ por <?= htmlspecialchars($p['unidade_rotulo'], ENT_QUOTES) ?></label><br>
-            <input type="text" name="bonus_unidade" value="<?= $fmt($p['bonus_unidade']) ?>" <?= $aberta ? '' : 'disabled' ?> style="padding:.5rem .7rem; border:1px solid var(--line); border-radius:var(--radius-sm); width:7rem;">
+            <label class="campo-rotulo">R$ por <?= htmlspecialchars($p['unidade_rotulo'], ENT_QUOTES) ?></label><br>
+            <input type="text" name="bonus_unidade" value="<?= $fmt($p['bonus_unidade']) ?>" <?= $aberta ? '' : 'disabled' ?> class="campo-inline" style="width:7rem;">
           </div>
           <?php if ($aberta): ?><button type="submit" class="btn pequeno">Salvar</button><?php endif; ?>
         </form>
@@ -254,8 +254,8 @@ $fechada = $edicao !== null && $edicao['status'] === 'fechada';
       <?= Csrf::field() ?>
       <input type="hidden" name="edicao_id" value="<?= (int) $edicao['id'] ?>">
       <div>
-        <label style="font-size:.75rem; font-weight:700; color:var(--ink-soft)">Do catálogo</label><br>
-        <select name="produto_id" style="padding:.5rem .7rem; border:1px solid var(--line); border-radius:var(--radius-sm); min-width:12rem;">
+        <label class="campo-rotulo">Do catálogo</label><br>
+        <select name="produto_id" class="campo-inline" style="min-width:12rem;">
           <option value="0">— novo produto —</option>
           <?php foreach ($catalogo as $c): ?>
             <option value="<?= (int) $c['id'] ?>"><?= htmlspecialchars($c['nome'], ENT_QUOTES) ?></option>
@@ -263,16 +263,16 @@ $fechada = $edicao !== null && $edicao['status'] === 'fechada';
         </select>
       </div>
       <div>
-        <label style="font-size:.75rem; font-weight:700; color:var(--ink-soft)">Novo produto — nome</label><br>
-        <input type="text" name="produto_nome" placeholder="ex.: Zodak" style="padding:.5rem .7rem; border:1px solid var(--line); border-radius:var(--radius-sm);">
+        <label class="campo-rotulo">Novo produto — nome</label><br>
+        <input type="text" name="produto_nome" placeholder="ex.: Zodak" class="campo-inline">
       </div>
       <div>
-        <label style="font-size:.75rem; font-weight:700; color:var(--ink-soft)">Unidade</label><br>
-        <input type="text" name="unidade_rotulo" value="unidade" style="padding:.5rem .7rem; border:1px solid var(--line); border-radius:var(--radius-sm); width:6rem;">
+        <label class="campo-rotulo">Unidade</label><br>
+        <input type="text" name="unidade_rotulo" value="unidade" class="campo-inline" style="width:6rem;">
       </div>
       <div>
-        <label style="font-size:.75rem; font-weight:700; color:var(--ink-soft)">Grupo vinculado</label><br>
-        <select name="grupo_id" style="padding:.5rem .7rem; border:1px solid var(--line); border-radius:var(--radius-sm);">
+        <label class="campo-rotulo">Grupo vinculado</label><br>
+        <select name="grupo_id" class="campo-inline">
           <option value="0">— solto —</option>
           <?php foreach ($grupos as $g): ?>
             <option value="<?= (int) $g['id'] ?>"><?= htmlspecialchars($g['nome'], ENT_QUOTES) ?></option>
@@ -280,8 +280,8 @@ $fechada = $edicao !== null && $edicao['status'] === 'fechada';
         </select>
       </div>
       <div>
-        <label style="font-size:.75rem; font-weight:700; color:var(--ink-soft)">R$ por unidade</label><br>
-        <input type="text" name="bonus_unidade" placeholder="5,00" style="padding:.5rem .7rem; border:1px solid var(--line); border-radius:var(--radius-sm); width:7rem;">
+        <label class="campo-rotulo">R$ por unidade</label><br>
+        <input type="text" name="bonus_unidade" placeholder="5,00" class="campo-inline" style="width:7rem;">
       </div>
       <button type="submit" class="btn pequeno">Adicionar produto</button>
     </form>

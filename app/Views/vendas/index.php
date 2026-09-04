@@ -67,7 +67,7 @@ foreach ($categorias as $c) {
 <form class="form-padrao" method="post" action="/vendas/bruta" style="max-width:400px; margin-top:1.1rem">
   <?= Csrf::field() ?>
   <input type="hidden" name="filial_id" value="<?= $filialId ?>">
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:0 1rem">
+  <div class="grade-2">
     <div>
       <label for="data_bruta">Dia</label>
       <input type="date" id="data_bruta" name="data_bruta" value="<?= date('Y-m-d') ?>">
@@ -79,7 +79,7 @@ foreach ($categorias as $c) {
   </div>
   <?php if (!empty($categoriasMix)): ?>
   <p class="ajuda">Opcional — total acumulado do mês até hoje, por categoria, só pra acompanhar o mix de vendas (não é o valor do dia isolado, e não precisa somar o valor total acima).</p>
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:0 1rem">
+  <div class="grade-2">
     <?php foreach ($categoriasMix as $c): ?>
       <div>
         <label for="categoria_valor_<?= (int) $c['id'] ?>"><?= htmlspecialchars($c['nome'], ENT_QUOTES) ?> — acumulado do mês (R$) — meta <?= $fmt($c['meta_percentual_pct']) ?>%</label>

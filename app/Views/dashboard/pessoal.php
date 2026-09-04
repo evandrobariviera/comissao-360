@@ -17,15 +17,34 @@
 use App\Core\Auth;
 use App\Core\Viz;
 
+/** @var array $simulador */
 $nomesMes = [1=>'janeiro',2=>'fevereiro',3=>'março',4=>'abril',5=>'maio',6=>'junho',7=>'julho',8=>'agosto',9=>'setembro',10=>'outubro',11=>'novembro',12=>'dezembro'];
 $rotuloPeriodo = $nomesMes[(int) $periodo['mes']] . '/' . $periodo['ano'];
+$simulador = $simulador ?? [];
 ?>
-<h2>Minha performance</h2>
-<p class="subtitle">Olá, <strong><?= htmlspecialchars($nome, ENT_QUOTES) ?></strong> — período <strong><?= htmlspecialchars($rotuloPeriodo, ENT_QUOTES) ?></strong>.</p>
 
 <?php if ($linha === null): ?>
+<h2>Minha performance</h2>
+<p class="subtitle">Olá, <strong><?= htmlspecialchars($nome, ENT_QUOTES) ?></strong> — período <strong><?= htmlspecialchars($rotuloPeriodo, ENT_QUOTES) ?></strong>.</p>
 <div class="card"><p>Ainda não há cálculo disponível para você neste período.</p></div>
 <?php else: $p = $linha['pontuacao']; $dq = $p['detalhe_qualidade']; ?>
+
+<div class="balc-hero">
+  <div class="balc-saud">Olá,</div>
+  <div class="balc-nome"><?= htmlspecialchars($nome, ENT_QUOTES) ?></div>
+  <div class="balc-box">
+    <div class="balc-box-label">Comissão projetada no mês</div>
+    <div class="balc-box-val"><?= Viz::money($linha['total']) ?></div>
+    <div class="balc-box-sub">comissão ajustada + prêmio de filial · <?= htmlspecialchars($rotuloPeriodo, ENT_QUOTES) ?></div>
+  </div>
+  <div class="balc-nivel">
+    <div>
+      <div class="balc-nivel-label">Nível Meta 360</div>
+      <div class="balc-nivel-pts"><?= number_format($p['pontuacao_total'], 1, ',', '.') ?> pontos</div>
+    </div>
+    <div class="balc-nivel-val"><?= htmlspecialchars($p['nivel'], ENT_QUOTES) ?> · <?= number_format($p['multiplicador_protegido'], 2, ',', '.') ?>×</div>
+  </div>
+</div>
 
 <div class="dash-cols">
   <div class="dash-col-principal">
@@ -68,6 +87,62 @@ $rotuloPeriodo = $nomesMes[(int) $periodo['mes']] . '/' . $periodo['ano'];
       <p class="secao-sub">Quanto falta vender em cada categoria para pular de faixa — a alíquota nova vale sobre o total, então vale a pena empurrar.</p>
       <div class="card"><?= Viz::oportunidadesFuncionario($linha['detalhe_categorias']) ?></div>
     </div>
+
+    <?php if (!empty($simulador)): ?>
+    <div class="secao">
+      <h3>Simulador</h3>
+      <p class="secao-sub">Se eu vender mais numa categoria, quanto a comissão sobe?</p>
+      <div class="simulador" id="simulador" data-cats='<?= htmlspecialchars(json_encode($simulador, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS), ENT_QUOTES) ?>'>
+        <p class="sim-desc">A alíquota da faixa incide sobre o total vendido na categoria — pular de faixa recalcula tudo.</p>
+        <div class="sim-row">
+          <select id="sim-cat">
+            <?php foreach ($simulador as $s): ?>
+              <option><?= htmlspecialchars($s['nome'], ENT_QUOTES) ?></option>
+            <?php endforeach; ?>
+          </select>
+          <input type="number" id="sim-val" min="0" step="50" inputmode="numeric" placeholder="R$ 500">
+          <button type="button" class="btn" id="sim-btn">Ver</button>
+        </div>
+        <div class="sim-result" id="sim-result">
+          <div class="sim-result-label">Comissão adicional estimada</div>
+          <div class="sim-result-val" id="sim-out">+ R$ 0,00</div>
+          <div class="sim-result-diff" id="sim-diff"></div>
+        </div>
+      </div>
+    </div>
+    <script>
+    (function(){
+      var box = document.getElementById('simulador');
+      if (!box) return;
+      var cats = JSON.parse(box.dataset.cats || '[]');
+      var fmtPct = function(v){ return (Math.round(v * 100) / 100).toString().replace('.', ','); };
+      var brl = function(v){ return 'R$ ' + v.toFixed(2).replace('.', ','); };
+      var aliquota = function(valor, faixas){
+        for (var i = 0; i < faixas.length; i++){
+          if (faixas[i].ate === null || valor <= faixas[i].ate) return faixas[i].pct;
+        }
+        return 0;
+      };
+      var calcular = function(){
+        var cat = cats.find(function(c){ return c.nome === document.getElementById('sim-cat').value; });
+        var add = parseFloat(document.getElementById('sim-val').value) || 0;
+        var res = document.getElementById('sim-result');
+        if (!cat || add <= 0){ res.classList.remove('show'); return; }
+        var atual = cat.valor_atual;
+        var faAtual = aliquota(atual, cat.faixas);
+        var faNovo = aliquota(atual + add, cat.faixas);
+        var ganho = (atual + add) * faNovo / 100 - atual * faAtual / 100;
+        document.getElementById('sim-out').textContent = '+ ' + brl(Math.max(0, ganho));
+        document.getElementById('sim-diff').textContent = faNovo > faAtual
+          ? 'Sobe da faixa de ' + fmtPct(faAtual) + '% para ' + fmtPct(faNovo) + '% — aplicada sobre o total da categoria.'
+          : 'Continua na faixa de ' + fmtPct(faAtual) + '%.';
+        res.classList.add('show');
+      };
+      document.getElementById('sim-btn').addEventListener('click', calcular);
+      document.getElementById('sim-val').addEventListener('keydown', function(e){ if (e.key === 'Enter') calcular(); });
+    })();
+    </script>
+    <?php endif; ?>
 
     <div class="secao">
       <h3>Minhas vendas por categoria</h3>

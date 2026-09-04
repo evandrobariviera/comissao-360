@@ -49,7 +49,7 @@ $fmt = static fn ($v) => rtrim(rtrim(number_format((float) $v, 2, '.', ''), '0')
 
   <fieldset>
     <legend>Meta da filial</legend>
-    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:0 1rem; max-width:640px">
+    <div class="grade-3" style="max-width:640px">
       <div>
         <label for="meta_venda_filial">Meta de venda (R$)</label>
         <?php if ($editavel): ?>
